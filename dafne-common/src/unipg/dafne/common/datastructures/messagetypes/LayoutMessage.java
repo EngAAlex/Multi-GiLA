@@ -100,6 +100,10 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 		out.writeFloat(value[1]);
 		if(getDeg() == -1)
 			out.writeBoolean(false);
+		else{
+			out.writeBoolean(true);
+			out.writeInt(deg);
+		}
 	}
 
 }
