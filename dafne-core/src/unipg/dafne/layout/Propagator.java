@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.graph.AbstractComputation;
+import org.apache.giraph.graph.Computation;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -18,7 +19,10 @@ import org.apache.hadoop.io.Writable;
 
 import unipg.dafne.common.coordinatewritables.CoordinateWritable;
 import unipg.dafne.common.datastructures.PartitionedLongWritable;
-import unipg.dafne.common.datastructures.messagetypes.PlainMessage;
+import unipg.dafne.common.datastructures.messagetypes.LayoutMessage;
+import unipg.dafne.layout.GraphReintegration.FairShareReintegrateOneEdges;
+import unipg.dafne.layout.force.FR;
+import unipg.dafne.layout.force.Force;
 import unipg.dafne.utils.Toolbox;
 
 /**
@@ -36,16 +40,22 @@ import unipg.dafne.utils.Toolbox;
  *
  */
 public class Propagator extends AbstractComputation<PartitionedLongWritable, 
-CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
+CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 
 	protected boolean useQueues;
 	protected float minimumForceThreshold;
-
-
 	protected Float k;
 	protected float walshawConstant;
 	private float queueFlushRatio;
+	
+	protected Force force;
+	protected boolean useCosSin;
+	
+	protected float cos;
+	protected float sin;
 
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(
 			GraphState graphState,
@@ -61,16 +71,31 @@ CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
 
 		useQueues = getConf().getBoolean(FloodingMaster.useQueuesString, false);
 		queueFlushRatio = getConf().getFloat(FloodingMaster.queuePercentageString, 0.1f);
+		
+		try {
+			force = ((Class<Force>)Class.forName(getConf().get(FloodingMaster.forceMethodOptionString, FR.class.toString()))
+						).newInstance();
+		} catch (Exception e) {
+			force = new FR();
+		}	
+		force.generateForce(new Object[]{k});
+		
+		if(getConf().getBoolean(FloodingMaster.useCosSinInForceComputation, false)){
+			useCosSin=true;
+			cos=1;
+			sin=1;
+		}else
+			useCosSin=false;
 
 	}
 
 	@Override
 	public void compute(
 			Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-			Iterable<PlainMessage> messages)
+			Iterable<LayoutMessage> messages)
 					throws IOException {
 
-		Iterator<PlainMessage> it = messages.iterator();
+		Iterator<LayoutMessage> it = messages.iterator();
 		CoordinateWritable vValue = vertex.getValue();
 
 		float[] mycoords = vValue.getCoordinates();;	
@@ -78,17 +103,20 @@ CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
 
 		float distanceFromVertex;
 
-		float[] force = new float[]{0.0f, 0.0f};
+		float[] finalForce = new float[]{0.0f, 0.0f};
 		float[] repulsiveForce = new float[]{0.0f, 0.0f};
+		
+		int v1Deg;
+		int v2Deg;
 
 		while(it.hasNext()){	
-			PlainMessage currentMessage = it.next();
+			LayoutMessage currentMessage = it.next();
 
 			LongWritable currentPayload = new LongWritable(currentMessage.getPayloadVertex());
 
 			if(currentMessage.getPayloadVertex().equals(vertex.getId().getId()) || vValue.isAnalyzed(currentPayload))
 				continue;
-
+			
 			foreigncoords=currentMessage.getValue();
 
 			distanceFromVertex = Toolbox.computeModule(mycoords, foreigncoords);
@@ -96,24 +124,37 @@ CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
 			float deltaX = (foreigncoords[0] - mycoords[0]);
 			float deltaY = (foreigncoords[1] - mycoords[1]);		
 
-			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);		
-
+			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
+			
+			if(useCosSin){
+				cos = deltaX/distanceFromVertex;
+				sin = deltaY/distanceFromVertex;
+			}
+			
+			float[] computedForce;
+			
+			v1Deg = vertex.getNumEdges() + vValue.getOneDegreeVerticesQuantity();
+			v2Deg = currentMessage.getDeg();
+			
 			//ATTRACTIVE FORCES
-			if(vValue.hasBeenReset()){				
-				force[0] += deltaX*distanceFromVertex/k;
-				force[1] += deltaY*distanceFromVertex/k;	
+			if(vValue.hasBeenReset()){
+				computedForce = force.computeAttractiveForce(deltaX, deltaY, distanceFromVertex, squareDistance, v1Deg, v2Deg);
+				finalForce[0] += (computedForce[0]*cos);
+				finalForce[1] += (computedForce[1]*sin);
 			}
 
 			//REPULSIVE FORCES
-			repulsiveForce[0] += (deltaX/squareDistance);
-			repulsiveForce[1] += (deltaY/squareDistance);
+			computedForce = force.computeRepulsiveForce(deltaX, deltaY, distanceFromVertex, squareDistance, v1Deg, v2Deg);
+			
+			repulsiveForce[0] += (computedForce[0]*cos);
+			repulsiveForce[1] += (computedForce[1]*sin);
 
 			vValue.analyse(currentPayload);
 
 			if(!currentMessage.isAZombie()){
 				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
 				if(!useQueues)
-					sendMessageToAllEdges(vertex, (PlainMessage) currentMessage.propagate());					
+					sendMessageToAllEdges(vertex, (LayoutMessage) currentMessage.propagate());					
 				else
 					vertex.getValue().enqueueMessage(currentMessage.propagate());	
 			}
@@ -124,11 +165,11 @@ CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
 		repulsiveForce[0] *= walshawConstant;
 		repulsiveForce[1] *= walshawConstant;
 
-		force[0] -= repulsiveForce[0];
-		force[1] -= repulsiveForce[1];
+		finalForce[0] -= repulsiveForce[0];
+		finalForce[1] -= repulsiveForce[1];
 
 		vValue.setAsMoving();
-		vValue.addToForceVector(force);
+		vValue.addToForceVector(finalForce);
 
 		if(!useQueues)
 			return;
@@ -136,7 +177,7 @@ CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
 		Writable[] toDequeue = vValue.dequeueMessages(new Double(Math.ceil(queueFlushRatio*vertex.getNumEdges())).intValue());
 
 		for(int i=0; i<toDequeue.length; i++){
-			PlainMessage current = (PlainMessage) toDequeue[i];
+			LayoutMessage current = (LayoutMessage) toDequeue[i];
 			if(current != null){
 				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
 				sendMessageToAllEdges(vertex, current);

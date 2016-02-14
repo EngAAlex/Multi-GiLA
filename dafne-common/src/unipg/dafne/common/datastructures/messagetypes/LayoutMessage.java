@@ -13,13 +13,15 @@ import java.io.IOException;
  * @author Alessio Arleo
  *
  */
-public class PlainMessage extends MessageWritable<Long, float[]> {
+public class LayoutMessage extends MessageWritable<Long, float[]> {
 
+	private int deg;
+	
 	/**
 	 * Parameter-less constructor
 	 * 
 	 */
-	public PlainMessage() {
+	public LayoutMessage() {
 		super();
 	}
 	
@@ -29,7 +31,7 @@ public class PlainMessage extends MessageWritable<Long, float[]> {
 	 * @param payloadVertex
 	 * @param coords
 	 */
-	public PlainMessage(long payloadVertex, float[] coords){
+	public LayoutMessage(long payloadVertex, float[] coords){
 		super(payloadVertex, coords);		
 	}
 	
@@ -40,8 +42,16 @@ public class PlainMessage extends MessageWritable<Long, float[]> {
 	 * @param ttl
 	 * @param coords
 	 */
-	public PlainMessage(long payloadVertex, int ttl, float[] coords){
+	public LayoutMessage(long payloadVertex, int ttl, float[] coords){
 		super(payloadVertex, ttl, coords);		
+	}
+	
+	public void setDeg(int deg){
+		this.deg = deg;
+	}
+
+	public int getDeg(){
+		return deg;
 	}
 	
 	/* (non-Javadoc)
@@ -49,7 +59,10 @@ public class PlainMessage extends MessageWritable<Long, float[]> {
 	 */
 	@Override
 	public MessageWritable<Long, float[]> propagate() {
-		return new PlainMessage(payloadVertex, ttl-1, new float[]{value[0], value[1]});
+		LayoutMessage toReturn = new LayoutMessage(payloadVertex, ttl-1, new float[]{value[0], value[1]});
+		if(getDeg() != -1)
+			toReturn.setDeg(getDeg());
+		return toReturn;
 	}
 
 	/* (non-Javadoc)
@@ -57,7 +70,10 @@ public class PlainMessage extends MessageWritable<Long, float[]> {
 	 */
 	@Override
 	public MessageWritable<Long, float[]> propagateAndDie() {
-		return new PlainMessage(payloadVertex, new float[]{value[0], value[1]});
+		LayoutMessage toReturn = new LayoutMessage(payloadVertex, new float[]{value[0], value[1]});
+		if(getDeg() != -1)
+			toReturn.setDeg(getDeg());
+		return toReturn;
 	}
 
 	/* (non-Javadoc)
@@ -69,6 +85,9 @@ public class PlainMessage extends MessageWritable<Long, float[]> {
 		value = new float[2];
 		value[0] = in.readFloat();
 		value[1] = in.readFloat();
+		if(in.readBoolean())
+			deg = in.readInt();
+			
 	}
 
 	/* (non-Javadoc)
@@ -79,6 +98,8 @@ public class PlainMessage extends MessageWritable<Long, float[]> {
 		out.writeLong(payloadVertex);
 		out.writeFloat(value[0]);
 		out.writeFloat(value[1]);
+		if(getDeg() == -1)
+			out.writeBoolean(false);
 	}
 
 }

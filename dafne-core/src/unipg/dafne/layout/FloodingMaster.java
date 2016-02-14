@@ -33,7 +33,7 @@ import unipg.dafne.aggregators.SetAggregator;
 import unipg.dafne.common.coordinatewritables.CoordinateWritable;
 import unipg.dafne.common.datastructures.FloatWritableArray;
 import unipg.dafne.common.datastructures.PartitionedLongWritable;
-import unipg.dafne.common.datastructures.messagetypes.PlainMessage;
+import unipg.dafne.common.datastructures.messagetypes.LayoutMessage;
 import unipg.dafne.coolingstrategies.CoolingStrategy;
 import unipg.dafne.coolingstrategies.LinearCoolingStrategy;
 import unipg.dafne.layout.GraphReintegration.FairShareReintegrateOneEdges;
@@ -94,6 +94,9 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public float defaultInitialTempFactor = 0.4f;
 	public final String defaultCoolingSpeed = "0.93";
 	public static final float accuracyDefault = 0.01f;
+	public static final String forceMethodOptionString = "layout.forceModel";
+	public static final String useCosSinInForceComputation = "layout.useCosSin";
+	public static final String sendDegTooOptionString = "layout.sendDegreeIntoLayoutMessages";
 	
 	//INPUT OPTIONS
 	public static final String bbString = "layout.boundingBox";
@@ -228,8 +231,6 @@ public class FloodingMaster extends DefaultMasterCompute {
 
 			float[] correctedSizes = new float[]{W, H};
 			float[] scaleFactors = new float[]{W/w, H/h};
-			if(Float.isNaN(scaleFactors[0]) || Float.isNaN(scaleFactors[1]))
-				throw new IllegalAccessException("NaN alert CHIs at component " + key + " component " + scaleFactors[0] + " " + scaleFactors[1] + " " + W + " " + H + " " + w + " " + h + " " + noOfNodes + " " + ratio);
 			float[] temps = new float[]{W/tempConstant, H/tempConstant};
 			
 			correctedSizeMap.put(key, new FloatWritableArray(correctedSizes));
@@ -469,7 +470,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 *
 	 */
 	public static class DrawingBoundariesExplorer extends
-	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, PlainMessage, PlainMessage> {
+	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
 
 		protected float[] coords;
 		protected CoordinateWritable vValue;
@@ -477,7 +478,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> msgs) throws IOException {
+				Iterable<LayoutMessage> msgs) throws IOException {
 			vValue = vertex.getValue();
 			coords = vValue.getCoordinates();
 			MapWritable myCoordsPackage = new MapWritable();
@@ -491,7 +492,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 			@Override
 			public void compute(
 					Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-					Iterable<PlainMessage> msgs) throws IOException {
+					Iterable<LayoutMessage> msgs) throws IOException {
 				super.compute(vertex, msgs);
 				MapWritable information = new MapWritable();
 				information.put(new LongWritable(vValue.getComponent()), 
@@ -509,7 +510,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 *
 	 */
 	public static class DrawingScaler extends
-	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, PlainMessage, PlainMessage> {
+	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
 		
 		MapWritable scaleFactors;
 		MapWritable minCoordinateMap;
@@ -524,7 +525,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> msgs) throws IOException {
+				Iterable<LayoutMessage> msgs) throws IOException {
 			CoordinateWritable vValue = vertex.getValue();
 			float[] coords = vValue.getCoordinates();
 			float[] factors = ((FloatWritableArray)scaleFactors.get(new LongWritable(vValue.getComponent()))).get();
@@ -540,7 +541,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 *
 	 */
 	public static class LayoutCCs extends
-	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, PlainMessage, PlainMessage> {
+	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
 
 		MapWritable offsets;
 		
@@ -549,7 +550,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> msgs) throws IOException {
+				Iterable<LayoutMessage> msgs) throws IOException {
 				CoordinateWritable vValue = vertex.getValue();
 				float[] coords = vValue.getCoordinates();
 				float[] ccOffset = ((FloatWritableArray)offsets.get(new LongWritable(vValue.getComponent()))).get();

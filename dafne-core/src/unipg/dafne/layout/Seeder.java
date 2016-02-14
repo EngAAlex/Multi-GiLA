@@ -17,7 +17,7 @@ import org.apache.hadoop.io.NullWritable;
 import unipg.dafne.common.coordinatewritables.CoordinateWritable;
 import unipg.dafne.common.datastructures.FloatWritableArray;
 import unipg.dafne.common.datastructures.PartitionedLongWritable;
-import unipg.dafne.common.datastructures.messagetypes.PlainMessage;
+import unipg.dafne.common.datastructures.messagetypes.LayoutMessage;
 import unipg.dafne.utils.Toolbox;
 
 /**
@@ -32,7 +32,7 @@ import unipg.dafne.utils.Toolbox;
  *
  */
 public class Seeder extends
-AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
+AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 	
 	float initialTemp;
 	float accuracy;
@@ -40,6 +40,8 @@ AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, P
 	
 	MapWritable tempsMap;
 	MapWritable sizesMap;
+	
+	boolean sendDegToo;
 	
 	@Override
 	public void initialize(
@@ -55,12 +57,14 @@ AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, P
 
 		tempsMap = getAggregatedValue(FloodingMaster.tempAGG);
 		sizesMap = getAggregatedValue(FloodingMaster.correctedSizeAGG);
+		
+		sendDegToo = getConf().getBoolean(FloodingMaster.sendDegTooOptionString, false);
 	}
 
 	@Override
 	public void compute(
 			Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-			Iterable<PlainMessage> msgs) throws IOException {
+			Iterable<LayoutMessage> msgs) throws IOException {
 
 		CoordinateWritable vValue = vertex.getValue();
 
@@ -109,9 +113,11 @@ AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, P
 	}
 
 	protected void gatherAndSend(Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex, float[] coords){
-		PlainMessage toSend = new PlainMessage(vertex.getId().getId(), 
+		LayoutMessage toSend = new LayoutMessage(vertex.getId().getId(), 
 				ttlmax - 1,
-				coords);		
+				coords);
+		if(sendDegToo)
+			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
 		sendMessageToAllEdges(vertex, toSend);
 	}
 

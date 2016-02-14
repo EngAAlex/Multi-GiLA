@@ -19,7 +19,7 @@ import org.apache.hadoop.io.NullWritable;
 
 import unipg.dafne.common.coordinatewritables.CoordinateWritable;
 import unipg.dafne.common.datastructures.PartitionedLongWritable;
-import unipg.dafne.common.datastructures.messagetypes.PlainMessage;
+import unipg.dafne.common.datastructures.messagetypes.LayoutMessage;
 import unipg.dafne.utils.Toolbox;
 
 /**
@@ -36,12 +36,12 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class PlainDummyComputation extends AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, PlainMessage, PlainMessage> {
+	public static class PlainDummyComputation extends AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
 
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> messages) throws IOException {
+				Iterable<LayoutMessage> messages) throws IOException {
 			return;
 		}
 
@@ -57,7 +57,7 @@ public class GraphReintegration {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> messages) throws IOException {
+				Iterable<LayoutMessage> messages) throws IOException {
 			int size = vertex.getValue().getOneDegreeVerticesQuantity();
 			if(size == 0)
 				return;
@@ -84,7 +84,7 @@ public class GraphReintegration {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> messages) throws IOException {
+				Iterable<LayoutMessage> messages) throws IOException {
 			int size = vertex.getValue().getOneDegreeVerticesQuantity();
 			if(size == 0)
 				return;
@@ -114,23 +114,23 @@ public class GraphReintegration {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> messages) throws IOException {	
+				Iterable<LayoutMessage> messages) throws IOException {	
 			int size = vertex.getValue().getOneDegreeVerticesQuantity();			
 			if(size == 0)
 				return;
 			computePositions(size, vertex, messages);
 		}
 
-		protected void computePositions(int size, Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex, Iterable<PlainMessage> itl) throws IOException{
+		protected void computePositions(int size, Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex, Iterable<LayoutMessage> itl) throws IOException{
 			maxSlope = Float.MIN_VALUE;
 			float[] myCoordinates = vertex.getValue().getCoordinates();
-			Iterator<PlainMessage> its = itl.iterator();		
+			Iterator<LayoutMessage> its = itl.iterator();		
 			if(vertex.getNumEdges() == 0){ 
 				float[][] verticesCollection = computeOneDegreeVerticesCoordinates(vertex, size, new Double(Math.PI*2).floatValue(), 0);
 				reconstructGraph(verticesCollection, vertex);
 				return;
 			}else if(vertex.getNumEdges() == 1){
-				PlainMessage currentNeighbour = its.next();
+				LayoutMessage currentNeighbour = its.next();
 				float[] coordinates = currentNeighbour.getValue();
 				float computedAtan = (float) Math.atan2(coordinates[1] - myCoordinates[1], coordinates[0] - myCoordinates[0]);
 				reconstructGraph(computeOneDegreeVerticesCoordinates(vertex, size, (float)Math.PI*2, 
@@ -166,12 +166,12 @@ public class GraphReintegration {
 			rebuild(size, vertex);
 		}
 
-		private LinkedList<Double> buildSlopesList(Iterator<PlainMessage> its,
+		private LinkedList<Double> buildSlopesList(Iterator<LayoutMessage> its,
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex) throws IOException {
 			LinkedList<Double> tempList = new LinkedList<Double>();
 			float[] myCoordinates = vertex.getValue().getCoordinates();
 			while(its.hasNext()){
-				PlainMessage currentNeighbour = its.next();
+				LayoutMessage currentNeighbour = its.next();
 				float[] coordinates = currentNeighbour.getValue();
 				vertex.getValue().setShortestEdge(Toolbox.computeModule(myCoordinates, coordinates));
 				double computedAtan = Math.atan2(coordinates[1] - myCoordinates[1], coordinates[0] - myCoordinates[0]);
@@ -217,7 +217,7 @@ public class GraphReintegration {
 		@Override
 		public void compute(
 				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<PlainMessage> messages) throws IOException {
+				Iterable<LayoutMessage> messages) throws IOException {
 			slopes = new HashMap<Float, Float>();
 			super.compute(vertex, messages);
 		}
@@ -275,7 +275,7 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static abstract class PlainGraphReintegration extends AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, PlainMessage, PlainMessage>{
+	public static abstract class PlainGraphReintegration extends AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 
 		protected static final double DEGREE_TO_RADIANS_CONSTANT = Math.PI/180;
 		protected static final double RADIANS_TO_DEGREE_CONSTANT = 180/Math.PI;		
@@ -364,16 +364,16 @@ public class GraphReintegration {
 			}
 		}
 
-		protected float[][] placeVerticesInCone(Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex, int size, Iterable<PlainMessage> itl) throws IOException{
+		protected float[][] placeVerticesInCone(Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex, int size, Iterable<LayoutMessage> itl) throws IOException{
 			float[] statusCopy = vertex.getValue().getCoordinates();			
 			float[] force = new float[]{0.0f, 0.0f};
 
 			//			CoordinateWritable<Float> vValue = vertex.getValue();
-			Iterator<PlainMessage> cohords = itl.iterator();
+			Iterator<LayoutMessage> cohords = itl.iterator();
 
 			while(cohords.hasNext()){
 
-				PlainMessage val = cohords.next();
+				LayoutMessage val = cohords.next();
 
 				float[] foreignCoordinates = val.getValue();
 
