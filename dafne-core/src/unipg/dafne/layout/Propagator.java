@@ -77,15 +77,8 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 						).newInstance();
 		} catch (Exception e) {
 			force = new FR();
-		}	
-		force.generateForce(new Object[]{k});
-		
-		if(getConf().getBoolean(FloodingMaster.useCosSinInForceComputation, false)){
-			useCosSin=true;
-			cos=1;
-			sin=1;
-		}else
-			useCosSin=false;
+		}
+		force.generateForce(getConf().getStrings(FloodingMaster.forceMethodOptionExtraOptionsString, ""), k);
 
 	}
 
@@ -101,7 +94,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 		float[] mycoords = vValue.getCoordinates();;	
 		float[] foreigncoords;
 
-		float distanceFromVertex;
+		float distance;
 
 		float[] finalForce = new float[]{0.0f, 0.0f};
 		float[] repulsiveForce = new float[]{0.0f, 0.0f};
@@ -119,35 +112,33 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 			
 			foreigncoords=currentMessage.getValue();
 
-			distanceFromVertex = Toolbox.computeModule(mycoords, foreigncoords);
+			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
+			distance = (float) Math.sqrt(squareDistance);
 
 			float deltaX = (foreigncoords[0] - mycoords[0]);
 			float deltaY = (foreigncoords[1] - mycoords[1]);		
 
-			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
 			
-			if(useCosSin){
-				cos = deltaX/distanceFromVertex;
-				sin = deltaY/distanceFromVertex;
-			}
+			cos = deltaX/distance;
+			sin = deltaY/distance;
 			
-			float[] computedForce;
+			float computedForce = 0.0f;
 			
 			v1Deg = vertex.getNumEdges() + vValue.getOneDegreeVerticesQuantity();
 			v2Deg = currentMessage.getDeg();
 			
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
-				computedForce = force.computeAttractiveForce(deltaX, deltaY, distanceFromVertex, squareDistance, v1Deg, v2Deg);
-				finalForce[0] += (computedForce[0]*cos);
-				finalForce[1] += (computedForce[1]*sin);
+				computedForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
+				finalForce[0] += (computedForce*cos);
+				finalForce[1] += (computedForce*sin);
 			}
 
 			//REPULSIVE FORCES
-			computedForce = force.computeRepulsiveForce(deltaX, deltaY, distanceFromVertex, squareDistance, v1Deg, v2Deg);
+			computedForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
 			
-			repulsiveForce[0] += (computedForce[0]*cos);
-			repulsiveForce[1] += (computedForce[1]*sin);
+			repulsiveForce[0] += (computedForce*cos);
+			repulsiveForce[1] += (computedForce*sin);
 
 			vValue.analyse(currentPayload);
 

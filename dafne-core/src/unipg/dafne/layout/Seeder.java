@@ -33,7 +33,7 @@ import unipg.dafne.utils.Toolbox;
  */
 public class Seeder extends
 AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
-	
+		
 	float initialTemp;
 	float accuracy;
 	int ttlmax;
@@ -80,7 +80,7 @@ AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, L
 		
 		float coords[] = vValue.getCoordinates();	
 		float[] forces = vValue.getForceVector();
-
+		
 		float displacementModule = Toolbox.computeModule(forces);
 		float correctedDispModule;
 		

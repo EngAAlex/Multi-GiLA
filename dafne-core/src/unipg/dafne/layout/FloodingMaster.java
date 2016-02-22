@@ -59,7 +59,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public static final String computationLimit = "layout.limit";
 	public static final String convergenceThresholdString = "layout.convergence-threshold";
 	public static final int ttlMaxDefault = 3;
-	public static final int maxSstepsDefault = 1000;
+	public static final int maxSstepsDefault = 1500;
 	public static final float defaultConvergenceThreshold = 0.85f;
 
 	//MESSAGES OPTIONS
@@ -95,8 +95,11 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public final String defaultCoolingSpeed = "0.93";
 	public static final float accuracyDefault = 0.01f;
 	public static final String forceMethodOptionString = "layout.forceModel";
-	public static final String useCosSinInForceComputation = "layout.useCosSin";
+	public static final String forceMethodOptionExtraOptionsString = "layout.forceModel.extraOptions";
 	public static final String sendDegTooOptionString = "layout.sendDegreeIntoLayoutMessages";
+	
+	//BUNDLED FORCE MODELS OPTIONS DEFAULTS
+	public static final float linLongAttractiveForcesConstantDefault = 25.0f;
 	
 	//INPUT OPTIONS
 	public static final String bbString = "layout.boundingBox";

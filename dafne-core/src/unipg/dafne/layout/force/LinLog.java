@@ -22,31 +22,24 @@ public class LinLog extends Force {
 	 * @see unipg.dafne.layout.force.Force#generateForce(java.lang.String[])
 	 */
 	@Override
-	public void generateForce(Object[] args) {
-		attractiveForcesConstant = (float)args[0];
-
+	public void generateForce(String[] args, float k) {
+		attractiveForcesConstant = Float.parseFloat(args[0]);
 	}
 
 	/* (non-Javadoc)
 	 * @see unipg.dafne.layout.force.Force#computeAttractiveForce(float[], float)
 	 */
 	@Override
-	public float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
-		float[] attForces = new float[2];
-		attForces[0] = attractiveForcesConstant;
-		attForces[1] = attractiveForcesConstant;
-		return attForces;
+	public float computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
+		return attractiveForcesConstant;
 	}
 
 	/* (non-Javadoc)
 	 * @see unipg.dafne.layout.force.Force#computeRepulsiveForce(float[], float)
 	 */
 	@Override
-	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
-		float[] repulsiveForces = new float[2];
-		repulsiveForces[0] = (v1Deg+v2Deg)/squareDistance;
-		repulsiveForces[1] = (v1Deg+v2Deg)/squareDistance;
-		return repulsiveForces;
+	public float computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
+		return (v1Deg+v2Deg)/distance;
 	}
 
 }

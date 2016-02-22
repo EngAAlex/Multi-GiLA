@@ -17,7 +17,7 @@ public class Toolbox {
 	 * @return The square distance.
 	 */
 	public static float squareModule(float[] p1, float[] p2){
-		float result = new Float(Math.pow(p2[0] - p1[0],2) + Math.pow(p2[1] - p1[1], 2));
+		float result = (float) (Math.pow(p2[0] - p1[0],2) + Math.pow(p2[1] - p1[1], 2));
 		return floatFuzzyMath(result);
 	}
 	
@@ -29,7 +29,7 @@ public class Toolbox {
 	 * @return The square rooted distance between two points.
 	 */
 	public static float computeModule(float[] p1, float[] p2){
-		float result = new Float(squareModule(p1, p2));
+		float result = (float) Math.sqrt(squareModule(p1, p2));
 		return floatFuzzyMath(result);
 	}
 	
