@@ -70,7 +70,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 		walshawConstant = ((FloatWritable)getAggregatedValue(FloodingMaster.walshawConstant_agg)).get();
 
 		useQueues = getConf().getBoolean(FloodingMaster.useQueuesString, false);
-		queueFlushRatio = getConf().getFloat(FloodingMaster.queuePercentageString, 0.1f);
+		queueFlushRatio = getConf().getFloat(FloodingMaster.queueUnloadFactor, 0.1f);
 		
 		try {
 			force = ((Class<Force>)Class.forName(getConf().get(FloodingMaster.forceMethodOptionString, FR.class.toString()))

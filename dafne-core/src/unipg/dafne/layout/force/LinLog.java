@@ -23,7 +23,10 @@ public class LinLog extends Force {
 	 */
 	@Override
 	public void generateForce(String[] args, float k) {
-		attractiveForcesConstant = Float.parseFloat(args[0]);
+		if(args[0] == "")
+			attractiveForcesConstant = 25;
+		else
+			attractiveForcesConstant = Float.parseFloat(args[0]);
 	}
 
 	/* (non-Javadoc)

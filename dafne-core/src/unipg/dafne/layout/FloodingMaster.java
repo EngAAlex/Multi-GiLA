@@ -64,8 +64,8 @@ public class FloodingMaster extends DefaultMasterCompute {
 
 	//MESSAGES OPTIONS
 	public static final String useQueuesString = "flooding.useQueues";
-	public static final String queuePercentageString = "layout.queuepercentage";
-	public static final float queuePercentageDefault = 0.1f;
+	public static final String queueUnloadFactor = "layout.queueUnloadFactor";
+	public static final float queueUnloadFactorDefault = 0.1f;
 
 	//REINTEGRATION OPTIONS
 	public static final String radiusString = "reintegration.radius";
@@ -97,9 +97,6 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public static final String forceMethodOptionString = "layout.forceModel";
 	public static final String forceMethodOptionExtraOptionsString = "layout.forceModel.extraOptions";
 	public static final String sendDegTooOptionString = "layout.sendDegreeIntoLayoutMessages";
-	
-	//BUNDLED FORCE MODELS OPTIONS DEFAULTS
-	public static final float linLongAttractiveForcesConstantDefault = 25.0f;
 	
 	//INPUT OPTIONS
 	public static final String bbString = "layout.boundingBox";
