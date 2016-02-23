@@ -87,6 +87,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public final static String node_separation = "layout.node_separation";
 	public final String initialTempFactorString = "layout.initialTempFactor";
 	public static final String coolingSpeed = "layout.coolingSpeed";
+	private static final String repulsiveForceModerationString = "layout.repulsiveForceModerationFactor";
 	public static final String walshawModifierString = "layout.walshawModifier";
 	public static final String accuracyString = "layout.accuracy";
 	public static final float walshawModifierDefault = 0.052f;
@@ -186,7 +187,8 @@ public class FloodingMaster extends DefaultMasterCompute {
 		
 		float walshawModifier = getConf().getFloat(walshawModifierString, walshawModifierDefault);
 		
-		setAggregatedValue(walshawConstant_agg, new FloatWritable(new Double(Math.pow(k, 2) * walshawModifier).floatValue()));
+		setAggregatedValue(walshawConstant_agg, 
+				new FloatWritable(getConf().getFloat(repulsiveForceModerationString,(float) (Math.pow(k, 2) * walshawModifier))));
 		
 		coolingStrategy = new LinearCoolingStrategy(new String[]{getConf().get(FloodingMaster.coolingSpeed, defaultCoolingSpeed )});
 	}

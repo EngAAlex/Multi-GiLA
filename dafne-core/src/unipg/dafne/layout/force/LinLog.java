@@ -24,7 +24,7 @@ public class LinLog extends Force {
 	@Override
 	public void generateForce(String[] args, float k) {
 		if(args[0] == "")
-			attractiveForcesConstant = 25;
+			attractiveForcesConstant = 25.0f;
 		else
 			attractiveForcesConstant = Float.parseFloat(args[0]);
 	}
@@ -42,7 +42,7 @@ public class LinLog extends Force {
 	 */
 	@Override
 	public float computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
-		return (v1Deg+v2Deg)/distance;
+		return (v1Deg*v2Deg)/distance;
 	}
 
 }
