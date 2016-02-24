@@ -1,33 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>unipg</groupId>
-  <artifactId>dafne</artifactId>
+  <artifactId>gila</artifactId>
   <version>0.8</version>
   <packaging>pom</packaging>
-  <name>dafne</name>
-  <description>dafne</description>
-  <modules>
-  	<module>dafne-common</module>
-  	<module>dafne-core</module>
-  	<module>dafne-utils</module>
-  </modules>
+  <name>gila</name>
   
   <dependencyManagement>
   	<dependencies>
   		<dependency>
-  			<groupId>unipg</groupId>
-  			<artifactId>dafne-core</artifactId>
-  			<version>0.8</version>
+  			<groupId>org.json</groupId>
+  			<artifactId>json</artifactId>
+  			<version>20151123</version>
   		</dependency>
   		<dependency>
-  			<groupId>unipg</groupId>
-  			<artifactId>dafne-common</artifactId>
-  			<version>0.8</version>
-  		</dependency>
-  		<dependency>
-  			<groupId>unipg</groupId>
-  			<artifactId>dafne-utils</artifactId>
-  			<version>0.8</version>
+  			<groupId>org.apache.giraph</groupId>
+  			<artifactId>giraph-core</artifactId>
+  			<version>1.1.0-hadoop2</version>
   		</dependency>
   		<dependency>
   			<groupId>org.apache.hadoop</groupId>
@@ -35,20 +24,31 @@
   			<version>2.6.0</version>
   		</dependency>
   		<dependency>
-  			<groupId>org.json</groupId>
-  			<artifactId>json</artifactId>
-  			<version>20151123</version>
-  		</dependency>
-  		<dependency>
   			<groupId>org.apache.hadoop</groupId>
   			<artifactId>hadoop-common</artifactId>
   			<version>2.6.0</version>
   		</dependency>
   		<dependency>
-  			<groupId>org.apache.giraph</groupId>
-  			<artifactId>giraph-core</artifactId>
-  			<version>1.1.0-hadoop2</version>
+  			<groupId>unipg</groupId>
+  			<artifactId>gila-core</artifactId>
+  			<version>0.8</version>
+  		</dependency>
+  		<dependency>
+  			<groupId>unipg</groupId>
+  			<artifactId>gila-common</artifactId>
+  			<version>0.8</version>
+  		</dependency>
+  		<dependency>
+  			<groupId>unipg</groupId>
+  			<artifactId>gila-utils</artifactId>
+  			<version>0.8</version>
   		</dependency>
   	</dependencies>
   </dependencyManagement>
+  <modules>
+  	<module>gila-common</module>
+  	<module>gila-core</module>
+  	<module>gila-utils</module>
+  </modules>
+  <description>gila</description>
 </project>
