@@ -45,19 +45,19 @@ public class PartitionedPositionedVertexValue implements WritableComparable {
 	}
 
 
-	@Override
+	
 	public void readFields(DataInput in) throws IOException {
 		partition = in.readShort();
 		id = in.readLong();
 	}
 
-	@Override
+	
 	public void write(DataOutput out) throws IOException {
 		out.writeShort(partition);
 		out.writeLong(id);
 	}
 
-	@Override
+	
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
@@ -72,12 +72,12 @@ public class PartitionedPositionedVertexValue implements WritableComparable {
 		return false;
 	}
 
-	@Override
+	
 	public String toString() {
 		return partition + DELIMITER + id;
 	}
 
-	@Override
+	
 	public int hashCode() {
 		return (int) id;
 	}
@@ -98,8 +98,7 @@ public class PartitionedPositionedVertexValue implements WritableComparable {
 		this.coords = coords;
 	}
 
-	@Override
-	public int compareTo(Object o) {
+		public int compareTo(Object o) {
 		if (o == this) {
 			return 0;
 		}

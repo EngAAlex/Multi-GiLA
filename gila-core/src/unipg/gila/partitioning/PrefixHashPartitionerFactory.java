@@ -34,26 +34,25 @@ public class PrefixHashPartitionerFactory<I extends WritableComparable, V extend
 	/** Saved configuration */
 	private ImmutableClassesGiraphConfiguration conf;
 
-	@Override
+	
 	public MasterGraphPartitioner<I, V, E> createMasterGraphPartitioner() {
 		return new HashMasterPartitioner<I, V, E>(getConf());
 	}
 
-	@Override
+	
 	public WorkerGraphPartitioner<I, V, E> createWorkerGraphPartitioner() {
 		return new PrefixHashWorkerPartitioner<I, V, E>();
 	}
 
-	@Override
+
 	public ImmutableClassesGiraphConfiguration getConf() {
 		return conf;
 	}
 
-	@Override
+
 	public void setConf(ImmutableClassesGiraphConfiguration conf) {
 		this.conf = conf;
 	}
 
-  @Override
   public void initialize(LocalData<I, V, E, ? extends Writable> localData) { }
 }

@@ -21,7 +21,6 @@ public abstract class ComponentAggregatorAbstract implements Aggregator<MapWrita
 
 	protected MapWritable internalState;
 
-	@Override
 	public void aggregate(MapWritable in) {
 		Iterator<Entry<Writable, Writable>> allEntries = in.entrySet().iterator();
 		while(allEntries.hasNext()){
@@ -34,22 +33,18 @@ public abstract class ComponentAggregatorAbstract implements Aggregator<MapWrita
 		}
 	}
 
-	@Override
 	public MapWritable createInitialValue() {
 		return new MapWritable();
 	}
 
-	@Override
 	public MapWritable getAggregatedValue() {
 		return internalState;
 	}
 
-	@Override
 	public void reset() {
 		internalState.clear();
 	}
 
-	@Override
 	public void setAggregatedValue(MapWritable in) {
 		internalState = in;
 	}

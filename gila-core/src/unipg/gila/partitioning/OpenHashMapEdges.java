@@ -39,37 +39,30 @@ public class OpenHashMapEdges extends
 	private Long2ShortMap map;
 	private EdgeValue repValue = new EdgeValue();
 
-	@Override
 	public void initialize(Iterable<Edge<LongWritable, EdgeValue>> edges) {
 		EdgeIterables.initialize(this, edges);
 	}
 
-	@Override
 	public void initialize(int capacity) {
 		map = new Long2ShortOpenHashMap(capacity);
 	}
 
-	@Override
 	public void initialize() {
 		map = new Long2ShortOpenHashMap();
 	}
 
-	@Override
 	public void add(Edge<LongWritable, EdgeValue> edge) {
 		map.put(edge.getTargetVertexId().get(), edge.getValue().getPartition());
 	}
 
-	@Override
 	public void remove(LongWritable targetVertexId) {
 		map.remove(targetVertexId.get());
 	}
 
-	@Override
 	public int size() {
 		return map.size();
 	}
 
-	@Override
 	public Iterator<Edge<LongWritable, EdgeValue>> iterator() {
 		return (Iterator) mutableIterator();
 	}
@@ -80,12 +73,12 @@ public class OpenHashMapEdges extends
 			private MutableEdge<LongWritable, EdgeValue> repEdge = EdgeFactory
 					.createReusable(new LongWritable(), new EdgeValue());
 
-			@Override
+			
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
-			@Override
+			
 			public MutableEdge<LongWritable, EdgeValue> next() {
 				Entry<Long, Short> entry = it.next();
 				repEdge.getTargetVertexId().set(entry.getKey());
@@ -93,13 +86,13 @@ public class OpenHashMapEdges extends
 				return repEdge;
 			}
 
-			@Override
+			
 			public void remove() {
 			}
 		};
 	}
 
-	@Override
+	
 	public void readFields(DataInput in) throws IOException {
 		int numEdges = in.readInt();
 		initialize(numEdges);
@@ -110,7 +103,7 @@ public class OpenHashMapEdges extends
 		}
 	}
 
-	@Override
+	
 	public void write(final DataOutput out) throws IOException {
 		out.writeInt(map.size());
 		for (Entry<Long, Short> e : map.entrySet()) {
@@ -119,14 +112,14 @@ public class OpenHashMapEdges extends
 		}
 	}
 
-	@Override
+	
 	public EdgeValue getEdgeValue(LongWritable targetVertexId) {
 		short v = map.get(targetVertexId.get());
 		repValue.setPartition(v);
 		return repValue;
 	}
 
-	@Override
+	
 	public void setEdgeValue(LongWritable targetVertexId, EdgeValue edgeValue) {
 		map.put(targetVertexId.get(), edgeValue.getPartition());
 	}

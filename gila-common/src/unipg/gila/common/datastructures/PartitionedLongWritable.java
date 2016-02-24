@@ -42,13 +42,11 @@ public class PartitionedLongWritable implements WritableComparable<Object>{
 			return new PartitionedLongWritable(partition, id);
 		}
 
-		@Override
 		public void readFields(DataInput in) throws IOException{
 				partition = in.readShort();
 				id = in.readLong();			
 		}
 
-		@Override
 		public void write(DataOutput out) throws IOException {
 			out.writeShort(partition);
 			out.writeLong(id);
@@ -87,7 +85,6 @@ public class PartitionedLongWritable implements WritableComparable<Object>{
 			return id;
 		}
 
-		@Override
 		public int compareTo(Object o) {
 			if (o == this) {
 				return 0;

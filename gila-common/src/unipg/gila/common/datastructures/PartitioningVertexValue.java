@@ -78,7 +78,6 @@ public class PartitioningVertexValue implements Writable {
 		return coords;
 	}
 
-	@Override
 	public void readFields(DataInput in) throws IOException {
 		currentPartition = in.readShort();
 		newPartition = in.readShort();
@@ -91,7 +90,6 @@ public class PartitioningVertexValue implements Writable {
 			coords = new float[]{in.readFloat(), in.readFloat()};
 	}
 
-	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeShort(currentPartition);
 		out.writeShort(newPartition);

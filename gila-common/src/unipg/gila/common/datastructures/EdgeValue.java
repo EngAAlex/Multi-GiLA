@@ -45,13 +45,11 @@ public class EdgeValue implements Writable {
 		this.weight = weight;
 	}
 
-	@Override
 	public void readFields(DataInput in) throws IOException {
 		partition = in.readShort();
 		weight = in.readByte();
 	}
 
-	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeShort(partition);
 		out.writeByte(weight);

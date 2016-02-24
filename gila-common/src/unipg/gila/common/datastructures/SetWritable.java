@@ -4,14 +4,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
-import org.apache.log4j.Logger;
 
 /**
  * Implementation of a Set implementing the Writable (org.apache.hadoop.io.Writable) interface.
@@ -58,7 +55,6 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override
 	public void readFields(DataInput in) throws IOException {
 		internalState.clear();
 		int limit = in.readInt();
@@ -69,7 +65,6 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 	    }
 	}
 
-	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(internalState.size());
 		Iterator<P> it = internalState.iterator();

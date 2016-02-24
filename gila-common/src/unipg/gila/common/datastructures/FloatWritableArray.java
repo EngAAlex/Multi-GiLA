@@ -29,7 +29,6 @@ public class FloatWritableArray implements Writable {
 		return internalState;
 	}
 	
-	@Override
 	public void readFields(DataInput in) throws IOException {
 		int length = in.readInt();
 		internalState = new float[length];
@@ -37,7 +36,6 @@ public class FloatWritableArray implements Writable {
 			internalState[i] = in.readFloat();
 	}
 
-	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(internalState.length);
 		for(int i=0; i<internalState.length; i++)

@@ -31,17 +31,14 @@ public class GilaRunner implements Tool{
 	  /** Writable conf */
 	  private Configuration conf;
 
-	  @Override
 	  public Configuration getConf() {
 	    return conf;
 	  }
 
-	  @Override
 	  public void setConf(Configuration conf) {
 	    this.conf = conf;
 	  }
 
-	  @Override
 	  /**
 	   * Drives a job run configured for "Giraph on Hadoop MR cluster"
 	   * @param args the command line arguments

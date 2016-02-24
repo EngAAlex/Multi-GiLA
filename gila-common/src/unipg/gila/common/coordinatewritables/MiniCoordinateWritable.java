@@ -63,7 +63,6 @@ public class MiniCoordinateWritable implements Writable{
 		return component;
 	}
 
-	@Override
 	public void readFields(DataInput in) throws IOException {
 		x = in.readFloat();
 		y = in.readFloat();
@@ -74,7 +73,6 @@ public class MiniCoordinateWritable implements Writable{
 		component = in.readLong();
 	}
 
-	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeFloat(x);
 		out.writeFloat(y);

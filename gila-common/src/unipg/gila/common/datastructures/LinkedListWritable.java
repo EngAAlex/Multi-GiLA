@@ -45,7 +45,6 @@ public class LinkedListWritable implements Writable {
 		return result;
 	}
 	
-	@Override
 	public void readFields(DataInput in) throws IOException {
 	    internalState.clear();
 
@@ -67,7 +66,6 @@ public class LinkedListWritable implements Writable {
 	    }
 	}
 
-	@Override
 	public void write(DataOutput out) throws IOException {
 	   int size = internalState.size();
 		out.writeInt(size);
