@@ -17,7 +17,7 @@ public class MiniCoordinateWritable implements Writable{
 	protected float x;
 	protected float y;
 	protected LongWritableSet oneEdges;
-	protected long component;
+	protected int component;
 
 	public MiniCoordinateWritable() {
 		x = 0.0f;
@@ -25,13 +25,13 @@ public class MiniCoordinateWritable implements Writable{
 		component = -1;
 	}
 	
-	public MiniCoordinateWritable(float x, float y, long component){
+	public MiniCoordinateWritable(float x, float y, int component){
 		this.x = x;
 		this.y = y;
 		this.component = component;
 	}
 
-	public MiniCoordinateWritable(float x, float y, JSONArray oEs, long component) throws JSONException{
+	public MiniCoordinateWritable(float x, float y, JSONArray oEs, int component) throws JSONException{
 		this(x,y,component);
 		oneEdges = new LongWritableSet();
 		
@@ -59,7 +59,7 @@ public class MiniCoordinateWritable implements Writable{
 		return (Iterator<LongWritable>) oneEdges.iterator();
 	}
 		
-	public long getComponent() {
+	public int getComponent() {
 		return component;
 	}
 
@@ -70,7 +70,7 @@ public class MiniCoordinateWritable implements Writable{
 			oneEdges = new LongWritableSet();
 			oneEdges.readFields(in);
 		}
-		component = in.readLong();
+		component = in.readInt();
 	}
 
 	public void write(DataOutput out) throws IOException {
@@ -82,7 +82,7 @@ public class MiniCoordinateWritable implements Writable{
 			out.writeBoolean(true);
 			oneEdges.write(out);
 		}
-		out.writeLong(component);
+		out.writeInt(component);
 	}
 
 }

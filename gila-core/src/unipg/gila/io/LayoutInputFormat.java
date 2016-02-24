@@ -56,7 +56,7 @@ TextVertexInputFormat<PartitionedLongWritable, CoordinateWritable, NullWritable>
 		@Override
 		protected CoordinateWritable getValue(JSONArray jsonVertex) throws
 		JSONException, IOException {
-				return new CoordinateWritable(new Double(jsonVertex.getDouble(3)).floatValue(), new Double(jsonVertex.getDouble(4)).floatValue(), jsonVertex.getJSONArray(5), jsonVertex.getLong(1));
+				return new CoordinateWritable(new Double(jsonVertex.getDouble(3)).floatValue(), new Double(jsonVertex.getDouble(4)).floatValue(), jsonVertex.getJSONArray(5), jsonVertex.getInt(1));
 		}
 
 		protected Vertex<PartitionedLongWritable, CoordinateWritable, FloatWritable> handleException(Text line, JSONArray jsonVertex,

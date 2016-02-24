@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -17,10 +18,22 @@ import org.apache.hadoop.io.WritableFactories;
  *
  * @param <P> The class of the object contained in the set. Must implement Writable.
  */
-public abstract class SetWritable<P extends Writable> implements Writable {
+public class SetWritable<P extends Writable> implements Writable {
 	
 	protected Set<P> internalState;
 	protected Class<P> valueClass;
+	
+	/**
+	 * 
+	 */
+	public SetWritable() {
+		internalState = new HashSet<P>();
+	}
+	
+	public SetWritable(Collection<P> cll){
+		this();
+		addAll(cll);
+	}
 		
 	public void addAll(Collection<P> it){
 		internalState.addAll(it);

@@ -3,6 +3,7 @@ package unipg.gila.common.datastructures;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.apache.hadoop.io.Writable;
@@ -13,22 +14,33 @@ import org.apache.hadoop.io.Writable;
  * @author Alessio Arleo
  *
  */
-public class LinkedListWritable implements Writable {
+public class LinkedListWritable<T extends Writable> implements Writable {
 
-	private LinkedList<Writable> internalState;
+	private LinkedList<T> internalState;
 	
 	public LinkedListWritable(){
-		internalState = new LinkedList<Writable>();
+		internalState = new LinkedList<T>();
 	}
 	
-	public void enqueue(Writable toEnqueue){
-		internalState.addLast(toEnqueue);
+	public LinkedListWritable(LinkedListWritable<T> toCopy){
+		this();
+		addAll(toCopy);
 	}
 	
-	public Writable dequeue(){
+	public void addAll(LinkedListWritable<T> toAdd){
+		Iterator<T> it = toAdd.iterator();
+		while(it.hasNext())
+			internalState.add(it.next());
+	}
+
+	public void enqueue(T toEnqueue){
+		internalState.addFirst(toEnqueue);
+	}
+	
+	public T dequeue(){
 		if(!isEmpty())
 			return internalState.pop();
-		else return null;
+		return null;
 	}
 	
 	public int size(){
@@ -39,12 +51,17 @@ public class LinkedListWritable implements Writable {
 		return internalState.isEmpty();
 	}
 	
+	public Iterator<T> iterator(){
+		return internalState.iterator();
+	}
+	
 	public Writable[] flush() {
 		Writable[] result = internalState.toArray(new Writable[0]);
 		internalState.clear();
 		return result;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void readFields(DataInput in) throws IOException {
 	    internalState.clear();
 
@@ -52,11 +69,11 @@ public class LinkedListWritable implements Writable {
 	    if (numFields == 0)
 	      return;
 	    String className = in.readUTF();
-	    Writable obj;
+	    T obj;
 	    try {
-	      Class<Writable> c = (Class<Writable>) Class.forName(className);
+	      Class<T> c = (Class<T>) Class.forName(className);
 	      for (int i = 0; i < numFields; i++) {
-	        obj = (Writable) c.newInstance();
+	        obj = (T) c.newInstance();
 	        obj.readFields(in);
 	        internalState.add(obj);
 	      }

@@ -11,6 +11,7 @@ import org.json.JSONException;
 
 import unipg.gila.common.datastructures.LinkedListWritable;
 import unipg.gila.common.datastructures.LongWritableSet;
+import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 
 public class CoordinateWritable extends MiniCoordinateWritable{
 	
@@ -19,7 +20,7 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 	protected boolean justReset; 
 	protected LongWritableSet analyzed;
 	protected float shortestEdge = Float.MAX_VALUE;
-	protected LinkedListWritable messageStack;
+	protected LinkedListWritable<Writable> messageStack;
 
 	public CoordinateWritable(){
 		super();
@@ -29,7 +30,7 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 		justReset = false;
 	}
 	
-	public CoordinateWritable(Float x, Float y, long component){
+	public CoordinateWritable(Float x, Float y, int component){
 		super(x, y, component);
 		fX = 0.0f;
 		fY = 0.0f;			
@@ -37,7 +38,7 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 		justReset = false;	
 	}
 	
-	public CoordinateWritable(float x, float y,  JSONArray oEs, long component) throws JSONException {
+	public CoordinateWritable(float x, float y,  JSONArray oEs, int component) throws JSONException {
 		super(x, y, oEs, component);		
 		fX = 0.0f;
 		fY = 0.0f;	
