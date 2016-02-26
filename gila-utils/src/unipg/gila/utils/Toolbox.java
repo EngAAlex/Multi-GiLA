@@ -37,8 +37,8 @@ public class Toolbox {
 	/**
 	 * A simple method to compute the module of a vector of size 2.
 	 * 
-	 * @param vector
-	 * @return
+	 * @param vector The vector whose module is requested.
+	 * @return The requested module.
 	 */
 	public static float computeModule(float[] vector) {
 		return floatFuzzyMath(new Float(Math.sqrt((Math.pow(vector[0], 2) + Math.pow(vector[1], 2)))));

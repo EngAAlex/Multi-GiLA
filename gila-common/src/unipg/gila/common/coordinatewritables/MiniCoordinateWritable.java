@@ -12,11 +12,29 @@ import org.json.JSONException;
 
 import unipg.gila.common.datastructures.LongWritableSet;
 
+/**
+ * This class models the core of the vertex value.
+ * 
+ * @author Alessio Arleo
+ *
+ */
 public class MiniCoordinateWritable implements Writable{
 
+	/**
+	 * The vertex X coordinate.
+	 */
 	protected float x;
+	/**
+	 * The vertex Y coordinate.
+	 */
 	protected float y;
+	/**
+	 * A set containing the ids of its one degree neighbors.
+	 */
 	protected LongWritableSet oneEdges;
+	/**
+	 * The connected component index the vertex belongs to.
+	 */
 	protected long component;
 
 	public MiniCoordinateWritable() {
@@ -54,6 +72,10 @@ public class MiniCoordinateWritable implements Writable{
 		return oneEdges.size();
 	}
 
+	/**
+	 * Returns an iterator on the one degree neighbors ids of the vertex.
+	 * @return Iterator on the one degree neighbors ids.
+	 */
 	@SuppressWarnings("unchecked")
 	public Iterator<LongWritable> getOneDegreeVertices(){
 		return (Iterator<LongWritable>) oneEdges.iterator();

@@ -12,12 +12,33 @@ import org.json.JSONException;
 import unipg.gila.common.datastructures.LinkedListWritable;
 import unipg.gila.common.datastructures.LongWritableSet;
 
+/**
+ * This class models the vertex value.
+ * @author Alessio Arleo
+ *
+ */
 public class CoordinateWritable extends MiniCoordinateWritable{
 	
+	/**
+	 * The X component of the forces acting on the vertex.
+	 */
 	protected float fX;
+	/**
+	 * The Y component of the forces acting on the vertex.
+	 */
 	protected float fY;
+	/**
+	 * A switch used to know if the vertex has been reset or not; it is used to check if whether to 
+	 * include the attractive forces or not at the next propagator step.
+	 */
 	protected boolean justReset; 
+	/**
+	 * A set which contains all the ids of the vertices already taken into account.
+	 */
 	protected LongWritableSet analyzed;
+	/**
+	 * The shortest incident edge.
+	 */
 	protected float shortestEdge = Float.MAX_VALUE;
 	protected LinkedListWritable messageStack;
 
@@ -49,20 +70,35 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 		return analyzed.contains(neigh);
 	}
 	
-	public void analyse(LongWritable neigh){
+	/**
+	 * Set a new vertex as analyzed.
+	 * 
+	 * @param neigh The vertex id to be set as analyzed.
+	 */
+	public void analyze(LongWritable neigh){
 		analyzed.addElement(neigh);
 	}
 	
+	/**
+	 * At the end of a drawing cycle (seeding + propagation) this method resets the Analyzed set.
+	 */
 	public void resetAnalyzed(){
 		analyzed.reset();
 		resetForceVector();
 		justReset=true;
 	}
 	
+	/**
+	 * When called, it means that for that vertex attractive forces have been already computed.
+	 */
 	public void setAsMoving(){
 		justReset = false;
 	}
 	
+	/**
+	 * Returns true if the vertex has been reset (resetAnalyzed has been called).
+	 * @return
+	 */
 	public boolean hasBeenReset(){
 		return justReset;
 	}
@@ -76,6 +112,10 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 		return new float[]{x, y};
 	}
 	
+	/**
+	 * Adds to the internal force vector the values in the given 2-dimensional array.
+	 * @param force The array to add to the internal force array.
+	 */
 	public void addToForceVector(float[] force){
 		this.fX += force[0];
 		this.fY += force[1];

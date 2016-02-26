@@ -196,10 +196,9 @@ public class FloodingMaster extends DefaultMasterCompute {
 	/**
 	 * This method executes a number of tasks to tune the algorithm given the proportions of the initial (random) layout of each component.
 	 * 
-	 * @return
 	 * @throws IllegalAccessException
 	 */
-	protected boolean superstepOneSpecials() throws IllegalAccessException{
+	protected void superstepOneSpecials() throws IllegalAccessException{
 		
 		MapWritable aggregatedMaxComponentData = getAggregatedValue(maxCoords);
 		MapWritable aggregatedMinComponentData = getAggregatedValue(minCoords);
@@ -324,10 +323,9 @@ public class FloodingMaster extends DefaultMasterCompute {
 		
 		if(getSuperstep() == 1){
 			try {
-				if(superstepOneSpecials()){ //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
+				superstepOneSpecials(); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
 					setComputation(DrawingScaler.class); //... AND APPLY THEM
 					return;
-				}
 			} catch (IllegalAccessException e) {
 				haltComputation();
 			}

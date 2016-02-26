@@ -93,7 +93,7 @@ public abstract class MessageWritable<P, T> implements Writable{
 	 * 
 	 * Method to check if the message should survive or be scrapped.
 	 * 
-	 * @return
+	 * @return Whether or not the message TTL is 0.
 	 */
 	public boolean isAZombie(){
 		return ttl == 0;
@@ -122,7 +122,7 @@ public abstract class MessageWritable<P, T> implements Writable{
 	 * (payloadVertex, value and any other variable introduced). To know more about the serializing process in Hadoop please visit <a href='https://hadoop.apache.org/docs/r2.6.1/api/org/apache/hadoop/io/Writable.html'>this</a> website. 
 	 * 
 	 *  
-	 * @param DataInput
+	 * @param in
 	 * @throws IOException
 	 */
 	protected  abstract void specificRead(DataInput in) throws IOException;
@@ -131,7 +131,7 @@ public abstract class MessageWritable<P, T> implements Writable{
 	 * Method that guarantees that extending classes are de-serialized properly. All instance variables (excluding the ttl) must be de-serialized in this method 
 	 * (payloadVertex, value and any other variable introduced). To know more about the serializing process in Hadoop please visit <a href='https://hadoop.apache.org/docs/r2.6.1/api/org/apache/hadoop/io/Writable.html'>this</a> website.
 	 * 
-	 * @param DataOutput
+	 * @param out
 	 * @throws IOException
 	 */
 	protected abstract void specificWrite(DataOutput out) throws IOException;

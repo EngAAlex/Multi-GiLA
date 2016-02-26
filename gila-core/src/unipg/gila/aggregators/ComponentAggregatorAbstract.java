@@ -54,7 +54,7 @@ public abstract class ComponentAggregatorAbstract implements Aggregator<MapWrita
 	 * whether to insert the current java.util.map.Entry<Writable, Writable> in the map or not. Note that if the key is already present the entry will be
 	 * always stored in the map.
 	 * 
-	 * @param A java.util.map.Entry<Writable, Writable> object representing the key-value pair to insert into the map.
+	 * @param current A java.util.map.Entry<Writable, Writable> object representing the key-value pair to insert into the map.
 	 */
 	protected abstract void specificAggregate(Entry<Writable, Writable> current);
 

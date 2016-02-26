@@ -15,15 +15,15 @@ public abstract class CoolingStrategy {
 	/**
 	 * An abstract method which takes as a parameter an array of String to tune the cooling strategy.
 	 * 
-	 * @param the array of arguments
+	 * @param args The array of arguments
 	 */
 	protected abstract void generateCoolingStrategy(String[] args);
 	
 	/**
 	 * The cool method takes the current temperature as a parameter and returns the cooled one according to the law implemented in it.
 	 * 
-	 * @param temperature
-	 * @return the cooled temperature.
+	 * @param temperature The current temperature.
+	 * @return the cooled temperature according to the cooling strategy.
 	 */
 	public abstract float cool(float temperature);  
 	

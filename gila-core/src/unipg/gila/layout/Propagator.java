@@ -140,7 +140,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 			repulsiveForce[0] += (computedForce*cos);
 			repulsiveForce[1] += (computedForce*sin);
 
-			vValue.analyse(currentPayload);
+			vValue.analyze(currentPayload);
 
 			if(!currentMessage.isAZombie()){
 				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
