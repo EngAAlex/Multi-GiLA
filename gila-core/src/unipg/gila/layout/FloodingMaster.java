@@ -243,8 +243,6 @@ public class FloodingMaster extends DefaultMasterCompute {
 		setAggregatedValue(correctedSizeAGG, correctedSizeMap);
 		setAggregatedValue(tempAGG, tempMap);
 		setAggregatedValue(scaleFactorAgg, scaleFactorMap);
-
-		return true;
 	}
 
 	/**

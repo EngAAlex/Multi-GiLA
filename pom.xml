@@ -43,6 +43,11 @@
   			<artifactId>gila-utils</artifactId>
   			<version>0.8</version>
   		</dependency>
+  		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.3.6</version>
+  		</dependency>
   	</dependencies>
   </dependencyManagement>
   <modules>

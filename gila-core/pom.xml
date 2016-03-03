@@ -56,5 +56,9 @@
   		<groupId>org.apache.giraph</groupId>
   		<artifactId>giraph-core</artifactId>
   	</dependency>
+  	<dependency>
+  		<groupId>org.apache.httpcomponents</groupId>
+  		<artifactId>httpclient</artifactId>
+  	</dependency>
   </dependencies>
 </project>
