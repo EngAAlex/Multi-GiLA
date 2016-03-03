@@ -11,7 +11,6 @@ import org.json.JSONException;
 
 import unipg.gila.common.datastructures.LinkedListWritable;
 import unipg.gila.common.datastructures.LongWritableSet;
-import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 
 public class CoordinateWritable extends MiniCoordinateWritable{
 	

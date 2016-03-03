@@ -24,7 +24,8 @@ public class LinkedListWritable<T extends Writable> implements Writable {
 	
 	public LinkedListWritable(LinkedListWritable<T> toCopy){
 		this();
-		addAll(toCopy);
+		if(toCopy != null && toCopy.size() > 0)
+			addAll(toCopy);
 	}
 	
 	public void addAll(LinkedListWritable<T> toAdd){

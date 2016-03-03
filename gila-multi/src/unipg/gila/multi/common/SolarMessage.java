@@ -57,16 +57,11 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public SolarMessage(LayeredPartitionedLongWritable payloadVertex, int ttl, LayeredPartitionedLongWritable value, CODE code) {
 		super(payloadVertex, ttl, value);
 		this.code = code;
-	}
-	
-	public SolarMessage(LayeredPartitionedLongWritable id, int ttl, LayeredPartitionedLongWritable value, LayeredPartitionedLongWritable selectedSun, CODE code){
-		super(id, ttl, value);
-		this.code = code;
 		if(code.equals(CODE.REFUSEOFFER))
 			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>();
 	}
 	
-	public SolarMessage(LayeredPartitionedLongWritable id, int ttl, LayeredPartitionedLongWritable phySender, LayeredPartitionedLongWritable selectedSun, CODE code, LinkedListWritable<LayeredPartitionedLongWritable> extraPayload){
+	public SolarMessage(LayeredPartitionedLongWritable id, int ttl, LayeredPartitionedLongWritable phySender, CODE code, LinkedListWritable<LayeredPartitionedLongWritable> extraPayload){
 		super(id, ttl, phySender);
 		this.code = code;
 		if(code.equals(CODE.REFUSEOFFER))
@@ -98,9 +93,14 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public void copyExtraPayload(LinkedListWritable<LayeredPartitionedLongWritable> toAdd){
 		if(extraPayload == null)
 			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>(toAdd);
-		else
-			extraPayload.addAll(toAdd);
-		
+		else if(toAdd != null && toAdd.size() > 0)
+			extraPayload.addAll(toAdd);	
+	}
+	
+	public int extraPayloadSize(){
+		if(extraPayload == null)
+			return 0;
+		return extraPayload.size();
 	}
 	
 	public LinkedListWritable<LayeredPartitionedLongWritable> getExtraPayload(){
@@ -135,8 +135,8 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		value.write(out);
 		out.writeInt(CODE.write(getCode()));
 		if(getCode().equals(CODE.REFUSEOFFER)){
-			out.writeInt(extraPayload.size());
-			if(extraPayload.size() > 0)
+			out.writeInt(extraPayloadSize());
+			if(extraPayloadSize() > 0)
 				extraPayload.write(out);
 		}
 	}

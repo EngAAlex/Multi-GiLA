@@ -113,7 +113,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public void addPlanet(LayeredPartitionedLongWritable id){
 		if(planets == null)
-			planets	=	new MapWritable();
+			planets	= new MapWritable();
 		planets.put(id.copy(), new SetWritable<PathWritable>());
 //		systemSize++;
 	}
