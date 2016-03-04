@@ -102,7 +102,6 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public final static String node_separation = "layout.node_separation";
 	public final String initialTempFactorString = "layout.initialTempFactor";
 	public static final String coolingSpeed = "layout.coolingSpeed";
-	private static final String repulsiveForceModerationString = "layout.repulsiveForceModerationFactor";
 	public static final String walshawModifierString = "layout.walshawModifier";
 	public static final String accuracyString = "layout.accuracy";
 	public static final float walshawModifierDefault = 0.052f;
@@ -113,6 +112,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public static final String forceMethodOptionString = "layout.forceModel";
 	public static final String forceMethodOptionExtraOptionsString = "layout.forceModel.extraOptions";
 	public static final String sendDegTooOptionString = "layout.sendDegreeIntoLayoutMessages";
+	private static final String repulsiveForceModerationString = "layout.repulsiveForceModerationFactor";	
 	
 	//INPUT OPTIONS
 	public static final String bbString = "layout.boundingBox";

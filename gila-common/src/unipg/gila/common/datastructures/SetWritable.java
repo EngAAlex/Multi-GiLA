@@ -35,7 +35,7 @@ import org.apache.hadoop.io.WritableFactories;
 public abstract class SetWritable<P extends Writable> implements Writable {
 	
 	protected Set<P> internalState;
-	protected Class<P> valueClass;
+//	protected Class<P> valueClass;
 		
 	public void addAll(Collection<P> it){
 		internalState.addAll(it);
@@ -69,17 +69,20 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 		return internalState.iterator();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void readFields(DataInput in) throws IOException {
 		internalState.clear();
 		int limit = in.readInt();
 	    for (int i = 0; i < limit; i++) {
-	      P value = (P) WritableFactories.newInstance(valueClass);
-	      value.readFields(in);                       
-	      internalState.add(value);                         
+	    	specificRead(in);                       
 	    }
 	}
 
+	/**
+	 * @param in
+	 * @throws IOException 
+	 */
+	protected abstract void specificRead(DataInput in) throws IOException;
+	
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(internalState.size());
 		Iterator<P> it = internalState.iterator();
