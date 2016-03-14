@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2016 Alessio Arleo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package unipg.gila.common.datastructures;
 
 import java.io.DataInput;
@@ -18,11 +33,10 @@ import org.apache.hadoop.io.WritableFactories;
  *
  * @param <P> The class of the object contained in the set. Must implement Writable.
  */
-public class SetWritable<P extends Writable> implements Writable {
+public abstract class SetWritable<P extends Writable> implements Writable {
 	
-	protected Set<P> internalState;
-	protected Class<P> valueClass;
 	
+	protected Set<P> internalState;	
 	/**
 	 * 
 	 */
@@ -67,17 +81,22 @@ public class SetWritable<P extends Writable> implements Writable {
 		return internalState.iterator();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void readFields(DataInput in) throws IOException {
 		internalState.clear();
 		int limit = in.readInt();
 	    for (int i = 0; i < limit; i++) {
-	      P value = (P) WritableFactories.newInstance(valueClass);
-	      value.readFields(in);                       
-	      internalState.add(value);                         
+	    	specificRead(in);                       
 	    }
 	}
 
+	/**
+	 * This method is used to let the subclasses properly deserialize the data from the DataInput.  
+	 * 
+	 * @param in The DataInput object from which read the data.
+	 * @throws IOException 
+	 */
+	protected abstract void specificRead(DataInput in) throws IOException;
+	
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(internalState.size());
 		Iterator<P> it = internalState.iterator();

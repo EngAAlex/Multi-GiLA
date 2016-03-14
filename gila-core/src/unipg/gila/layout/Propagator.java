@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2016 Alessio Arleo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package unipg.gila.layout;
 
 import java.io.IOException;
@@ -140,7 +155,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 			repulsiveForce[0] += (computedForce*cos);
 			repulsiveForce[1] += (computedForce*sin);
 
-			vValue.analyse(currentPayload);
+			vValue.analyze(currentPayload);
 
 			if(!currentMessage.isAZombie()){
 				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));

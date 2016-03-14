@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2016 Alessio Arleo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package unipg.gila.layout;
 
 import java.awt.geom.Point2D;
@@ -87,7 +102,6 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public final static String node_separation = "layout.node_separation";
 	public final String initialTempFactorString = "layout.initialTempFactor";
 	public static final String coolingSpeed = "layout.coolingSpeed";
-	private static final String repulsiveForceModerationString = "layout.repulsiveForceModerationFactor";
 	public static final String walshawModifierString = "layout.walshawModifier";
 	public static final String accuracyString = "layout.accuracy";
 	public static final float walshawModifierDefault = 0.052f;
@@ -98,6 +112,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 	public static final String forceMethodOptionString = "layout.forceModel";
 	public static final String forceMethodOptionExtraOptionsString = "layout.forceModel.extraOptions";
 	public static final String sendDegTooOptionString = "layout.sendDegreeIntoLayoutMessages";
+	private static final String repulsiveForceModerationString = "layout.repulsiveForceModerationFactor";	
 	
 	//INPUT OPTIONS
 	public static final String bbString = "layout.boundingBox";
@@ -196,10 +211,9 @@ public class FloodingMaster extends DefaultMasterCompute {
 	/**
 	 * This method executes a number of tasks to tune the algorithm given the proportions of the initial (random) layout of each component.
 	 * 
-	 * @return
 	 * @throws IllegalAccessException
 	 */
-	protected boolean superstepOneSpecials() throws IllegalAccessException{
+	protected void superstepOneSpecials() throws IllegalAccessException{
 		
 		MapWritable aggregatedMaxComponentData = getAggregatedValue(maxCoords);
 		MapWritable aggregatedMinComponentData = getAggregatedValue(minCoords);
@@ -244,8 +258,6 @@ public class FloodingMaster extends DefaultMasterCompute {
 		setAggregatedValue(correctedSizeAGG, correctedSizeMap);
 		setAggregatedValue(tempAGG, tempMap);
 		setAggregatedValue(scaleFactorAgg, scaleFactorMap);
-
-		return true;
 	}
 
 	/**
@@ -324,10 +336,9 @@ public class FloodingMaster extends DefaultMasterCompute {
 		
 		if(getSuperstep() == 1){
 			try {
-				if(superstepOneSpecials()){ //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
+				superstepOneSpecials(); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
 					setComputation(DrawingScaler.class); //... AND APPLY THEM
 					return;
-				}
 			} catch (IllegalAccessException e) {
 				haltComputation();
 			}

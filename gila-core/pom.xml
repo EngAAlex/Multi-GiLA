@@ -57,8 +57,8 @@
   		<artifactId>giraph-core</artifactId>
   	</dependency>
   	<dependency>
-  		<groupId>unipg</groupId>
-  		<artifactId>gila-multi</artifactId>
+  		<groupId>org.apache.httpcomponents</groupId>
+  		<artifactId>httpclient</artifactId>
   	</dependency>
   </dependencies>
 </project>

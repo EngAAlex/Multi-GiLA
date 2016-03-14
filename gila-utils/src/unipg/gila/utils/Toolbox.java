@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2016 Alessio Arleo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package unipg.gila.utils;
 
 
@@ -37,8 +52,8 @@ public class Toolbox {
 	/**
 	 * A simple method to compute the module of a vector of size 2.
 	 * 
-	 * @param vector
-	 * @return
+	 * @param vector The vector whose module is requested.
+	 * @return The requested module.
 	 */
 	public static float computeModule(float[] vector) {
 		return floatFuzzyMath(new Float(Math.sqrt((Math.pow(vector[0], 2) + Math.pow(vector[1], 2)))));
