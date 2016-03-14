@@ -114,21 +114,21 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public void addPlanet(LayeredPartitionedLongWritable id){
 		if(planets == null)
 			planets	=	new MapWritable();
-		planets.put(id.copy(), new SetWritable<PathWritable>());
+		planets.put(id.copy(), new PathWritable());
 //		systemSize++;
 	}
 
 	public void addMoon(LayeredPartitionedLongWritable id){
 		if(moons == null)
 			moons	=	new MapWritable();
-		moons.put(id.copy(), new SetWritable<PathWritable>());
+		moons.put(id.copy(), new PathWritable());
 //		systemSize++;
 	}
 
 	@SuppressWarnings("unchecked")
 	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, LinkedListWritable<LayeredPartitionedLongWritable> referrers, int ttl){
 		if(neighborSystems == null)
-			neighborSystems = new SetWritable<LayeredPartitionedLongWritable>();
+			neighborSystems = new LayeredPartitionedLongWritableSet();
 		neighborSystems.addElement(sun);
 		Iterator<LayeredPartitionedLongWritable> it = (Iterator<LayeredPartitionedLongWritable>) referrers.iterator();
 		int counter = 1;
@@ -143,27 +143,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			counter++;
 		}
 	}
-
-	//	###### TO FINISH
-
-	//	@SuppressWarnings("unchecked")
-	//	public boolean addNeighbourSystem(LayeredPartitionedLongWritable sun, LayeredPartitionedLongWritable referrer, int referrerDistance, Iterator<IntAndLayeredWritable> referrers){
-	//		if(neighborSystems == null)
-	//			neighborSystems = new SetWritable<LayeredPartitionedLongWritable>();
-	//		neighborSystems.addElement(sun);
-	//		if(neighborMapping == null)
-	//			neighborMapping = new MapWritable();
-	//		while(referrers.hasNext()){
-	//			IntAndLayeredWritable daCurrent = referrers.next();
-	//			if(!neighborMapping.containsKey(daCurrent.getMyWritable()))
-	//				neighborMapping.put(daCurrent.getMyWritable(), new SetWritable<IntAndLayeredWritable>());
-	//			((SetWritable<LayeredPartitionedLongWritable>)neighborMapping.get(daCurrent)).addElement(daCurrent));
-	//		}
-	//		if(!neighborMapping.containsKey(sun))
-	//			neighborMapping.put(sun, new SetWritable<LayeredPartitionedLongWritable>());
-	//			((SetWritable<LayeredPartitionedLongWritable>)neighborMapping.get(sun)).addElement(referrers.next());
-	//		return ((SetWritable<LayeredPartitionedLongWritable>)neighborMapping.get(sun)).addElement(referrer);
-	//	}
 
 	public int neigbourSystemsNo(){
 		if(neighborSystems != null)
@@ -227,7 +206,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			moons = new MapWritable();
 			planets.readFields(in);
 			moons.readFields(in);
-			neighborSystems = new SetWritable<LayeredPartitionedLongWritable>();
+			neighborSystems = new LayeredPartitionedLongWritableSet();
 			neighborSystems.readFields(in);
 			lowerLevelWeight = in.readInt();
 		}else{

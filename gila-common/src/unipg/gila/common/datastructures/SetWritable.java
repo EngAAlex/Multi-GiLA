@@ -85,7 +85,7 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 		internalState.clear();
 		int limit = in.readInt();
 	    for (int i = 0; i < limit; i++) {
-	    	specificRead(in);                       
+	    	internalState.add(specificRead(in));                       
 	    }
 	}
 
@@ -95,7 +95,7 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 	 * @param in The DataInput object from which read the data.
 	 * @throws IOException 
 	 */
-	protected abstract void specificRead(DataInput in) throws IOException;
+	protected abstract P specificRead(DataInput in) throws IOException;
 	
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(internalState.size());

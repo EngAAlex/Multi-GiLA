@@ -26,6 +26,7 @@ import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.multi.common.SolarMessage;
 import unipg.gila.multi.common.SolarMessage.CODE;
+import unipg.gila.multi.common.SolarMessageSet;
 
 /**
  * @author Alessio Arleo
@@ -209,13 +210,13 @@ public class SolarMerger{
 				if(chosenOne == null || (current.getPayloadVertex().getId() > vertexId && current.getPayloadVertex().getId() > chosenOne.getPayloadVertex().getId())){	
 					if(chosenOne != null){
 						if(refusedOffers == null)
-							refusedOffers = new SetWritable<SolarMessage>();
+							refusedOffers = new SolarMessageSet();
 						refusedOffers.addElement(chosenOne.copy());
 					}
 					chosenOne = current.copy();
 				}else{
 					if(refusedOffers == null)
-						refusedOffers = new SetWritable<SolarMessage>();
+						refusedOffers = new SolarMessageSet();
 					refusedOffers.addElement(current.copy());
 				}
 			}

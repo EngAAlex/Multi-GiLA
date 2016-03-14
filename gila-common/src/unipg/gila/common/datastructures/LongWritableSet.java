@@ -38,7 +38,6 @@ public class LongWritableSet extends SetWritable<LongWritable> {
 	 */
 	public LongWritableSet() {
 		internalState = new HashSet<LongWritable>();
-//		valueClass = LongWritable.class;
 	}
 	
 	/**
@@ -48,15 +47,16 @@ public class LongWritableSet extends SetWritable<LongWritable> {
 	 */
 	public LongWritableSet(LongWritableSet toCopy){
 		internalState = new HashSet<LongWritable>(toCopy.get());
-//		valueClass = LongWritable.class;
 	}
 
 	/* (non-Javadoc)
 	 * @see unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput)
 	 */
 	@Override
-	protected void specificRead(DataInput in) throws IOException{
-		internalState.add(new LongWritable(in.readLong()));
+	protected LongWritable specificRead(DataInput in) throws IOException{
+		LongWritable l = new LongWritable();
+		l.readFields(in);
+		return l;
 	}
 	
 }
