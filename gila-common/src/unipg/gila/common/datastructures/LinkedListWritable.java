@@ -44,6 +44,8 @@ public class LinkedListWritable<T extends Writable> implements Writable {
 	}
 	
 	public void addAll(LinkedListWritable<T> toAdd){
+		if(toAdd == null)
+			return;
 		Iterator<T> it = toAdd.iterator();
 		while(it.hasNext())
 			internalState.add(it.next());
@@ -115,6 +117,14 @@ public class LinkedListWritable<T extends Writable> implements Writable {
 	      }
 	      obj.write(out);
 	    }
+	}
+	
+	public String toString(){
+		Iterator<T> it = internalState.iterator();
+		String tmp = "";
+		while(it.hasNext())
+			tmp += it.next().toString()+"\n";
+		return tmp;
 	}
 
 }

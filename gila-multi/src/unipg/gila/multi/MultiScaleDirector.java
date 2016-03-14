@@ -4,10 +4,12 @@
 package unipg.gila.multi;
 
 import org.apache.giraph.aggregators.BooleanAndAggregator;
+import org.apache.giraph.aggregators.FloatMaxAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.aggregators.IntSumAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
@@ -53,6 +55,8 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 	public static final String sunChance = "merger.SunChance";
 	public static final float sunChanceDefault = 0.2f;
 
+	public static final String sunChanceAggregatorString = "AGG_SUNCHANCE";
+
 	//INSTANCE ATTRIBUTES
 	boolean creatingNewLayerVertices = false;
 	boolean creatingNewLayerEdges = false;	
@@ -60,6 +64,8 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 	boolean waitForDummy = false;
 	boolean timeForTheMoons = false;
 	boolean terminate = false;
+	int attempts = 0;
+	float baseSunChance;
 
 	@Override
 	public void compute() {
@@ -82,10 +88,11 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 			//				setAggregatedValue(currentLayer, new IntWritable(0));
 			setAggregatedValue(layerSizeAggregator, setupInfo.put(new IntWritable(0), new IntWritable((int)getTotalNumVertices())));
 			setAggregatedValue(mergerAttempts, new IntWritable(1));
+			setAggregatedValue(sunChanceAggregatorString, new FloatWritable(getConf().getFloat(sunChance, sunChanceDefault)));
 			return;
 		}
 		boolean messagesNegotiationDone = ((BooleanWritable)getAggregatedValue(messagesDepleted)).get();
-		boolean asteroidsAssigned = !((BooleanWritable)getAggregatedValue(asteroidsRemoved)).get();
+		boolean asteroidsAssigned = ((BooleanWritable)getAggregatedValue(asteroidsRemoved)).get();
 		if(getComputation().equals(SunGeneration.class)){
 			setComputation(SolarSweep.class);
 			return;
@@ -119,8 +126,14 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 			if(asteroidsAssigned){
 				setComputation(MoonSweep.class);
 				timeForTheMoons = true;
-			}else
+			}else{
 				setComputation(SunGeneration.class);
+				float currentSunChance = ((FloatWritable)getAggregatedValue(sunChanceAggregatorString)).get();
+				log.info("currentsunchance " + currentSunChance);
+				currentSunChance += currentSunChance*0.5;
+				log.info("currentsunchance " + currentSunChance);				
+				setAggregatedValue(sunChanceAggregatorString, new FloatWritable(currentSunChance));
+			}
 			return;
 		}		
 		if(getComputation().equals(MoonSweep.class)){
@@ -159,7 +172,8 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 							mp.put(new IntWritable(cLayer+1), new IntWritable(0));
 							setAggregatedValue(layerSizeAggregator, mp);
 //						}else
-						setComputation(SunGeneration.class);					
+						setComputation(SunGeneration.class);
+						setAggregatedValue(sunChanceAggregatorString, new FloatWritable(getConf().getFloat(sunChance, sunChanceDefault)));
 				}
 			}
 //			setComputation(EdgeDuplicatesRemover.class);
@@ -178,6 +192,7 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 		registerAggregator(asteroidsRemoved, BooleanAndAggregator.class);
 		registerAggregator(messagesDepleted, BooleanAndAggregator.class);
 		setAggregatedValue(currentLayer, new IntWritable(0));
+		registerPersistentAggregator(sunChanceAggregatorString, FloatMaxAggregator.class);
 	}
 
 }

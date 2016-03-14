@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2016 Alessio Arleo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package unipg.gila.multi.common;
 
 import java.io.DataInput;
@@ -8,6 +23,7 @@ import java.util.Iterator;
 import org.apache.hadoop.io.MapWritable;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.mortbay.log.Log;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.LinkedListWritable;
@@ -97,6 +113,13 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return distanceFromSun == -1;
 	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isPlanet() {
+		return distanceFromSun == 1;
+	}
+	
 	public boolean isMoon(){
 		return distanceFromSun > 1;
 	}
@@ -107,25 +130,20 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public void resetToAsteroid(){
 		distanceFromSun = -1;
-//		sun = new LayeredPartitionedLongWritable();
-//		sunProxy = new LayeredPartitionedLongWritable();
 	}
 
 	public void addPlanet(LayeredPartitionedLongWritable id){
 		if(planets == null)
 			planets	=	new MapWritable();
-		planets.put(id.copy(), new PathWritable());
-//		systemSize++;
+		planets.put(id.copy(), new PathWritableSet());
 	}
 
 	public void addMoon(LayeredPartitionedLongWritable id){
 		if(moons == null)
-			moons	=	new MapWritable();
-		moons.put(id.copy(), new PathWritable());
-//		systemSize++;
+			moons =	new MapWritable();
+		moons.put(id.copy(), new PathWritableSet());
 	}
 
-	@SuppressWarnings("unchecked")
 	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, LinkedListWritable<LayeredPartitionedLongWritable> referrers, int ttl){
 		if(neighborSystems == null)
 			neighborSystems = new LayeredPartitionedLongWritableSet();
@@ -135,10 +153,10 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		while(it.hasNext()){
 			LayeredPartitionedLongWritable currentReferrer = it.next();
 			if(planets.containsKey(currentReferrer))
-				((SetWritable<PathWritable>)planets.get(currentReferrer)).addElement(new PathWritable(
+				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
 							counter, Integer.MAX_VALUE - ttl, sun));
 			else
-				((SetWritable<PathWritable>)moons.get(currentReferrer)).addElement(new PathWritable(
+				((PathWritableSet)moons.get(currentReferrer)).addElement(new PathWritable(
 						counter, Integer.MAX_VALUE - ttl, sun));
 			counter++;
 		}

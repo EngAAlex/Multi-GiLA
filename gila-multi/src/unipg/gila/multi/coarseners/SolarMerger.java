@@ -1,11 +1,9 @@
 package unipg.gila.multi.coarseners;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
-import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
@@ -38,7 +36,7 @@ public class SolarMerger{
 	 * LOGGER 
 	 * */
 	protected static Logger log = Logger.getLogger(SolarMerger.class);
-	
+
 	public static enum AstralBody{
 		SUN, MOON, PLANET, ASTEROID;
 
@@ -78,6 +76,7 @@ public class SolarMerger{
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
+			log.info("current sunchance " + sunChance);
 			if(vertex.getValue().isAsteroid() && Math.random() < sunChance){
 				vertex.getValue().setAsSun();
 				MapWritable myValue = new MapWritable();
@@ -97,7 +96,7 @@ public class SolarMerger{
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
 
-			sunChance = getConf().getFloat(MultiScaleDirector.sunChance, MultiScaleDirector.sunChanceDefault);
+			sunChance = ((FloatWritable)getAggregatedValue(MultiScaleDirector.sunChanceAggregatorString)).get();
 		}
 
 	}
@@ -109,8 +108,10 @@ public class SolarMerger{
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
 				Iterable<SolarMessage> msgs) throws IOException{
-			if(vertex.getValue().isSun())
+			if(vertex.getValue().isSun() && !vertex.getValue().isAssigned()){
 				sendMessageToAllEdges(vertex, new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER));
+				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
+			}
 		}
 
 
@@ -140,8 +141,9 @@ public class SolarMerger{
 			if(chosenOne == null)
 				return;
 
-			if(vertex.getValue().isSun() && maxID > vertex.getId().getId())
+			if(vertex.getValue().isSun() && maxID > vertex.getId().getId()){
 				vertex.getValue().resetToAsteroid();
+			}
 
 			if(!chosenOne.isAZombie()){
 				sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
@@ -171,6 +173,9 @@ public class SolarMerger{
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
 				Iterable<SolarMessage> msgs) throws IOException{
 
+			if(!vertex.getValue().isAsteroid() || vertex.getValue().isAssigned())
+				return;
+
 			Iterator<SolarMessage> theMessages = (Iterator<SolarMessage>)msgs.iterator();
 
 			theMessages = (Iterator<SolarMessage>)msgs.iterator();
@@ -181,15 +186,19 @@ public class SolarMerger{
 
 			SolarMessage chosenOne = (SolarMessage) shuffled[0];
 			SetWritable<SolarMessage> refused = (SetWritable<SolarMessage>) shuffled[1];
-
+			
 			if(chosenOne != null){
+				value.setSun(chosenOne.getPayloadVertex().copy(), chosenOne.getValue().copy());
 				ackAndPropagateSunOffer(vertex, value, chosenOne);
 				//SET THE SUN
-				value.setSun(chosenOne.getPayloadVertex().copy(), chosenOne.getValue().copy());
-				if(chosenOne.getTTL() == 1)
+				if(chosenOne.getTTL() == 1){
 					value.setAsPlanet();
-				else
+					log.info("Me, vertex " + vertex.getId().getId() + " chose vertex " + chosenOne.getValue().getId() + " as a planet");
+				}else{
+					log.info("Me, vertex " + vertex.getId().getId() + " chose vertex " + chosenOne.getValue().getId() + " as a moon");
+
 					value.setAsMoon();
+				}
 			}
 
 			if(refused != null){
@@ -205,7 +214,7 @@ public class SolarMerger{
 			//		SetWritable<LayeredPartitionedLongWritable> incomingInterfaces = null;
 			while(theMessages.hasNext()){
 				SolarMessage current = theMessages.next();
-				if(!current.getCode().equals(CODE.SUNOFFER)) // || sunsToIgnore.contains(current.getPayloadVertex().getId()))
+				if(!current.getCode().equals(CODE.SUNOFFER) || (chosenOne != null && current.getValue().equals(chosenOne.getValue()))) // || sunsToIgnore.contains(current.getPayloadVertex().getId()))
 					continue;
 				if(chosenOne == null || (current.getPayloadVertex().getId() > vertexId && current.getPayloadVertex().getId() > chosenOne.getPayloadVertex().getId())){	
 					if(chosenOne != null){
@@ -224,26 +233,28 @@ public class SolarMerger{
 		}
 
 		protected void refuseOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex, SolarMessage refusedSun){
-			//INFORM THE VERTEX'S SUN THAT AN OFFER HAS BEEN REFUSED
-			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), vertex.getId(), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
+			//INFORM MY SUN THAT AN OFFER HAS BEEN REFUSED
+			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
 			smForMySun.addToExtraPayload(vertex.getId());
 			sendMessage(vertex.getValue().getProxy(), smForMySun);
-
+			log.info("Me, vertex " + vertex.getId().getId()  + "Refusing offer from " + refusedSun.getValue().getId() + " received from " + refusedSun.getPayloadVertex());
+			
 			//INFORM THE REFUSED SUN THAT ITS OFFER HAS BEEN DECLINED
-			sendMessage(refusedSun.getPayloadVertex(), new SolarMessage(vertex.getId(), Integer.MAX_VALUE - vertex.getValue().getDistanceFromSun(), vertex.getId(), vertex.getValue().getSun().copy(), CODE.REFUSEOFFER));
+			sendMessage(refusedSun.getPayloadVertex(), new SolarMessage(vertex.getId(), Integer.MAX_VALUE - vertex.getValue().getDistanceFromSun(), vertex.getValue().getSun().copy(), CODE.REFUSEOFFER));
 			aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
 		}
 
 		protected void ackAndPropagateSunOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex, AstralBodyCoordinateWritable value,
 				SolarMessage chosenOne){
 			//ACK THE SUN OFFER
-			sendMessage(value.getSun(), new SolarMessage(vertex.getId(), 1, vertex.getId(), vertex.getId(), CODE.ACCEPTOFFER));
+			sendMessage(value.getProxy(), new SolarMessage(vertex.getId(), 1, chosenOne.getValue().copy(), CODE.ACCEPTOFFER));
 
 			//IF NEEDED PROPAGATE THE SOLAR MESSAGE
 			if(chosenOne.getCode().equals(CODE.SUNOFFER) && !chosenOne.isAZombie()){
 				chosenOne.spoofPayloadVertex(vertex.getId());
 				sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
 			}
+
 			aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
 		}
 
@@ -256,8 +267,8 @@ public class SolarMerger{
 				AstralBody status = AstralBody.buildBody(value.getDistanceFromSun());
 				switch(status){
 
-				case SUN: //#### A SUN EXAMINES THE MESSAGES; PLANET/MOON MESSAGES ARE PROCESSED AND STORED 
-					msgIterator = msgs.iterator();
+				case SUN: //#### A SUN EXAMINES THE MESSAGES; PLANET/MOON MESSAGES ARE PROCESSED AND STORED. FIRST ALL ACCEPTED OFFERS ARE COMPUTED, THEN THE 
+					msgIterator = msgs.iterator(); //REFUSED ONES. 
 					while(msgIterator.hasNext()){
 						SolarMessage currentMessage =  msgIterator.next();
 
@@ -266,13 +277,21 @@ public class SolarMerger{
 
 						if(currentMessage.getCode().equals(CODE.ACCEPTOFFER)) //A PLANET/MOON HAS ACCEPTED THE OFFER; IT IS STORED INTO THE APPROPRIATE DATA STRUCTURE
 							if(currentMessage.getTTL() == 1){
+								log.info("Me, sun " + vertex.getId().getId() + " accept as a planet the vertex " + currentMessage.getPayloadVertex());
 								value.addPlanet(currentMessage.getPayloadVertex().copy());
 							}else{
+								log.info("Me, sun " + vertex.getId().getId() + " accept as a moon the vertex " + currentMessage.getPayloadVertex());
 								value.addMoon(currentMessage.getPayloadVertex().copy());
 							}
-
-						if(currentMessage.getCode().equals(CODE.REFUSEOFFER)) //THE SUN OFFER HAS BEEN DECLINED. SAVING THE DATA INTO THE NEIGHBORING SYSTEMS DATA STR.
+					}
+					msgIterator = msgs.iterator();
+					while(msgIterator.hasNext()){
+						SolarMessage currentMessage =  msgIterator.next();					
+						if(currentMessage.getCode().equals(CODE.REFUSEOFFER)){ //THE SUN OFFER HAS BEEN DECLINED. SAVING THE DATA INTO THE NEIGHBORING SYSTEMS DATA STR.
+							log.info("Me, sun " + vertex.getId().getId() + " accept as a neighboring sun the vertex " + currentMessage.getValue());
+							log.info("Referrers " + currentMessage.getExtraPayload().toString());
 							value.addNeighbourSystem(currentMessage.getValue(), currentMessage.getExtraPayload(), currentMessage.getTTL());
+						}
 					}
 					// SUNS SHALL NOT REACT TO ANY OTHER MESSAGE TYPE.
 					break;
@@ -282,20 +301,11 @@ public class SolarMerger{
 					super.vertexInLayerComputation(vertex, msgs);
 					break;
 
-				default: //####A PLANET OR A MOON RECEIVES MESSAGES. REFUSE OFFERS ARE 
+				default: //####A PLANET OR A MOON RECEIVES MESSAGES. REFUSE OFFERS ARE PROPAGATED THROUGH PROXIES
 					msgIterator = msgs.iterator();					
 					while(msgIterator.hasNext()){
 						SolarMessage currentMessage =  msgIterator.next();
-						//value.processMessage(currentMessage);
-						//							if(currentMessage.getCode().equals(CODE.SUNDISCOVERY)){// && !sunsToIgnore.contains(currentMessage.getValue().getId())){ //TWO NEIGHBORING SYSTEMS ACKNOWLEDGE EACH OTHER
-						//								SolarMessage messageForAsteroid = new SolarMessage(vertex.getId(), vertex.getValue().getSun(), CODE.ACCEPTOFFER);
-						//								sendMessage(currentMessage.getPayloadVertex(), messageForAsteroid);
-						//								SolarMessage messageForSun = new SolarMessage(vertex.getId(), 0, vertex.getId(), currentMessage.getPayloadVertex(), CODE.ACCEPTOFFER);
-						//								sendMessage(value.getProxy(), messageForSun);
-						//								aggregate(ClintMultiScaleDirector.messagesDepleted, new BooleanWritable(false));
-						//								continue;
-						//							}else{
-						if(currentMessage.getCode().equals(CODE.REFUSEOFFER) && currentMessage.getValue().equals(value.getSun()))
+						if(vertex.getValue().isAssigned())
 							continue;
 						SolarMessage messageToSend;
 						if(!currentMessage.getCode().equals(CODE.REFUSEOFFER)){
@@ -305,7 +315,7 @@ public class SolarMerger{
 						}else{
 							messageToSend = (SolarMessage)currentMessage.propagate();
 							messageToSend.addToExtraPayload(vertex.getId());
-							log.info("Sending a message to my proxy " + value.getProxy().getId() + " from " + messageToSend.getPayloadVertex().getId() + " regardin sun " + messageToSend.getValue().getId());
+							log.info("Me, vertex " + vertex.getId() + "Refusemessage from " + messageToSend.getValue().getId() + "I am adding my info to it");
 							sendMessage(value.getProxy(), messageToSend);
 							aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
 						}
@@ -332,12 +342,14 @@ public class SolarMerger{
 					Iterable<SolarMessage> msgs) {
 				Iterator<SolarMessage> messages = msgs.iterator();
 				AstralBodyCoordinateWritable value = vertex.getValue();
+				if(!value.isMoon() || !value.isPlanet())
+					return;
 				while(messages.hasNext()){
 					SolarMessage xu = messages.next();
 					if(xu.getCode().equals(CODE.SUNDISCOVERY) && !xu.getValue().equals(value.getSun())){
 						aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
-						SolarMessage messageForReferrer = new SolarMessage(xu.getPayloadVertex().copy(), Integer.MAX_VALUE - value.getDistanceFromSun(), value.getSun(), value.getSun(), CODE.REFUSEOFFER);
-						SolarMessage messageForSun = new SolarMessage(vertex.getId(), xu.getTTL()-1, vertex.getId(), xu.getValue().copy(), CODE.REFUSEOFFER);
+						SolarMessage messageForReferrer = new SolarMessage(xu.getPayloadVertex().copy(), Integer.MAX_VALUE - value.getDistanceFromSun(), value.getSun(), CODE.REFUSEOFFER);
+						SolarMessage messageForSun = new SolarMessage(vertex.getId(), xu.getTTL()-1, xu.getValue().copy(), CODE.REFUSEOFFER);
 						messageForSun.addToExtraPayload(vertex.getId());
 						sendMessage(xu.getPayloadVertex().copy(), messageForReferrer);
 						sendMessage(value.getProxy(), messageForSun);
@@ -362,7 +374,7 @@ public class SolarMerger{
 				AstralBodyCoordinateWritable value = vertex.getValue();
 				if(value.isMoon()){
 					aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
-					SolarMessage sweepMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - 2, vertex.getId(), value.getSun(), CODE.SUNDISCOVERY);
+					SolarMessage sweepMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - 2, value.getSun(), CODE.SUNDISCOVERY);
 					sendMessageToAllEdges(vertex, sweepMessage);
 				}
 			}
@@ -414,7 +426,7 @@ public class SolarMerger{
 				MapWritable infoToUpdate = new MapWritable();
 				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
 				aggregate(MultiScaleDirector.layerSizeAggregator, infoToUpdate);
-				
+
 				if(!vertex.getValue().isSun())
 					return;
 				LayeredPartitionedLongWritable homologousId = new LayeredPartitionedLongWritable(vertex.getId().getPartition(), vertex.getId().getId(), currentLayer+1);
@@ -426,36 +438,36 @@ public class SolarMerger{
 				while(neighborSystems.hasNext()){
 					LayeredPartitionedLongWritable neighborSun = neighborSystems.next();
 					LayeredPartitionedLongWritable remoteId = new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), currentLayer+1);
-//					addEdgeRequest(remoteId, EdgeFactory.create(homologousId, new FloatWritable(1.0f)));					
+					//					addEdgeRequest(remoteId, EdgeFactory.create(homologousId, new FloatWritable(1.0f)));					
 					addEdgeRequest(homologousId, EdgeFactory.create(remoteId, new FloatWritable(1.0f)));					
 				}
 			}
 		}
 
-//		public static class EdgeDuplicatesRemover extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage>{
-//
-//			@Override
-//			protected void vertexInLayerComputation(
-//					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-//					Iterable<SolarMessage> msgs) throws IOException {
-//				HashSet<Edge<LayeredPartitionedLongWritable, FloatWritable>> tempSack = new HashSet<Edge<LayeredPartitionedLongWritable, FloatWritable>>();
-//				HashSet<LayeredPartitionedLongWritable> chechSack = new HashSet<LayeredPartitionedLongWritable>();
-//				Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edgesIt = vertex.getEdges().iterator();
-//				while(edgesIt.hasNext()){
-//					Edge<LayeredPartitionedLongWritable, FloatWritable> current = edgesIt.next();
-//					if(!chechSack.contains(current.getTargetVertexId())){
-//						tempSack.add(EdgeFactory.create(current.getTargetVertexId().copy(), new FloatWritable(current.getValue().get())));
-//						chechSack.add(current.getTargetVertexId().copy());
-//					}
-//				}
-//				vertex.setEdges(tempSack);
-//
-//				MapWritable infoToUpdate = new MapWritable();
-//				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
-//				aggregate(MultiScaleDirector.layerSizeAggregator, infoToUpdate);
-//			}
-//
-//		}
+		//		public static class EdgeDuplicatesRemover extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage>{
+		//
+		//			@Override
+		//			protected void vertexInLayerComputation(
+		//					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
+		//					Iterable<SolarMessage> msgs) throws IOException {
+		//				HashSet<Edge<LayeredPartitionedLongWritable, FloatWritable>> tempSack = new HashSet<Edge<LayeredPartitionedLongWritable, FloatWritable>>();
+		//				HashSet<LayeredPartitionedLongWritable> chechSack = new HashSet<LayeredPartitionedLongWritable>();
+		//				Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edgesIt = vertex.getEdges().iterator();
+		//				while(edgesIt.hasNext()){
+		//					Edge<LayeredPartitionedLongWritable, FloatWritable> current = edgesIt.next();
+		//					if(!chechSack.contains(current.getTargetVertexId())){
+		//						tempSack.add(EdgeFactory.create(current.getTargetVertexId().copy(), new FloatWritable(current.getValue().get())));
+		//						chechSack.add(current.getTargetVertexId().copy());
+		//					}
+		//				}
+		//				vertex.setEdges(tempSack);
+		//
+		//				MapWritable infoToUpdate = new MapWritable();
+		//				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
+		//				aggregate(MultiScaleDirector.layerSizeAggregator, infoToUpdate);
+		//			}
+		//
+		//		}
 
 		public static class DummySolarMergerComputation extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage>{
 

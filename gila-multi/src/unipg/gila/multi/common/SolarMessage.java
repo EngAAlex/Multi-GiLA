@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright 2016 Alessio Arleo
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 /**
  * 
  */
@@ -57,17 +72,12 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public SolarMessage(LayeredPartitionedLongWritable payloadVertex, int ttl, LayeredPartitionedLongWritable value, CODE code) {
 		super(payloadVertex, ttl, value);
 		this.code = code;
-	}
-	
-	public SolarMessage(LayeredPartitionedLongWritable id, int ttl, LayeredPartitionedLongWritable value, LayeredPartitionedLongWritable selectedSun, CODE code){
-		super(id, ttl, value);
-		this.code = code;
 		if(code.equals(CODE.REFUSEOFFER))
 			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>();
-	}
+}
 	
-	public SolarMessage(LayeredPartitionedLongWritable id, int ttl, LayeredPartitionedLongWritable phySender, LayeredPartitionedLongWritable selectedSun, CODE code, LinkedListWritable<LayeredPartitionedLongWritable> extraPayload){
-		super(id, ttl, phySender);
+	public SolarMessage(LayeredPartitionedLongWritable payload, int ttl, LayeredPartitionedLongWritable valueSun, CODE code, LinkedListWritable<LayeredPartitionedLongWritable> extraPayload){
+		super(payload, ttl, valueSun);
 		this.code = code;
 		if(code.equals(CODE.REFUSEOFFER))
 			this.extraPayload = extraPayload;
@@ -78,7 +88,8 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 			return new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
 		else{
 			SolarMessage tmp = new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
-			tmp.copyExtraPayload(extraPayload);
+			if(extraPayload != null)
+				tmp.copyExtraPayload(extraPayload);
 			return tmp;
 		}
 	}
@@ -88,18 +99,15 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	}
 	
 	public void addToExtraPayload(LayeredPartitionedLongWritable toAdd){
-		if(extraPayload == null){
+		if(extraPayload == null)
 			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>();
-		}
 		extraPayload.enqueue(toAdd);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void copyExtraPayload(LinkedListWritable<LayeredPartitionedLongWritable> toAdd){
 		if(extraPayload == null)
 			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>(toAdd);
-		else
-			extraPayload.addAll(toAdd);
+		extraPayload.addAll(toAdd);
 		
 	}
 	
@@ -107,7 +115,6 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		return extraPayload;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Iterator<LayeredPartitionedLongWritable> getExtraPayloadIterator(){
 		return (Iterator<LayeredPartitionedLongWritable>) extraPayload.iterator();
 	}
@@ -135,8 +142,9 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		value.write(out);
 		out.writeInt(CODE.write(getCode()));
 		if(getCode().equals(CODE.REFUSEOFFER)){
-			out.writeInt(extraPayload.size());
-			if(extraPayload.size() > 0)
+			int size = extraPayload == null ? 0 : extraPayload.size();
+			out.writeInt(size);
+			if(size > 0)
 				extraPayload.write(out);
 		}
 	}

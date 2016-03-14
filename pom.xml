@@ -59,7 +59,8 @@
   	<module>gila-common</module>
   	<module>gila-core</module>
   	<module>gila-utils</module>
-  	
+
+  	<module>gila-multi</module>
   </modules>
   <description>gila</description>
 </project>
