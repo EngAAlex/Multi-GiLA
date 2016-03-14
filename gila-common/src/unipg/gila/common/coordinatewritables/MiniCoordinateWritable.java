@@ -47,9 +47,12 @@ public class MiniCoordinateWritable implements Writable{
 	 * A set containing the ids of its one degree neighbors.
 	 */
 	protected LongWritableSet oneEdges;
+<<<<<<< HEAD
 	/**
 	 * The connected component index the vertex belongs to.
 	 */
+=======
+>>>>>>> Multi-Gila
 	protected int component;
 
 	public MiniCoordinateWritable() {
