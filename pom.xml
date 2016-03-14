@@ -43,6 +43,11 @@
   			<artifactId>gila-utils</artifactId>
   			<version>0.8</version>
   		</dependency>
+                <dependency>
+                        <groupId>unipg</groupId>
+                        <artifactId>gila-multi</artifactId>
+                        <version>0.8</version>
+                </dependency>
   		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
