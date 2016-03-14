@@ -35,7 +35,6 @@ import org.apache.hadoop.io.WritableFactories;
 public abstract class SetWritable<P extends Writable> implements Writable {
 	
 	protected Set<P> internalState;
-//	protected Class<P> valueClass;
 		
 	public void addAll(Collection<P> it){
 		internalState.addAll(it);
@@ -78,7 +77,9 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 	}
 
 	/**
-	 * @param in
+	 * This method is used to let the subclasses properly deserialize the data from the DataInput.  
+	 * 
+	 * @param in The DataInput object from which read the data.
 	 * @throws IOException 
 	 */
 	protected abstract void specificRead(DataInput in) throws IOException;
