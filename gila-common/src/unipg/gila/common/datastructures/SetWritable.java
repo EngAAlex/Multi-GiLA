@@ -33,13 +33,10 @@ import org.apache.hadoop.io.WritableFactories;
  *
  * @param <P> The class of the object contained in the set. Must implement Writable.
  */
-public class SetWritable<P extends Writable> implements Writable {
+public abstract class SetWritable<P extends Writable> implements Writable {
 	
-	protected Set<P> internalState;
-<<<<<<< HEAD
-=======
-	protected Class<P> valueClass;
 	
+	protected Set<P> internalState;	
 	/**
 	 * 
 	 */
@@ -51,7 +48,6 @@ public class SetWritable<P extends Writable> implements Writable {
 		this();
 		addAll(cll);
 	}
->>>>>>> Multi-Gila
 		
 	public void addAll(Collection<P> it){
 		internalState.addAll(it);
