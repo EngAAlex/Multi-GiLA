@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
-import unipg.gila.common.datastructures.LinkedListWritable;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 
 /**
@@ -34,7 +33,7 @@ import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable, LayeredPartitionedLongWritable>{
 	
 	private CODE code;
-	private LinkedListWritable<LayeredPartitionedLongWritable> extraPayload;
+	private ReferrersList extraPayload;
 	
 	public static enum CODE{
 		SUNOFFER,ACCEPTOFFER,REFUSEOFFER,SUNDISCOVERY,CONFLICT;
@@ -72,26 +71,19 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public SolarMessage(LayeredPartitionedLongWritable payloadVertex, int ttl, LayeredPartitionedLongWritable value, CODE code) {
 		super(payloadVertex, ttl, value);
 		this.code = code;
-		if(code.equals(CODE.REFUSEOFFER))
-			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>();
-}
+	}
 	
-	public SolarMessage(LayeredPartitionedLongWritable payload, int ttl, LayeredPartitionedLongWritable valueSun, CODE code, LinkedListWritable<LayeredPartitionedLongWritable> extraPayload){
+	public SolarMessage(LayeredPartitionedLongWritable payload, int ttl, LayeredPartitionedLongWritable valueSun, ReferrersList extraPayload){
 		super(payload, ttl, valueSun);
-		this.code = code;
-		if(code.equals(CODE.REFUSEOFFER))
-			this.extraPayload = extraPayload;
+		this.code = CODE.REFUSEOFFER;
+		this.extraPayload = extraPayload;
 	}
 	
 	public SolarMessage copy() {
-		if(!code.equals(CODE.REFUSEOFFER))
-			return new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
-		else{
-			SolarMessage tmp = new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
-			if(extraPayload != null)
-				tmp.copyExtraPayload(extraPayload);
-			return tmp;
-		}
+		SolarMessage tmp = new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
+		if(extraPayload != null)
+			tmp.copyExtraPayload(extraPayload);
+		return tmp;
 	}
 	
 	public void spoofPayloadVertex(LayeredPartitionedLongWritable payloadVertex){
@@ -100,18 +92,18 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	
 	public void addToExtraPayload(LayeredPartitionedLongWritable toAdd){
 		if(extraPayload == null)
-			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>();
+			extraPayload = new ReferrersList();
 		extraPayload.enqueue(toAdd);
 	}
 	
-	public void copyExtraPayload(LinkedListWritable<LayeredPartitionedLongWritable> toAdd){
+	public void copyExtraPayload(ReferrersList toAdd){
 		if(extraPayload == null)
-			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>(toAdd);
+			extraPayload = new ReferrersList(toAdd);
 		extraPayload.addAll(toAdd);
 		
 	}
 	
-	public LinkedListWritable<LayeredPartitionedLongWritable> getExtraPayload(){
+	public ReferrersList getExtraPayload(){
 		return extraPayload;
 	}
 	
@@ -131,7 +123,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		value.readFields(in);
 		code = CODE.readFields(in.readInt());
 		if(code.equals(CODE.REFUSEOFFER) && in.readInt() > 0){
-			extraPayload = new LinkedListWritable<LayeredPartitionedLongWritable>();
+			extraPayload = new ReferrersList();
 			extraPayload.readFields(in);
 		}
 	}

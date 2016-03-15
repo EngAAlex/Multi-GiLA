@@ -20,6 +20,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.log4j.Logger;
 
 /**
  * 
@@ -35,6 +36,8 @@ public abstract class MessageWritable<P, T> implements Writable{
 	protected int ttl;
 	protected P payloadVertex;
 	protected T value;
+	
+	Logger log = Logger.getLogger(MessageWritable.class);
 	
 	/**
 	 * Parameter-less constructor.

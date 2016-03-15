@@ -159,9 +159,9 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 	}
 	
 	public void enqueueMessage(Writable w){
-		if(messageStack == null)
-			messageStack = new LinkedListWritable();
-		messageStack.enqueue(w);
+//		if(messageStack == null)
+//			messageStack = new LinkedListWritable();
+//		messageStack.enqueue(w);
 	}
 	
 	public Writable[] dequeueAllMessages() {

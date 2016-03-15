@@ -129,9 +129,7 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 			}else{
 				setComputation(SunGeneration.class);
 				float currentSunChance = ((FloatWritable)getAggregatedValue(sunChanceAggregatorString)).get();
-				log.info("currentsunchance " + currentSunChance);
 				currentSunChance += currentSunChance*0.5;
-				log.info("currentsunchance " + currentSunChance);				
 				setAggregatedValue(sunChanceAggregatorString, new FloatWritable(currentSunChance));
 			}
 			return;

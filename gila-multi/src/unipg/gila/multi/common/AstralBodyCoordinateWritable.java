@@ -82,7 +82,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(moons != null)
 			moonsSize = moons.size();
 		return planetsSize + moonsSize;
-		//		return systemSize;
 	}
 
 	public int getDistanceFromSun(){
@@ -100,26 +99,26 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public void setAsMoon() {
 		distanceFromSun = 2;
 	}
-	
+
 	public void setAssigned(){
 		assigned = true;
 	}
-	
+
 	public boolean isAssigned(){
 		return assigned;
 	}
-	
+
 	public boolean isAsteroid(){
 		return distanceFromSun == -1;
 	}
-	
+
 	/**
 	 * @return
 	 */
 	public boolean isPlanet() {
 		return distanceFromSun == 1;
 	}
-	
+
 	public boolean isMoon(){
 		return distanceFromSun > 1;
 	}
@@ -148,17 +147,30 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(neighborSystems == null)
 			neighborSystems = new LayeredPartitionedLongWritableSet();
 		neighborSystems.addElement(sun);
+		if(referrers == null)
+			return;
 		Iterator<LayeredPartitionedLongWritable> it = (Iterator<LayeredPartitionedLongWritable>) referrers.iterator();
 		int counter = 1;
 		while(it.hasNext()){
 			LayeredPartitionedLongWritable currentReferrer = it.next();
-			if(planets.containsKey(currentReferrer))
+			if(planets.containsKey(currentReferrer)){
 				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
-							counter, Integer.MAX_VALUE - ttl, sun));
-			else
-				((PathWritableSet)moons.get(currentReferrer)).addElement(new PathWritable(
-						counter, Integer.MAX_VALUE - ttl, sun));
-			counter++;
+						counter, Integer.MAX_VALUE - (ttl - 1), sun));
+				counter++;
+			}
+			else {
+				//########################################## WARNING!!
+				//The following code contains a potential vulnerability. The bug causes the refuse message towards the refused sun to have its extra payload initialized
+				//with the conflict generating vertex. The problem has no fix yet, so this patch should allow the computation to end ignoring the vertices into the referrer stacjk
+				//that are neither planets nor moons.
+				if(moons != null){
+					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer); 
+					if(pSet != null){
+						pSet.addElement(new PathWritable(counter, Integer.MAX_VALUE - (ttl - 1), sun));
+						counter++;
+					}
+				}
+			}
 		}
 	}
 
@@ -177,7 +189,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public String neighborSystemsState(){
 		if(neighborSystems == null)
-			return "Sistemi vicini set vuoto";
+			return "No neighboring system";
 		Iterator<LayeredPartitionedLongWritable> it = neighbourSystemsIterator();
 		String result = "";
 		while(it.hasNext()){
