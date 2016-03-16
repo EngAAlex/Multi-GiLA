@@ -44,7 +44,7 @@ public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<Laye
 			Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> it = edges.iterator();
 			while(it.hasNext()){
 				Edge<LayeredPartitionedLongWritable, FloatWritable> edge = it.next();
-				result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "," + edge.getTargetVertexId().getLayer() + "]";
+				result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "]";
 				if(it.hasNext())
 					result += ",";
 			}

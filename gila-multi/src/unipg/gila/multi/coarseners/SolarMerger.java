@@ -2,9 +2,15 @@ package unipg.gila.multi.coarseners;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
+import org.apache.giraph.conf.ImmutableClassesGiraphConfiguration;
+import org.apache.giraph.edge.ByteArrayEdges;
+import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
+import org.apache.giraph.edge.OutEdges;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -416,46 +422,49 @@ public class SolarMerger{
 					Iterable<SolarMessage> msgs) throws IOException{
 				if(!vertex.getValue().isSun())
 					return;
-				AstralBodyCoordinateWritable value = vertex.getValue();
-				float[] coords = value.getCoordinates();
-				addVertexRequest(new LayeredPartitionedLongWritable(vertex.getId().getPartition(), 
-						vertex.getId().getId(), 
-						currentLayer+1), new AstralBodyCoordinateWritable(value.astralWeight(), 
-								coords[0], coords[1],value.getComponent()));
-			}
-
-		}
-
-		public static class SolarMergeEdgeCompletion extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage> {
-
-			@Override
-			protected void vertexInLayerComputation(
-					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-					Iterable<SolarMessage> msgs)
-							throws IOException {
+				
 				aggregate(MultiScaleDirector.mergerAttempts, new IntWritable(((IntWritable)getAggregatedValue(MultiScaleDirector.mergerAttempts)).get()+1));
 				MapWritable infoToUpdate = new MapWritable();
 				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
 				aggregate(MultiScaleDirector.layerSizeAggregator, infoToUpdate);
-
-				if(!vertex.getValue().isSun())
-					return;
 				
-				LayeredPartitionedLongWritable homologousId = new LayeredPartitionedLongWritable(vertex.getId().getPartition(), vertex.getId().getId(), currentLayer+1);
+				AstralBodyCoordinateWritable value = vertex.getValue();
+				float[] coords = value.getCoordinates();
+			
+				LayeredPartitionedLongWritable homologousId = new LayeredPartitionedLongWritable(vertex.getId().getPartition(), 
+						vertex.getId().getId(), 
+						vertex.getId().getLayer()+1);
+				
+			
 				addEdgeRequest(vertex.getId(), EdgeFactory.create(homologousId, new FloatWritable(1.0f)));					
-				addEdgeRequest(homologousId, EdgeFactory.create(vertex.getId(), new FloatWritable(1.0f)));
+
 				Iterator<LayeredPartitionedLongWritable> neighborSystems = vertex.getValue().neighbourSystemsIterator();
-				if(neighborSystems == null)
+				log.info("Vertex " + vertex.getId() + " is creating " + homologousId);
+				
+				if(neighborSystems == null){
+					addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight(), 
+							coords[0], coords[1],value.getComponent()));					
 					return;
-				log.info("Connecting edges on the upper level, vertex " + vertex.getId());
+				}
+
+				log.info("Connecting edges on the upper level, vertex " + vertex.getId() + " its homologous " + homologousId);
+
+				ByteArrayEdges<LayeredPartitionedLongWritable, FloatWritable> outEdges = new ByteArrayEdges<LayeredPartitionedLongWritable, FloatWritable>();
+				outEdges.setConf(getSpecialConf());
+				
+				List<Edge<LayeredPartitionedLongWritable, FloatWritable>> edgeList = new LinkedList<Edge<LayeredPartitionedLongWritable, FloatWritable>>();
+				edgeList.add(EdgeFactory.create(vertex.getId(), new FloatWritable(1.0f)));
+				
 				while(neighborSystems.hasNext()){
 					LayeredPartitionedLongWritable neighborSun = neighborSystems.next();
-					log.info("Neighboring sun " + neighborSun.getId());					
-					LayeredPartitionedLongWritable remoteId = new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), currentLayer+1);
-					//					addEdgeRequest(remoteId, EdgeFactory.create(homologousId, new FloatWritable(1.0f)));					
-					addEdgeRequest(homologousId, EdgeFactory.create(remoteId, new FloatWritable(1.0f)));					
+					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1), new FloatWritable(1.0f)));
 				}
+				
+				outEdges.initialize(edgeList);
+				addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight(), 
+								coords[0], coords[1],value.getComponent()), outEdges);
 			}
+
 		}
 
 		//		public static class EdgeDuplicatesRemover extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage>{

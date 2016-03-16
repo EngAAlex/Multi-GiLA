@@ -6,6 +6,7 @@ package unipg.gila.multi;
 import java.io.IOException;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
+import org.apache.giraph.conf.ImmutableClassesGiraphConfiguration;
 import org.apache.giraph.graph.AbstractComputation;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
@@ -48,6 +49,15 @@ public abstract class MultiScaleComputation<Z extends Writable, P extends Writab
 	
 	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, FloatWritable> vertex,
 			Iterable<P> msgs) throws IOException;
+	
+	/* (non-Javadoc)
+	 * @see org.apache.giraph.conf.DefaultImmutableClassesGiraphConfigurable#getConf()
+	 */
+	@SuppressWarnings("unchecked")
+	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, FloatWritable> getSpecialConf() {
+		// TODO Auto-generated method stub
+		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, FloatWritable>) super.getConf();
+	}
 	
 }
 

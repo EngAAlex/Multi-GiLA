@@ -83,7 +83,7 @@ public class LayeredPartitionedLongWritable extends PartitionedLongWritable {
 		if (this == o) {
 			return true;
 		}
-		if (o == null || getClass() != o.getClass()) {
+		if (o == null || !getClass().equals(o.getClass())) {
 			return false;
 		}
 		LayeredPartitionedLongWritable other = (LayeredPartitionedLongWritable) o;
@@ -98,6 +98,7 @@ public class LayeredPartitionedLongWritable extends PartitionedLongWritable {
 		return partition + DELIMITER + id + DELIMITER + layer;
 	}
 
+	
 	@Override
 	public int hashCode() {
 		return toString().hashCode();

@@ -23,7 +23,6 @@ import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.AsteroidCaller;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.DummySolarMergerComputation;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.MoonSweep;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.RegimeMerger;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.SolarMergeEdgeCompletion;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.SolarMergeVertexCreation;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.SunDiscovery;
 
@@ -59,7 +58,6 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 
 	//INSTANCE ATTRIBUTES
 	boolean creatingNewLayerVertices = false;
-	boolean creatingNewLayerEdges = false;	
 	boolean checkForNewLayer = false;
 	boolean waitForDummy = false;
 	boolean timeForTheMoons = false;
@@ -76,10 +74,7 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 		}
 		if(waitForDummy){
 			waitForDummy = false;
-			if(!getComputation().equals(SolarMergeEdgeCompletion.class))
-				creatingNewLayerEdges = true;
-			else
-				checkForNewLayer = true;
+			checkForNewLayer = true;
 			setComputation(DummySolarMergerComputation.class);
 			return;
 		}
@@ -116,7 +111,7 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 			else{
 				setComputation(SolarMergeVertexCreation.class);
 				//				creatingNewLayerVertices = false;
-				creatingNewLayerEdges = true;
+				creatingNewLayerVertices = true;
 				waitForDummy = true;
 				timeForTheMoons = false;
 			}
@@ -146,17 +141,10 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 //			setComputation(SunGeneration.class);
 //			return;
 //		}
-		if(creatingNewLayerEdges){
-			setComputation(SolarMergeEdgeCompletion.class);
-			creatingNewLayerEdges = false;
-			waitForDummy = true;
-			return;
-		}
 		int cLayer = ((IntWritable)getAggregatedValue(currentLayer)).get();
 		if(checkForNewLayer){
 			checkForNewLayer = false;
 			waitForDummy = false;
-			creatingNewLayerEdges = false;
 			creatingNewLayerVertices = false;
 			MapWritable mp = (MapWritable)getAggregatedValue(layerSizeAggregator);
 			int layerSize = ((IntWritable)mp.get(new IntWritable(cLayer+1))).get();
