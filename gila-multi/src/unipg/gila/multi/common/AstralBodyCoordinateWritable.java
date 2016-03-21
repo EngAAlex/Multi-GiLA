@@ -23,12 +23,9 @@ import java.util.Iterator;
 import org.apache.hadoop.io.MapWritable;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.mortbay.log.Log;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.LinkedListWritable;
-import unipg.gila.multi.common.PathWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.common.datastructures.SetWritable;
 
 /**
@@ -82,6 +79,10 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(moons != null)
 			moonsSize = moons.size();
 		return planetsSize + moonsSize;
+	}
+	
+	public int getLowerLevelWeight(){
+		return lowerLevelWeight;
 	}
 
 	public int getDistanceFromSun(){
@@ -187,7 +188,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return null;
 	}	
 
-	public String neighborSystemsState(){
+	public String neighborSystemsStateToString(){
 		if(neighborSystems == null)
 			return "No neighboring system";
 		Iterator<LayeredPartitionedLongWritable> it = neighbourSystemsIterator();
@@ -231,6 +232,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			return;
 		distanceFromSun = in.readInt();
 		assigned = in.readBoolean();
+		lowerLevelWeight = in.readInt();
 		if(isSun()){
 			planets = new MapWritable();
 			moons = new MapWritable();
@@ -238,7 +240,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			moons.readFields(in);
 			neighborSystems = new LayeredPartitionedLongWritableSet();
 			neighborSystems.readFields(in);
-			lowerLevelWeight = in.readInt();
 		}else{
 			sunProxy = new LayeredPartitionedLongWritable();
 			sun = new LayeredPartitionedLongWritable();
@@ -255,11 +256,11 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			return;
 		out.writeInt(distanceFromSun);
 		out.writeBoolean(assigned);
+		out.writeInt(lowerLevelWeight);		
 		if(isSun()){
 			planets.write(out);
 			moons.write(out);
 			neighborSystems.write(out);
-			out.writeInt(lowerLevelWeight);
 		}else{
 			sunProxy.write(out);
 			sun.write(out);
