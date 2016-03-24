@@ -53,8 +53,11 @@ public class MultiScaleDirector extends DefaultMasterCompute {
 	public static final int mergerConvergenceThresholdDefault = 10;
 	public static final String sunChance = "merger.SunChance";
 	public static final float sunChanceDefault = 0.2f;
-
 	public static final String sunChanceAggregatorString = "AGG_SUNCHANCE";
+	
+	//PLACER OPTIONS
+	public static final String placerDefaultLengthString = "coarsener.defaultLength";
+	public static final float placerDefaultLength = 15.0f;
 
 	//INSTANCE ATTRIBUTES
 	boolean creatingNewLayerVertices = false;

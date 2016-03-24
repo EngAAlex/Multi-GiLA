@@ -19,6 +19,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.io.MapWritable;
 import org.json.JSONArray;
@@ -173,6 +174,18 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				}
 			}
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>> getPlanetsIterator(){
+		return (Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>>) planets.entrySet();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>> getMoonsIterator(){
+		if(moons == null || moons.size() == 0)
+			return null;
+		return (Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>>) moons.entrySet();
 	}
 
 	public int neigbourSystemsNo(){
