@@ -106,6 +106,13 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		assigned = true;
 	}
 
+	/**
+	 * 
+	 */
+	public void resetAssigned() {
+		assigned = false;
+	}
+	
 	public boolean isAssigned(){
 		return assigned;
 	}

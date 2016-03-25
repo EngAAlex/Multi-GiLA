@@ -41,7 +41,7 @@ public class SolarMerger{
 	/*
 	 * LOGGER 
 	 * */
-	protected static Logger log = Logger.getLogger(SolarMerger.class);
+//	protected static Logger log = Logger.getLogger(SolarMerger.class);
 
 	public static enum AstralBody{
 		SUN, MOON, PLANET, ASTEROID;
@@ -115,7 +115,7 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(vertex.getValue().isSun() && !vertex.getValue().isAssigned()){
 				sendMessageToAllEdges(vertex, new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER));
-				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
+//				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
 			}
 		}
 
@@ -250,6 +250,7 @@ public class SolarMerger{
 //				log.info("The declinedMessage contains extra payload " + declinedMessage.getExtraPayload().toString());
 //			else
 //				log.info("The declined message contains no extra payload");
+			sendMessage(refusedSun.getPayloadVertex(), declinedMessage);
 			aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
 		}
 
@@ -297,11 +298,11 @@ public class SolarMerger{
 					while(msgIterator.hasNext()){
 						SolarMessage currentMessage =  msgIterator.next();					
 						if(currentMessage.getCode().equals(CODE.REFUSEOFFER) || currentMessage.getCode().equals(CODE.SUNDISCOVERY)){ //THE SUN OFFER HAS BEEN DECLINED. SAVING THE DATA INTO THE NEIGHBORING SYSTEMS DATA STR.
-							log.info("Me, sun " + vertex.getId().getId() + " accept as a neighboring sun the vertex " + currentMessage.getValue());
-							if(currentMessage.getExtraPayload() != null)
-								log.info("Referrers " + currentMessage.getExtraPayload().toString());
-							else
-								log.info("No referrers in this message");
+//							log.info("Me, sun " + vertex.getId().getId() + " accept as a neighboring sun the vertex " + currentMessage.getValue());
+//							if(currentMessage.getExtraPayload() != null)
+//								log.info("Referrers " + currentMessage.getExtraPayload().toString());
+//							else
+//								log.info("No referrers in this message");
 							value.addNeighbourSystem(currentMessage.getValue(), currentMessage.getExtraPayload(), currentMessage.getTTL());
 						}
 					}
@@ -439,7 +440,7 @@ public class SolarMerger{
 				addEdgeRequest(vertex.getId(), EdgeFactory.create(homologousId, new FloatWritable(1.0f)));					
 
 				Iterator<LayeredPartitionedLongWritable> neighborSystems = vertex.getValue().neighbourSystemsIterator();
-				log.info("Vertex " + vertex.getId() + " is creating " + homologousId);
+//				log.info("Vertex " + vertex.getId() + " is creating " + homologousId);
 				
 				if(neighborSystems == null){
 					addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight(), 
@@ -447,7 +448,7 @@ public class SolarMerger{
 					return;
 				}
 
-				log.info("Connecting edges on the upper level, vertex " + vertex.getId() + " its homologous " + homologousId);
+//				log.info("Connecting edges on the upper level, vertex " + vertex.getId() + " its homologous " + homologousId);
 
 				ByteArrayEdges<LayeredPartitionedLongWritable, FloatWritable> outEdges = new ByteArrayEdges<LayeredPartitionedLongWritable, FloatWritable>();
 				outEdges.setConf(getSpecialConf());
@@ -498,7 +499,7 @@ public class SolarMerger{
 			protected void vertexInLayerComputation(
 					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
 					Iterable<SolarMessage> msgs) throws IOException {
-				return;
+				vertex.getValue().resetAssigned();
 			}
 		}
 
