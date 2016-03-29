@@ -352,7 +352,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 			settledSteps++;
 		}else
 			if(!(getComputation().toString().contains("Propagator"))){
-				setComputation(Propagator.class); //PROPAGATE THE MESSAGES AND COMPUTE THE FORCES
+				setComputation(AbstractPropagator.class); //PROPAGATE THE MESSAGES AND COMPUTE THE FORCES
 			}	
 
 

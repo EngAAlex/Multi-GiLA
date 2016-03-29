@@ -1,18 +1,6 @@
-/*******************************************************************************
- * Copyright 2016 Alessio Arleo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
+/**
+ * 
+ */
 package unipg.gila.layout;
 
 import java.io.IOException;
@@ -20,7 +8,6 @@ import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.graph.AbstractComputation;
-import org.apache.giraph.graph.Computation;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -29,16 +16,15 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.layout.GraphReintegration.FairShareReintegrateOneEdges;
 import unipg.gila.layout.force.FR;
 import unipg.gila.layout.force.Force;
 import unipg.gila.utils.Toolbox;
+
 
 /**
  * The propagator class works as follows. For each message received:
@@ -54,56 +40,27 @@ import unipg.gila.utils.Toolbox;
  * @author Alessio Arleo
  *
  */
-public class Propagator extends AbstractComputation<PartitionedLongWritable, 
-CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
+public class AbstractPropagator<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends AbstractComputation<I, V, E, M1, M2> {
 
 	protected boolean useQueues;
 	protected float minimumForceThreshold;
 	protected Float k;
 	protected float walshawConstant;
 	private float queueFlushRatio;
-	
+
 	protected Force force;
 	protected boolean useCosSin;
-	
+
 	protected float cos;
 	protected float sin;
 
-
-	@SuppressWarnings("unchecked")
+	/* (non-Javadoc)
+	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+	 */
 	@Override
-	public void initialize(
-			GraphState graphState,
-			WorkerClientRequestProcessor<PartitionedLongWritable, CoordinateWritable, NullWritable> workerClientRequestProcessor,
-			GraphTaskManager<PartitionedLongWritable, CoordinateWritable, NullWritable> graphTaskManager,
-			WorkerGlobalCommUsage workerGlobalCommUsage,
-			WorkerContext workerContext) {
-		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-				workerGlobalCommUsage, workerContext);
-
-		k = ((FloatWritable)getAggregatedValue(FloodingMaster.k_agg)).get();
-		walshawConstant = ((FloatWritable)getAggregatedValue(FloodingMaster.walshawConstant_agg)).get();
-
-		useQueues = getConf().getBoolean(FloodingMaster.useQueuesString, false);
-		queueFlushRatio = getConf().getFloat(FloodingMaster.queueUnloadFactor, 0.1f);
-		
-		try {
-			force = ((Class<Force>)Class.forName(getConf().get(FloodingMaster.forceMethodOptionString, FR.class.toString()))
-						).newInstance();
-		} catch (Exception e) {
-			force = new FR();
-		}
-		force.generateForce(getConf().getStrings(FloodingMaster.forceMethodOptionExtraOptionsString, ""), k);
-
-	}
-
-	@Override
-	public void compute(
-			Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-			Iterable<LayoutMessage> messages)
-					throws IOException {
-
-		Iterator<LayoutMessage> it = messages.iterator();
+	public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+			throws IOException {
+		Iterator<M1> it = messages.iterator();
 		CoordinateWritable vValue = vertex.getValue();
 
 		float[] mycoords = vValue.getCoordinates();;	
@@ -113,7 +70,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 
 		float[] finalForce = new float[]{0.0f, 0.0f};
 		float[] repulsiveForce = new float[]{0.0f, 0.0f};
-		
+
 		int v1Deg;
 		int v2Deg;
 
@@ -124,7 +81,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 
 			if(currentMessage.getPayloadVertex().equals(vertex.getId().getId()) || vValue.isAnalyzed(currentPayload))
 				continue;
-			
+
 			foreigncoords=currentMessage.getValue();
 
 			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
@@ -133,15 +90,15 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 			float deltaX = (foreigncoords[0] - mycoords[0]);
 			float deltaY = (foreigncoords[1] - mycoords[1]);		
 
-			
+
 			cos = deltaX/distance;
 			sin = deltaY/distance;
-			
+
 			float computedForce = 0.0f;
-			
+
 			v1Deg = vertex.getNumEdges() + vValue.getOneDegreeVerticesQuantity();
 			v2Deg = currentMessage.getDeg();
-			
+
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
 				computedForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
@@ -151,7 +108,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 
 			//REPULSIVE FORCES
 			computedForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
-			
+
 			repulsiveForce[0] += (computedForce*cos);
 			repulsiveForce[1] += (computedForce*sin);
 
@@ -160,7 +117,7 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 			if(!currentMessage.isAZombie()){
 				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
 				if(!useQueues)
-					sendMessageToAllEdges(vertex, (LayoutMessage) currentMessage.propagate());					
+					sendMessageToAllEdges(vertex, (M2) currentMessage.propagate());					
 				else
 					vertex.getValue().enqueueMessage(currentMessage.propagate());	
 			}
@@ -186,12 +143,37 @@ CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
 			LayoutMessage current = (LayoutMessage) toDequeue[i];
 			if(current != null){
 				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
-				sendMessageToAllEdges(vertex, current);
+				sendMessageToAllEdges(vertex, (M2) current);
 			}
 			else
 				break;
 		}
 
+	}
+
+	/* (non-Javadoc)
+	 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void initialize(GraphState graphState,
+			WorkerClientRequestProcessor<I, V, E> workerClientRequestProcessor,
+			GraphTaskManager<I, V, E> graphTaskManager,
+			WorkerGlobalCommUsage workerGlobalCommUsage,
+			WorkerContext workerContext) {
+		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+				workerGlobalCommUsage, workerContext);
+		k = ((FloatWritable)getAggregatedValue(FloodingMaster.k_agg)).get();
+		walshawConstant = ((FloatWritable)getAggregatedValue(FloodingMaster.walshawConstant_agg)).get();
+
+		useQueues = getConf().getBoolean(FloodingMaster.useQueuesString, false);
+		queueFlushRatio = getConf().getFloat(FloodingMaster.queueUnloadFactor, 0.1f);
+
+		try {
+			force = ((Class<Force>)Class.forName(getConf().get(FloodingMaster.forceMethodOptionString, FR.class.toString()))).newInstance();
+		} catch (Exception e) {
+			force = new FR();
+		}
 	}
 
 }

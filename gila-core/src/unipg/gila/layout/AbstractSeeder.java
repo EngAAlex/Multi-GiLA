@@ -1,18 +1,6 @@
-/*******************************************************************************
- * Copyright 2016 Alessio Arleo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
+/**
+ * 
+ */
 package unipg.gila.layout;
 
 import java.io.IOException;
@@ -28,6 +16,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Writable;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
@@ -46,9 +35,8 @@ import unipg.gila.utils.Toolbox;
  * @author Alessio Arleo
  *
  */
-public class Seeder extends
-AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>{
-		
+public class AbstractSeeder<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends AbstractComputation<I, V, E, M1, M2> {
+
 	float initialTemp;
 	float accuracy;
 	int ttlmax;
@@ -58,29 +46,12 @@ AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, L
 	
 	boolean sendDegToo;
 	
+	/* (non-Javadoc)
+	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+	 */
 	@Override
-	public void initialize(
-			GraphState graphState,
-			WorkerClientRequestProcessor<PartitionedLongWritable, CoordinateWritable, NullWritable> workerClientRequestProcessor,
-			GraphTaskManager<PartitionedLongWritable, CoordinateWritable, NullWritable> graphTaskManager,
-			WorkerGlobalCommUsage workerGlobalCommUsage,
-			WorkerContext workerContext) {
-		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-				workerGlobalCommUsage, workerContext);
-		accuracy = getConf().getFloat(FloodingMaster.accuracyString, FloodingMaster.accuracyDefault);
-		ttlmax = getConf().getInt(FloodingMaster.ttlMaxString, FloodingMaster.ttlMaxDefault);		
-
-		tempsMap = getAggregatedValue(FloodingMaster.tempAGG);
-		sizesMap = getAggregatedValue(FloodingMaster.correctedSizeAGG);
-		
-		sendDegToo = getConf().getBoolean(FloodingMaster.sendDegTooOptionString, false);
-	}
-
-	@Override
-	public void compute(
-			Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-			Iterable<LayoutMessage> msgs) throws IOException {
-
+	public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+			throws IOException {
 		CoordinateWritable vValue = vertex.getValue();
 
 		if(getSuperstep() == 0){ //FIRST SUPERSTEP, EACH VERTEX BROADCASTS ITS COORDINATES TO ITS NEIGHBOR.
@@ -127,14 +98,33 @@ AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, L
 		vValue.resetAnalyzed();
 	}
 
-	protected void gatherAndSend(Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex, float[] coords){
+	protected void gatherAndSend(Vertex<I, V, E> vertex, float[] coords){
 		LayoutMessage toSend = new LayoutMessage(vertex.getId().getId(), 
 				ttlmax - 1,
 				coords);
 		if(sendDegToo)
 			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
-		sendMessageToAllEdges(vertex, toSend);
+		sendMessageToAllEdges(vertex, (M2) toSend);	
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+	 */
+	@Override
+	public void initialize(GraphState graphState,
+			WorkerClientRequestProcessor<I, V, E> workerClientRequestProcessor,
+			GraphTaskManager<I, V, E> graphTaskManager,
+			WorkerGlobalCommUsage workerGlobalCommUsage,
+			WorkerContext workerContext) {
+		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+				workerGlobalCommUsage, workerContext);
+		accuracy = getConf().getFloat(FloodingMaster.accuracyString, FloodingMaster.accuracyDefault);
+		ttlmax = getConf().getInt(FloodingMaster.ttlMaxString, FloodingMaster.ttlMaxDefault);		
 
+		tempsMap = getAggregatedValue(FloodingMaster.tempAGG);
+		sizesMap = getAggregatedValue(FloodingMaster.correctedSizeAGG);
+		
+		sendDegToo = getConf().getBoolean(FloodingMaster.sendDegTooOptionString, false);
+	}
 
 }
