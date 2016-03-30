@@ -14,15 +14,13 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
-import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
 import unipg.gila.layout.LayoutRoutine.DrawingScaler;
 import unipg.gila.layout.LayoutRoutine.LayoutCCs;
-import unipg.gila.layout.single.NullWritable;
+import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
@@ -48,7 +46,7 @@ public class MultiScaleLayout {
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(MultiScaleDirector.currentLayer)).get();
+			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
 		}
 		
 		/* (non-Javadoc)
@@ -83,7 +81,7 @@ public class MultiScaleLayout {
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(MultiScaleDirector.currentLayer)).get();
+			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
 
 		}
 

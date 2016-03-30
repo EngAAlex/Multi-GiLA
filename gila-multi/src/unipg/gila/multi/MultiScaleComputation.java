@@ -17,6 +17,7 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
+import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
 public abstract class MultiScaleComputation<Z extends Writable, P extends Writable, T extends Writable> extends
@@ -44,7 +45,7 @@ public abstract class MultiScaleComputation<Z extends Writable, P extends Writab
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		currentLayer = ((IntWritable)getAggregatedValue(MultiScaleDirector.currentLayer)).get();
+		currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
 	}
 	
 	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, FloatWritable> vertex,

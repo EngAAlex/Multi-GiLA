@@ -25,7 +25,6 @@ import org.apache.log4j.Logger;
 
 import unipg.gila.common.datastructures.SetWritable;
 import unipg.gila.multi.MultiScaleComputation;
-import unipg.gila.multi.MultiScaleDirector;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.multi.common.SolarMessage;
@@ -86,7 +85,7 @@ public class SolarMerger{
 				vertex.getValue().setAsSun();
 				MapWritable myValue = new MapWritable();
 				myValue.put(new IntWritable(currentLayer), new IntWritable(1));
-				aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+				aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 				sendMessageToAllEdges(vertex, new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER));
 			}
 		}
@@ -101,7 +100,7 @@ public class SolarMerger{
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
 
-			sunChance = ((FloatWritable)getAggregatedValue(MultiScaleDirector.sunChanceAggregatorString)).get();
+			sunChance = ((FloatWritable)getAggregatedValue(SolarMergerRoutine.sunChanceAggregatorString)).get();
 		}
 
 	}
@@ -152,7 +151,7 @@ public class SolarMerger{
 
 			if(!chosenOne.isAZombie()){
 				sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
-				aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+				aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 			}
 		}
 
@@ -251,7 +250,7 @@ public class SolarMerger{
 //			else
 //				log.info("The declined message contains no extra payload");
 			sendMessage(refusedSun.getPayloadVertex(), declinedMessage);
-			aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+			aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 		}
 
 		protected void ackAndPropagateSunOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex, AstralBodyCoordinateWritable value,
@@ -265,7 +264,7 @@ public class SolarMerger{
 				sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
 			}
 
-			aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+			aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 		}
 
 		public static class RegimeMerger extends PlanetResponse{
@@ -334,7 +333,7 @@ public class SolarMerger{
 							SolarMessage messageToSend = (SolarMessage)currentMessage.propagate();
 							messageToSend.addToExtraPayload(vertex.getId());
 							sendMessage(value.getProxy(), messageToSend);
-							aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+							aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 						}
 						continue;
 					}
@@ -359,7 +358,7 @@ public class SolarMerger{
 					Iterable<SolarMessage> msgs) throws IOException {
 				AstralBodyCoordinateWritable value = vertex.getValue();
 				if(value.isMoon()){
-					aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+					aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 					SolarMessage sweepMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - 2, value.getSun(), CODE.SUNDISCOVERY);
 					sendMessageToAllEdges(vertex, sweepMessage);
 				}
@@ -383,7 +382,7 @@ public class SolarMerger{
 				while(messages.hasNext()){
 					SolarMessage xu = messages.next();
 					if(xu.getCode().equals(CODE.SUNDISCOVERY) && !xu.getValue().equals(value.getSun())){
-						aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
+						aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 						SolarMessage messageForReferrer = new SolarMessage(xu.getPayloadVertex().copy(), Integer.MAX_VALUE - value.getDistanceFromSun(), value.isSun() ? vertex.getId() : value.getSun(), CODE.SUNDISCOVERY);
 						sendMessage(xu.getPayloadVertex().copy(), messageForReferrer);
 						if(!value.isSun()){
@@ -408,7 +407,7 @@ public class SolarMerger{
 					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
 					Iterable<SolarMessage> msgs) throws IOException {
 				if(vertex.getValue().isAsteroid())
-					aggregate(MultiScaleDirector.asteroidsRemoved, new BooleanWritable(false));
+					aggregate(SolarMergerRoutine.asteroidsRemoved, new BooleanWritable(false));
 				else
 					vertex.getValue().setAssigned();
 			}
@@ -424,10 +423,10 @@ public class SolarMerger{
 				if(!vertex.getValue().isSun())
 					return;
 				
-				aggregate(MultiScaleDirector.mergerAttempts, new IntWritable(((IntWritable)getAggregatedValue(MultiScaleDirector.mergerAttempts)).get()+1));
+				aggregate(SolarMergerRoutine.mergerAttempts, new IntWritable(((IntWritable)getAggregatedValue(SolarMergerRoutine.mergerAttempts)).get()+1));
 				MapWritable infoToUpdate = new MapWritable();
 				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
-				aggregate(MultiScaleDirector.layerSizeAggregator, infoToUpdate);
+				aggregate(SolarMergerRoutine.layerSizeAggregator, infoToUpdate);
 				
 				AstralBodyCoordinateWritable value = vertex.getValue();
 				float[] coords = value.getCoordinates();

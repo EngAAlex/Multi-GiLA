@@ -107,12 +107,13 @@ public class SingleScaleLayout {
 		}
 	}
 	
-	public static class SingleScaleGraphExplorer extends DrawingBoundariesExplorer<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
-	{}
+//	public static class SingleScaleGraphExplorer extends DrawingBoundariesExplorer<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
+//	{}
+//	
+//	public static class SingleScaleDrawingScaler extends DrawingScaler<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
+//	{}
+//	
+//	public static class SingleScaleLayoutCCs extends LayoutCCs<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
+//	{}
 	
-	public static class SingleScaleDrawingScaler extends DrawingScaler<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
-	{}
-	
-	public static class SingleScaleLayoutCCs extends LayoutCCs<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
-	{}
 }

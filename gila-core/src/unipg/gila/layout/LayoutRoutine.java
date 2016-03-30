@@ -55,7 +55,6 @@ import unipg.gila.coolingstrategies.LinearCoolingStrategy;
 import unipg.gila.layout.GraphReintegration.FairShareReintegrateOneEdges;
 import unipg.gila.layout.GraphReintegration.PlainDummyComputation;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer.DrawingBoundariesExplorerWithComponentsNo;
-import unipg.gila.layout.single.SingleScaleLayout.Seeder;
 import unipg.gila.utils.Toolbox;
 
 import com.google.common.collect.Lists;
@@ -132,8 +131,8 @@ public class LayoutRoutine {
 	public static final String maxOneDegAggregatorString = "AGG_ONEDEG_MAX";
 	public final static String k_agg = "K_AGG";
 	static final String walshawConstant_agg = "WALSHAW_AGG";
-	private final static String maxCoords = "AGG_MAX_COORDINATES";
-	private final static String minCoords = "AGG_MIN_COORDINATES";
+	public final static String maxCoords = "AGG_MAX_COORDINATES";
+	public final static String minCoords = "AGG_MIN_COORDINATES";
 	public final static String tempAGG = "AGG_TEMP";
 	public static final String correctedSizeAGG = "AGG_CORR_SIZE";
 	protected final static String scaleFactorAgg = "AGG_SCALEFACTOR";
@@ -145,8 +144,8 @@ public class LayoutRoutine {
 	//COUNTERS
 	protected static final String COUNTER_GROUP = "Drawing Counters";
 	
-	private static String minRationThresholdString = "layout.minRatioThreshold";
-	private float defaultMinRatioThreshold = 0.2f;
+	protected static final String minRationThresholdString = "layout.minRatioThreshold";
+	protected static final float defaultMinRatioThreshold = 0.2f;
 
 	//VARIABLES
 	protected long propagationSteps;
@@ -161,26 +160,27 @@ public class LayoutRoutine {
 	protected MasterCompute master;
 	protected Class<? extends AbstractSeeder> seeder;
 	protected Class<? extends AbstractPropagator> propagator;
-	protected Class<? extends DrawingBoundariesExplorer> drawingExplorer;
-	protected Class<? extends DrawingBoundariesExplorerWithComponentsNo> drawingExplorerWithCCs;
-	protected Class<? extends DrawingScaler> drawingScaler;
-	protected Class<? extends LayoutCCs> layoutCC;
-	protected Class<? extends Computation> dummyComputation;
+//	protected Class<? extends DrawingBoundariesExplorer> drawingExplorer;
+//	protected Class<? extends DrawingBoundariesExplorerWithComponentsNo> drawingExplorerWithCCs;
+//	protected Class<? extends DrawingScaler> drawingScaler;
+//	protected Class<? extends LayoutCCs> layoutCC;
+//	protected Class<? extends Computation> dummyComputation;
 	
-	public void initialize(MasterCompute myMaster, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator,
-			Class<? extends DrawingBoundariesExplorer> explorer, Class<? extends DrawingBoundariesExplorerWithComponentsNo> explorerWithCCs,
-			Class<? extends DrawingScaler> drawingScaler,
-			Class<? extends LayoutCCs> layoutCC,
-			Class<? extends Computation> dummyComputation) throws InstantiationException,
-	IllegalAccessException {
+	public void initialize(MasterCompute myMaster
+			, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator)//,
+//			Class<? extends DrawingBoundariesExplorer> explorer, Class<? extends DrawingBoundariesExplorerWithComponentsNo> explorerWithCCs,
+//			Class<? extends DrawingScaler> drawingScaler,
+//			Class<? extends LayoutCCs> layoutCC,
+//			Class<? extends Computation> dummyComputation)
+					throws InstantiationException,	IllegalAccessException {
 		master = myMaster;
 		this.seeder = seeder;
 		this.propagator = propagator;
-		drawingExplorer = explorer;
-		drawingExplorerWithCCs = explorerWithCCs;
-		this.layoutCC = layoutCC;
-		this.dummyComputation = dummyComputation;
-		this.drawingScaler = drawingScaler;
+//		drawingExplorer = explorer;
+//		drawingExplorerWithCCs = explorerWithCCs;
+//		this.layoutCC = layoutCC;
+//		this.dummyComputation = dummyComputation;
+//		this.drawingScaler = drawingScaler;
 		
 		maxSuperstep = master.getConf().getInt(computationLimit, maxSstepsDefault);
 
@@ -302,48 +302,6 @@ public class LayoutRoutine {
 		}		
 		master.setAggregatedValue(tempAGG, newTempsMap);
 	}
-	
-	/**
-	 * The method is used to start the halting sequence and to manage the order of the events leading to the algorithm conclusion.
-	 * 
-	 * @throws IllegalAccessException
-	 */
-	protected boolean masterHaltingSequence(){
-		if(readyToSleep != 0 || checkForConvergence()){ //IF TRUE, THE HALTING SEQUENCE IS IN PROGRESS
-			halting = true;
-			if(readyToSleep == 0){ //FIRST STEP: ONE DEGREE VERTICES REINTEGRATION
-				try {
-					master.setComputation((Class<? extends Computation>)Class.forName(master.getConf().get(oneDegreeReintegratingClassOption, FairShareReintegrateOneEdges.class.toString())));
-				} catch (ClassNotFoundException e) {
-					master.setComputation(FairShareReintegrateOneEdges.class);
-				}	
-				readyToSleep++;								
-				return false;
-			}
-			if(readyToSleep == 1){ //A BLANK COMPUTATION TO PROPAGATE THE GRAPH MODIFICATIONS MADE IN THE PREVIOUS SUPERSTEP
-				master.setComputation(dummyComputation);
-				readyToSleep++;
-				return false;
-			}
-			if(readyToSleep == 2){ //SECOND STEP: TO COMPUTE THE FINAL GRID LAYOUT OF THE CONNECTED COMPONENTS, THEIR DRAWING
-				master.setAggregatedValue(maxCoords, new MapWritable()); //PROPORTIONS ARE SCANNED.
-				master.setAggregatedValue(minCoords, new MapWritable());
-				master.setComputation(drawingExplorer);
-				readyToSleep++;
-				return false;
-			}
-			if(readyToSleep == 3){ //THIRD STEP: ONCE THE DATA NEEDED TO LAYOUT THE CONNECTED COMPONENTS GRID ARE COMPUTED, 
-				computeComponentGridLayout(); //THE LAYOUT IS COMPUTED.
-				master.setComputation(layoutCC);			
-				readyToSleep++;
-				return false;
-			}
-			
-			return true; //THE SEQUENCE IS COMPLETED, THE COMPUTATION MAY NOW HALT.
-//			haltComputation(); //THE SEQUENCE IS COMPLETED, THE COMPUTATION MAY NOW HALT.
-		}
-		return false;
-	}
 
 	/**
 	 * 
@@ -355,16 +313,13 @@ public class LayoutRoutine {
 			return false;
 		}
 		
-		if(masterHaltingSequence())
+		if(checkForConvergence())
 			return true; //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS
-
-		if(halting) //IF IT IS, THIS STEP MASTER COMPUTATION ENDS HERE.
-			return false;
 		
 		if(master.getSuperstep() == 1){
 			try {
 				superstepOneSpecials(); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
-					master.setComputation(drawingScaler); //... AND APPLY THEM
+					master.setComputation(DrawingBoundariesExplorerWithComponentsNo.class); //... AND APPLY THEM
 					return false;
 			} catch (IllegalAccessException e) {
 				master.haltComputation();
@@ -399,110 +354,7 @@ public class LayoutRoutine {
 		return ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/allVertices > threshold;
 	}
 	
-	/**
-	 * This method computes the connected components final grid layout.
-	 */
-	protected void computeComponentGridLayout() {
-		
-		float componentPadding = master.getConf().getFloat(LayoutRoutine.componentPaddingConfString, defaultPadding);
-		float minRatioThreshold = master.getConf().getFloat(LayoutRoutine.minRationThresholdString, defaultMinRatioThreshold );
-		
-		MapWritable offsets = new MapWritable();
-				
-		MapWritable maxCoordsMap = master.getAggregatedValue(maxCoords);
-		MapWritable minCoordsMap = master.getAggregatedValue(minCoords);
-		MapWritable componentsNo = master.getAggregatedValue(componentNoOfNodes);
-		
-		//##### SORTER -- THE MAP CONTAINING THE COMPONENTS' SIZES IS SORTED BY ITS VALUES
-		
-		LinkedHashMap<LongWritable, IntWritable> sortedMap = (LinkedHashMap<LongWritable, IntWritable>)sortMapByValues(componentsNo);
-	
-		LongWritable[] componentSizeSorter = sortedMap.keySet().toArray(new LongWritable[0]);
-		IntWritable[] componentSizeSorterValues = sortedMap.values().toArray(new IntWritable[0]);
-				
-		int coloumnNo = new Double(Math.ceil(Math.sqrt(componentsNo.size() - 1))).intValue();
-		
-		Point2D.Float cursor = new Point2D.Float(0.0f, 0.0f);
-		Point2D.Float tableOrigin = new Point2D.Float(0.0f, 0.0f);
-		
-		Long maxID = componentSizeSorter[componentSizeSorter.length-1].get();
-		int maxNo = componentSizeSorterValues[componentSizeSorter.length-1].get();// ((LongWritable)componentsNo.get(new LongWritable(maxID))).get();
-		
-		float[] translationCorrection = ((FloatWritableArray)minCoordsMap.get(new LongWritable(maxID))).get();
-		offsets.put(new LongWritable(maxID), new FloatWritableArray(new float[]{-translationCorrection[0], -translationCorrection[1], 1.0f, cursor.x, cursor.y}));
-		
-		float[] maxComponents = ((FloatWritableArray)maxCoordsMap.get(new LongWritable(maxID))).get();
-//		float componentPadding = getConf().getFloat(FloodingMaster.componentPaddingConfString, defaultPadding)*maxComponents[0];
-		cursor.setLocation((maxComponents[0] - translationCorrection[0]) + componentPadding, 0.0f); //THE BIGGEST COMPONENT IS PLACED IN THE UPPER LEFT CORNER.
-		tableOrigin.setLocation(cursor);
-		
-		float coloumnMaxY = 0.0f;
-		int counter = 1;
-		
-		for(int j=componentSizeSorter.length-2; j>=0; j--){ //THE OTHER SMALLER COMPONENTS ARE ARRANGED IN A GRID.
-			long currentComponent = componentSizeSorter[j].get();
-			maxComponents = ((FloatWritableArray)maxCoordsMap.get(new LongWritable(currentComponent))).get();
-			float sizeRatio = (float)componentSizeSorterValues[j].get()/maxNo;
-			translationCorrection = ((FloatWritableArray)minCoordsMap.get(new LongWritable(currentComponent))).get();
-						
-			if(sizeRatio < minRatioThreshold)	
-				sizeRatio = minRatioThreshold;
-			
-			maxComponents[0] -= translationCorrection[0];
-			maxComponents[1] -= translationCorrection[1];
-			maxComponents[0] *= sizeRatio;
-			maxComponents[1] *= sizeRatio;
-			
-			offsets.put(new LongWritable(currentComponent), new FloatWritableArray(new float[]{-translationCorrection[0], -translationCorrection[1], sizeRatio,  cursor.x, cursor.y}));
-			if(maxComponents[1] > coloumnMaxY)
-				coloumnMaxY = maxComponents[1];
-			if(counter % coloumnNo != 0){
-				cursor.setLocation(cursor.x + maxComponents[0] + componentPadding, cursor.y);
-				counter++;
-			}else{
-				cursor.setLocation(tableOrigin.x, cursor.y + coloumnMaxY + componentPadding);
-				coloumnMaxY = 0.0f;
-				counter = 1;
-			}
-		}
-		master.setAggregatedValue(offsetsAggregator, offsets); //THE VALUES COMPUTED TO LAYOUT THE COMPONENTS ARE STORED INTO AN AGGREGATOR.
-	}
-	
-	/**
-	 * This method sorts a map by its values.
-	 * 
-	 * @param mapToSort
-	 * @return The sorted LinkedHashMap.
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected static LinkedHashMap sortMapByValues(Map mapToSort){
-		List keys = Lists.newArrayList(mapToSort.keySet());
-		List values = Lists.newArrayList(mapToSort.values());
-				
-		Collections.sort(keys);
-		Collections.sort(values);	
-		
-		LinkedHashMap sortedMap = new LinkedHashMap(mapToSort.size());
-		
-		Iterator vals = values.iterator();
-		
-		while(vals.hasNext()){
-			Object currentVal = vals.next();
-			Iterator keysToIterate = keys.iterator();
-			
-			while(keysToIterate.hasNext()){
-				Object currentKey = keysToIterate.next();
-				if(mapToSort.get(currentKey).equals(currentVal)){
-					sortedMap.put(currentKey, currentVal);
-					keys.remove(currentKey);
-					break;
-				}	
-			}
-		}
-		
-		return sortedMap;
-		
-	}
+
 
 	/**
 	 * In this computation each vertex simply aggregates its coordinates to the max and min coodinates aggregator of its component.

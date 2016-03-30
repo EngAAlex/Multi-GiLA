@@ -23,7 +23,7 @@ public class InterLayerCommunicationUtils{
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class coordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessage>{
+	public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessage>{
 
 		/* (non-Javadoc)
 		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)

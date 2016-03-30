@@ -18,7 +18,7 @@ import org.apache.hadoop.io.FloatWritable;
 
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.multi.MultiScaleComputation;
-import unipg.gila.multi.MultiScaleDirector;
+import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.multi.common.PathWritable;
@@ -116,7 +116,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		defaultLength = getConf().getFloat(MultiScaleDirector.placerDefaultLengthString, MultiScaleDirector.placerDefaultLength);
+		defaultLength = getConf().getFloat(SolarMergerRoutine.placerDefaultLengthString, SolarMergerRoutine.placerDefaultLength);
 	}
 	
 }
