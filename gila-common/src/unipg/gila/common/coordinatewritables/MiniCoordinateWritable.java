@@ -22,6 +22,7 @@ import java.util.Iterator;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -33,7 +34,7 @@ import unipg.gila.common.datastructures.LongWritableSet;
  * @author Alessio Arleo
  *
  */
-public class MiniCoordinateWritable implements Writable{
+public class MiniCoordinateWritable implements Writable, WritableFactory{
 
 	/**
 	 * The vertex X coordinate.
@@ -96,7 +97,11 @@ public class MiniCoordinateWritable implements Writable{
 	public Iterator<LongWritable> getOneDegreeVertices(){
 		return (Iterator<LongWritable>) oneEdges.iterator();
 	}
-		
+	
+	public void setComponent(int component){
+		this.component = component;
+	}
+	
 	public int getComponent() {
 		return component;
 	}
@@ -121,6 +126,13 @@ public class MiniCoordinateWritable implements Writable{
 			oneEdges.write(out);
 		}
 		out.writeInt(component);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.WritableFactory#newInstance()
+	 */
+	public Writable newInstance() {
+		return new MiniCoordinateWritable();
 	}
 
 }

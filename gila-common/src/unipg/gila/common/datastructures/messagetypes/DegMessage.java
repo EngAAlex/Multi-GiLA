@@ -19,6 +19,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Writable;
+
 /**
  * This kind of message is used to prune the one degree messages and carries the degree of the generating vertex.
  * 
@@ -125,6 +127,13 @@ public class DegMessage extends MessageWritable<Long, Integer> {
 	@Override
 	public String toString() {
 		return getPayloadVertex() + " " + getValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.WritableFactory#newInstance()
+	 */
+	public Writable newInstance() {
+		return new DegMessage();
 	}
 
 }

@@ -26,16 +26,16 @@
   		<artifactId>json</artifactId>
   	</dependency>
   	<dependency>
-  		<groupId>org.apache.hadoop</groupId>
-  		<artifactId>hadoop-mapreduce-client-core</artifactId>
+  		<groupId>org.apache.giraph</groupId>
+  		<artifactId>giraph-core</artifactId>
   	</dependency>
   	<dependency>
   		<groupId>org.apache.hadoop</groupId>
   		<artifactId>hadoop-common</artifactId>
   	</dependency>
   	<dependency>
-  		<groupId>org.apache.giraph</groupId>
-  		<artifactId>giraph-core</artifactId>
+  		<groupId>org.apache.hadoop</groupId>
+  		<artifactId>hadoop-mapreduce-client-core</artifactId>
   	</dependency>
   </dependencies>
   <name>gila-common</name>

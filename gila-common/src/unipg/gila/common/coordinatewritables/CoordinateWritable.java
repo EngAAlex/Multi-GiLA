@@ -214,6 +214,14 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 		out.writeBoolean(justReset);
 		out.writeFloat(shortestEdge);
 	}
+	
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.coordinatewritables.MiniCoordinateWritable#newInstance()
+	 */
+	@Override
+	public Writable newInstance() {
+		return new CoordinateWritable();
+	}
 
 }
 

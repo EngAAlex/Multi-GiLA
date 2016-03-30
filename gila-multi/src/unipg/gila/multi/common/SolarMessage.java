@@ -23,6 +23,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.hadoop.io.Writable;
+
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 
@@ -167,6 +169,13 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 			propagatedSolarMessage.copyExtraPayload(extraPayload);
 			return propagatedSolarMessage;
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.WritableFactory#newInstance()
+	 */
+	public Writable newInstance() {
+		return new SolarMessage();
 	}
 
 

@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
-import unipg.gila.layout.FloodingMaster;
+import unipg.gila.layout.LayoutRoutine;
 
 /**
  * Algorithm final output format. Each line represents a vertex and is formatted as follows:
@@ -59,8 +59,8 @@ TextVertexOutputFormat<PartitionedLongWritable, CoordinateWritable, NullWritable
 		public void initialize(TaskAttemptContext context) throws IOException,
 				InterruptedException {
 			super.initialize(context);
-			showPartitioning = getConf().getBoolean(FloodingMaster.showPartitioningString, false);
-			showComponent = getConf().getBoolean(FloodingMaster.showComponentString, true);
+			showPartitioning = getConf().getBoolean(LayoutRoutine.showPartitioningString, false);
+			showComponent = getConf().getBoolean(LayoutRoutine.showComponentString, true);
 		}
 		
 		@Override

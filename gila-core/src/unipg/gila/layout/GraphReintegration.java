@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import org.apache.giraph.edge.ArrayListEdges;
+import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.AbstractComputation;
 import org.apache.giraph.graph.Vertex;
@@ -32,6 +33,7 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableFactories;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
@@ -52,12 +54,13 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class PlainDummyComputation extends AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
-
+	public static class PlainDummyComputation<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+	AbstractComputation<I, V, E, M1, M2>{
+		
 		@Override
 		public void compute(
-				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<LayoutMessage> messages) throws IOException {
+				Vertex<I, V, E> vertex,
+				Iterable<M1> messages) throws IOException {
 			return;
 		}
 
@@ -114,7 +117,7 @@ public class GraphReintegration {
 		@Override
 		public void preSuperstep() {
 			super.preSuperstep();
-			aperture = new Double(getConf().getFloat(FloodingMaster.coneWidth, FloodingMaster.coneWidthDefault) * DEGREE_TO_RADIANS_CONSTANT).floatValue();
+			aperture = new Double(getConf().getFloat(LayoutRoutine.coneWidth, LayoutRoutine.coneWidthDefault) * DEGREE_TO_RADIANS_CONSTANT).floatValue();
 		}
 
 	}
@@ -217,7 +220,7 @@ public class GraphReintegration {
 
 		public void preSuperstep() {
 			super.preSuperstep();
-			padding = new Double(getConf().getFloat(FloodingMaster.paddingString, paddingDefault)*DEGREE_TO_RADIANS_CONSTANT).floatValue();
+			padding = new Double(getConf().getFloat(LayoutRoutine.paddingString, paddingDefault)*DEGREE_TO_RADIANS_CONSTANT).floatValue();
 		}
 		
 	}
@@ -289,7 +292,7 @@ public class GraphReintegration {
 
 		public void preSuperstep() {
 			super.preSuperstep();	
-			lowThreshold = new Double(getConf().getFloat(FloodingMaster.lowThresholdString, FloodingMaster.lowThresholdDefault)*DEGREE_TO_RADIANS_CONSTANT).floatValue();
+			lowThreshold = new Double(getConf().getFloat(LayoutRoutine.lowThresholdString, LayoutRoutine.lowThresholdDefault)*DEGREE_TO_RADIANS_CONSTANT).floatValue();
 		}
 	}
 
@@ -373,16 +376,21 @@ public class GraphReintegration {
 			}
 		}
 		
+		@SuppressWarnings("unchecked")
 		private void addSingleOneDegreeVertex(long idOfOneEdge, float[] coordinatesOfVertexToPlace, Vertex<I, V, E> neighborVertex){
-			ArrayListEdges<PartitionedLongWritable, NullWritable> ale = new ArrayListEdges<PartitionedLongWritable, NullWritable>();
+			ArrayListEdges<I, E> ale = new ArrayListEdges<I, E>();
 			ale.initialize(1);
-			ale.add(EdgeFactory.create(neighborVertex.getId(), NullWritable.get()));
-			CoordinateWritable value = new CoordinateWritable(coordinatesOfVertexToPlace[0], coordinatesOfVertexToPlace[1], neighborVertex.getValue().getComponent());
-			PartitionedLongWritable oE = new PartitionedLongWritable(neighborVertex.getId().getPartition(), idOfOneEdge);
+			ale.add(((Edge<I, E>) EdgeFactory.create(neighborVertex.getId(), WritableFactories.newInstance(getConf().getEdgeValueClass()))));
+			V value = (V) WritableFactories.newInstance(getConf().getVertexValueClass());
+			value.setCoordinates(coordinatesOfVertexToPlace[0], coordinatesOfVertexToPlace[1]);
+			value.setComponent(neighborVertex.getValue().getComponent());
+			I oE = (I)WritableFactories.newInstance(getConf().getVertexIdClass());
+			oE.setId(idOfOneEdge);
+			oE.setPartition(neighborVertex.getId().getPartition());
 			added++;
 			try {
 				addVertexRequest(oE, value, ale);
-				addEdgeRequest(neighborVertex.getId(), EdgeFactory.create(oE, NullWritable.get()));					
+				addEdgeRequest(neighborVertex.getId(), ((Edge<I, E>) EdgeFactory.create(neighborVertex.getId(), WritableFactories.newInstance(getConf().getEdgeValueClass()))));					
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -419,9 +427,9 @@ public class GraphReintegration {
 		@Override
 		public void preSuperstep() {
 			added=0;
-			k = ((FloatWritable)getAggregatedValue(FloodingMaster.k_agg)).get();
-			radius = getConf().getFloat(FloodingMaster.radiusString, FloodingMaster.radiusDefault);
-			isRadiusDynamic = getConf().getBoolean(FloodingMaster.dynamicRadiusString, true);
+			k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+			radius = getConf().getFloat(LayoutRoutine.radiusString, LayoutRoutine.radiusDefault);
+			isRadiusDynamic = getConf().getBoolean(LayoutRoutine.dynamicRadiusString, true);
 		}
 	}
 

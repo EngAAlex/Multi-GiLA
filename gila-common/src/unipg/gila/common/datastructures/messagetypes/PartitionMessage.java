@@ -19,6 +19,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Writable;
+
 /**
  * This class is used during the partitioning label propagation.
  * 
@@ -108,6 +110,13 @@ public class PartitionMessage extends MessageWritable<Long, Short> {
 	@Override
 	public String toString() {
 		return getPayloadVertex() + " " + getValue();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.WritableFactory#newInstance()
+	 */
+	public Writable newInstance() {
+		return new PartitionMessage();
 	}
 
 }

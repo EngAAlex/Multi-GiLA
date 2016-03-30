@@ -20,6 +20,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableFactory;
 import org.apache.log4j.Logger;
 
 /**
@@ -31,14 +32,12 @@ import org.apache.log4j.Logger;
  * @param <P> the class of the payload vertex.
  * @param <T> the class of the value carried by the message.
  */
-public abstract class MessageWritable<P, T> implements Writable{
+public abstract class MessageWritable<P, T> implements Writable, WritableFactory{
 	
 	protected int ttl;
 	protected P payloadVertex;
 	protected T value;
-	
-	Logger log = Logger.getLogger(MessageWritable.class);
-	
+		
 	/**
 	 * Parameter-less constructor.
 	 * 
@@ -72,6 +71,10 @@ public abstract class MessageWritable<P, T> implements Writable{
 		this.value = value;
 	}
 	
+	public void setTTL(int ttl){
+		this.ttl = ttl;
+	}
+	
 	/**
 	 * Method that returns the time to live of the message.
 	 * 
@@ -81,6 +84,10 @@ public abstract class MessageWritable<P, T> implements Writable{
 		return ttl;
 	}
 
+	public void setPayloadVertex(P payloadVertex){
+		this.payloadVertex = payloadVertex;
+	}
+	
 	/**
 	 * Returns the payload vertex.
 	 * 
@@ -124,7 +131,7 @@ public abstract class MessageWritable<P, T> implements Writable{
 	public T getValue(){
 		return this.value;
 	}
-
+	
 	public void readFields(DataInput in) throws IOException{
 		ttl = in.readInt();
 		specificRead(in);

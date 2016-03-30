@@ -57,6 +57,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
 			throws IOException {
@@ -115,7 +116,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			vValue.analyze(currentPayload);
 
 			if(!currentMessage.isAZombie()){
-				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
+				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
 				if(!useQueues)
 					sendMessageToAllEdges(vertex, (M2) currentMessage.propagate());					
 				else
@@ -140,9 +141,9 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		Writable[] toDequeue = vValue.dequeueMessages(new Double(Math.ceil(queueFlushRatio*vertex.getNumEdges())).intValue());
 
 		for(int i=0; i<toDequeue.length; i++){
-			LayoutMessage current = (LayoutMessage) toDequeue[i];
+			M2 current = (M2) toDequeue[i];
 			if(current != null){
-				aggregate(FloodingMaster.MessagesAggregatorString, new BooleanWritable(false));
+				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
 				sendMessageToAllEdges(vertex, (M2) current);
 			}
 			else
@@ -163,14 +164,14 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		k = ((FloatWritable)getAggregatedValue(FloodingMaster.k_agg)).get();
-		walshawConstant = ((FloatWritable)getAggregatedValue(FloodingMaster.walshawConstant_agg)).get();
+		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+		walshawConstant = ((FloatWritable)getAggregatedValue(LayoutRoutine.walshawConstant_agg)).get();
 
-		useQueues = getConf().getBoolean(FloodingMaster.useQueuesString, false);
-		queueFlushRatio = getConf().getFloat(FloodingMaster.queueUnloadFactor, 0.1f);
+		useQueues = getConf().getBoolean(LayoutRoutine.useQueuesString, false);
+		queueFlushRatio = getConf().getFloat(LayoutRoutine.queueUnloadFactor, 0.1f);
 
 		try {
-			force = ((Class<Force>)Class.forName(getConf().get(FloodingMaster.forceMethodOptionString, FR.class.toString()))).newInstance();
+			force = ((Class<Force>)Class.forName(getConf().get(LayoutRoutine.forceMethodOptionString, FR.class.toString()))).newInstance();
 		} catch (Exception e) {
 			force = new FR();
 		}

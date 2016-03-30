@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package unipg.gila.layout;
+package unipg.gila.layout.single;
 
 import java.io.IOException;
 
@@ -24,10 +24,16 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.NullWritable;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.layout.AbstractPropagator;
+import unipg.gila.layout.AbstractSeeder;
+import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
+import unipg.gila.layout.LayoutRoutine.DrawingScaler;
+import unipg.gila.layout.LayoutRoutine.LayoutCCs;
 
 public class SingleScaleLayout {
 	
@@ -99,6 +105,14 @@ public class SingleScaleLayout {
 				Iterable<LayoutMessage> messages) throws IOException {
 			super.compute(vertex, messages);
 		}
-
 	}
+	
+	public static class SingleScaleGraphExplorer extends DrawingBoundariesExplorer<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
+	{}
+	
+	public static class SingleScaleDrawingScaler extends DrawingScaler<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
+	{}
+	
+	public static class SingleScaleLayoutCCs extends LayoutCCs<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
+	{}
 }

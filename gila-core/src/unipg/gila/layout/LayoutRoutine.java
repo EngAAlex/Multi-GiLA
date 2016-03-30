@@ -32,6 +32,7 @@ import org.apache.giraph.graph.AbstractComputation;
 import org.apache.giraph.graph.Computation;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.master.DefaultMasterCompute;
+import org.apache.giraph.master.MasterCompute;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -53,6 +54,8 @@ import unipg.gila.coolingstrategies.CoolingStrategy;
 import unipg.gila.coolingstrategies.LinearCoolingStrategy;
 import unipg.gila.layout.GraphReintegration.FairShareReintegrateOneEdges;
 import unipg.gila.layout.GraphReintegration.PlainDummyComputation;
+import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer.DrawingBoundariesExplorerWithComponentsNo;
+import unipg.gila.layout.single.SingleScaleLayout.Seeder;
 import unipg.gila.utils.Toolbox;
 
 import com.google.common.collect.Lists;
@@ -65,7 +68,8 @@ import com.google.common.collect.Lists;
  * @author general
  *
  */
-public class FloodingMaster extends DefaultMasterCompute {
+@SuppressWarnings("rawtypes")
+public class LayoutRoutine {
 		
 	//#############CLINT OPTIONS
 	
@@ -154,58 +158,79 @@ public class FloodingMaster extends DefaultMasterCompute {
 	protected CoolingStrategy coolingStrategy;
 	static int maxSuperstep;
 	
-	@Override
-	public void initialize() throws InstantiationException,
-	IllegalAccessException {		
-		maxSuperstep = getConf().getInt(computationLimit, maxSstepsDefault);
+	protected MasterCompute master;
+	protected Class<? extends AbstractSeeder> seeder;
+	protected Class<? extends AbstractPropagator> propagator;
+	protected Class<? extends DrawingBoundariesExplorer> drawingExplorer;
+	protected Class<? extends DrawingBoundariesExplorerWithComponentsNo> drawingExplorerWithCCs;
+	protected Class<? extends DrawingScaler> drawingScaler;
+	protected Class<? extends LayoutCCs> layoutCC;
+	protected Class<? extends Computation> dummyComputation;
+	
+	public void initialize(MasterCompute myMaster, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator,
+			Class<? extends DrawingBoundariesExplorer> explorer, Class<? extends DrawingBoundariesExplorerWithComponentsNo> explorerWithCCs,
+			Class<? extends DrawingScaler> drawingScaler,
+			Class<? extends LayoutCCs> layoutCC,
+			Class<? extends Computation> dummyComputation) throws InstantiationException,
+	IllegalAccessException {
+		master = myMaster;
+		this.seeder = seeder;
+		this.propagator = propagator;
+		drawingExplorer = explorer;
+		drawingExplorerWithCCs = explorerWithCCs;
+		this.layoutCC = layoutCC;
+		this.dummyComputation = dummyComputation;
+		this.drawingScaler = drawingScaler;
+		
+		maxSuperstep = master.getConf().getInt(computationLimit, maxSstepsDefault);
 
-		threshold = getConf().getFloat(convergenceThresholdString, defaultConvergenceThreshold);
+		threshold = master.getConf().getFloat(convergenceThresholdString, defaultConvergenceThreshold);
 
-		registerAggregator(convergenceAggregatorString, LongSumAggregator.class);
-		registerAggregator(MessagesAggregatorString, BooleanAndAggregator.class);
+		master.registerAggregator(convergenceAggregatorString, LongSumAggregator.class);
+		master.registerAggregator(MessagesAggregatorString, BooleanAndAggregator.class);
 
-		registerPersistentAggregator(maxOneDegAggregatorString, IntMaxAggregator.class);
+		master.registerPersistentAggregator(maxOneDegAggregatorString, IntMaxAggregator.class);
 
 		settledSteps = 0;
 		halting = false;
 
 		// FRAME AGGREGATORS
 
-		registerPersistentAggregator(correctedSizeAGG, ComponentMapOverwriteAggregator.class);
+		master.registerPersistentAggregator(correctedSizeAGG, ComponentMapOverwriteAggregator.class);
 
 		// TEMP AGGREGATORS
 
-		registerPersistentAggregator(tempAGG, ComponentMapOverwriteAggregator.class);
+		master.registerPersistentAggregator(tempAGG, ComponentMapOverwriteAggregator.class);
 
 		// COORDINATES AGGREGATORS
 
-		registerPersistentAggregator(maxCoords, ComponentFloatXYMaxAggregator.class);
-		registerPersistentAggregator(minCoords, ComponentFloatXYMinAggregator.class);
-		registerAggregator(scaleFactorAgg, ComponentMapOverwriteAggregator.class);
+		master.registerPersistentAggregator(maxCoords, ComponentFloatXYMaxAggregator.class);
+		master.registerPersistentAggregator(minCoords, ComponentFloatXYMinAggregator.class);
+		master.registerAggregator(scaleFactorAgg, ComponentMapOverwriteAggregator.class);
 
 		// CONSTANT AGGREGATORS
 
-		registerPersistentAggregator(k_agg, FloatMaxAggregator.class);		
-		registerPersistentAggregator(walshawConstant_agg, FloatMaxAggregator.class);	
+		master.registerPersistentAggregator(k_agg, FloatMaxAggregator.class);		
+		master.registerPersistentAggregator(walshawConstant_agg, FloatMaxAggregator.class);	
 		
 		//COMPONENT DATA AGGREGATORS
 		
-		registerPersistentAggregator(componentNumber, SetAggregator.class);
-		registerPersistentAggregator(componentNoOfNodes, ComponentIntSumAggregator.class);
-		registerAggregator(offsetsAggregator, ComponentMapOverwriteAggregator.class);
+		master.registerPersistentAggregator(componentNumber, SetAggregator.class);
+		master.registerPersistentAggregator(componentNoOfNodes, ComponentIntSumAggregator.class);
+		master.registerAggregator(offsetsAggregator, ComponentMapOverwriteAggregator.class);
 
-		float nl = getConf().getFloat(node_length ,defaultNodeValue);
-		float nw = getConf().getFloat(node_width ,defaultNodeValue);
-		float ns = getConf().getFloat(node_separation ,defaultNodeValue);
+		float nl = master.getConf().getFloat(node_length ,defaultNodeValue);
+		float nw = master.getConf().getFloat(node_width ,defaultNodeValue);
+		float ns = master.getConf().getFloat(node_separation ,defaultNodeValue);
 		float k = new Double(ns + Toolbox.computeModule(new float[]{nl, nw})).floatValue();
-		setAggregatedValue(k_agg, new FloatWritable(k));
+		master.setAggregatedValue(k_agg, new FloatWritable(k));
 		
-		float walshawModifier = getConf().getFloat(walshawModifierString, walshawModifierDefault);
+		float walshawModifier = master.getConf().getFloat(walshawModifierString, walshawModifierDefault);
 		
-		setAggregatedValue(walshawConstant_agg, 
-				new FloatWritable(getConf().getFloat(repulsiveForceModerationString,(float) (Math.pow(k, 2) * walshawModifier))));
+		master.setAggregatedValue(walshawConstant_agg, 
+				new FloatWritable(master.getConf().getFloat(repulsiveForceModerationString,(float) (Math.pow(k, 2) * walshawModifier))));
 		
-		coolingStrategy = new LinearCoolingStrategy(new String[]{getConf().get(FloodingMaster.coolingSpeed, defaultCoolingSpeed )});
+		coolingStrategy = new LinearCoolingStrategy(new String[]{master.getConf().get(LayoutRoutine.coolingSpeed, defaultCoolingSpeed )});
 	}
 
 	/**
@@ -215,14 +240,14 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 */
 	protected void superstepOneSpecials() throws IllegalAccessException{
 		
-		MapWritable aggregatedMaxComponentData = getAggregatedValue(maxCoords);
-		MapWritable aggregatedMinComponentData = getAggregatedValue(minCoords);
-		MapWritable componentNodesMap = getAggregatedValue(componentNoOfNodes);
+		MapWritable aggregatedMaxComponentData = master.getAggregatedValue(maxCoords);
+		MapWritable aggregatedMinComponentData = master.getAggregatedValue(minCoords);
+		MapWritable componentNodesMap = master.getAggregatedValue(componentNoOfNodes);
 
 		Iterator<Entry<Writable, Writable>> iteratorOverComponents = aggregatedMaxComponentData.entrySet().iterator();
 
-		float k = ((FloatWritable)getAggregatedValue(k_agg)).get();
-		float tempConstant = getConf().getFloat(initialTempFactorString, defaultInitialTempFactor);
+		float k = ((FloatWritable)master.getAggregatedValue(k_agg)).get();
+		float tempConstant = master.getConf().getFloat(initialTempFactorString, defaultInitialTempFactor);
 		
 		MapWritable correctedSizeMap = new MapWritable();
 		MapWritable tempMap = new MapWritable();
@@ -255,16 +280,16 @@ public class FloodingMaster extends DefaultMasterCompute {
 			
 		}
 		
-		setAggregatedValue(correctedSizeAGG, correctedSizeMap);
-		setAggregatedValue(tempAGG, tempMap);
-		setAggregatedValue(scaleFactorAgg, scaleFactorMap);
+		master.setAggregatedValue(correctedSizeAGG, correctedSizeMap);
+		master.setAggregatedValue(tempAGG, tempMap);
+		master.setAggregatedValue(scaleFactorAgg, scaleFactorMap);
 	}
 
 	/**
 	 * Convenience method to update the temperature aggregator each time a new seeding phase is performed.
 	 */
 	protected void updateTemperatureAggregator(){
-		MapWritable tempMap = getAggregatedValue(tempAGG);
+		MapWritable tempMap = master.getAggregatedValue(tempAGG);
 		Iterator<Entry<Writable, Writable>> tempsIterator = tempMap.entrySet().iterator();
 		MapWritable newTempsMap = new MapWritable();
 
@@ -275,7 +300,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 																					 coolingStrategy.cool(temps[1])}));
 			
 		}		
-		setAggregatedValue(tempAGG, newTempsMap);
+		master.setAggregatedValue(tempAGG, newTempsMap);
 	}
 	
 	/**
@@ -283,39 +308,41 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 * 
 	 * @throws IllegalAccessException
 	 */
-	protected void masterHaltingSequence(){
+	protected boolean masterHaltingSequence(){
 		if(readyToSleep != 0 || checkForConvergence()){ //IF TRUE, THE HALTING SEQUENCE IS IN PROGRESS
 			halting = true;
 			if(readyToSleep == 0){ //FIRST STEP: ONE DEGREE VERTICES REINTEGRATION
 				try {
-					setComputation((Class<? extends Computation>)Class.forName(getConf().get(oneDegreeReintegratingClassOption, FairShareReintegrateOneEdges.class.toString())));
+					master.setComputation((Class<? extends Computation>)Class.forName(master.getConf().get(oneDegreeReintegratingClassOption, FairShareReintegrateOneEdges.class.toString())));
 				} catch (ClassNotFoundException e) {
-					setComputation(FairShareReintegrateOneEdges.class);
+					master.setComputation(FairShareReintegrateOneEdges.class);
 				}	
 				readyToSleep++;								
-				return;
+				return false;
 			}
 			if(readyToSleep == 1){ //A BLANK COMPUTATION TO PROPAGATE THE GRAPH MODIFICATIONS MADE IN THE PREVIOUS SUPERSTEP
-				setComputation(PlainDummyComputation.class);
+				master.setComputation(dummyComputation);
 				readyToSleep++;
-				return;
+				return false;
 			}
 			if(readyToSleep == 2){ //SECOND STEP: TO COMPUTE THE FINAL GRID LAYOUT OF THE CONNECTED COMPONENTS, THEIR DRAWING
-				setAggregatedValue(maxCoords, new MapWritable()); //PROPORTIONS ARE SCANNED.
-				setAggregatedValue(minCoords, new MapWritable());
-				setComputation(DrawingBoundariesExplorer.class);
+				master.setAggregatedValue(maxCoords, new MapWritable()); //PROPORTIONS ARE SCANNED.
+				master.setAggregatedValue(minCoords, new MapWritable());
+				master.setComputation(drawingExplorer);
 				readyToSleep++;
-				return;
+				return false;
 			}
 			if(readyToSleep == 3){ //THIRD STEP: ONCE THE DATA NEEDED TO LAYOUT THE CONNECTED COMPONENTS GRID ARE COMPUTED, 
 				computeComponentGridLayout(); //THE LAYOUT IS COMPUTED.
-				setComputation(LayoutCCs.class);			
+				master.setComputation(layoutCC);			
 				readyToSleep++;
-				return;
+				return false;
 			}
 			
-			haltComputation(); //THE SEQUENCE IS COMPLETED, THE COMPUTATION MAY NOW HALT.
+			return true; //THE SEQUENCE IS COMPLETED, THE COMPUTATION MAY NOW HALT.
+//			haltComputation(); //THE SEQUENCE IS COMPLETED, THE COMPUTATION MAY NOW HALT.
 		}
+		return false;
 	}
 
 	/**
@@ -323,39 +350,40 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 * The main master compute method. 
 	 * 
 	 */
-	@Override
-	public void compute(){
-		if(getSuperstep() == 0){
-			return;
+	public boolean compute(){
+		if(master.getSuperstep() == 0){
+			return false;
 		}
 		
-		masterHaltingSequence(); //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS
+		if(masterHaltingSequence())
+			return true; //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS
 
 		if(halting) //IF IT IS, THIS STEP MASTER COMPUTATION ENDS HERE.
-			return;
+			return false;
 		
-		if(getSuperstep() == 1){
+		if(master.getSuperstep() == 1){
 			try {
 				superstepOneSpecials(); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
-					setComputation(DrawingScaler.class); //... AND APPLY THEM
-					return;
+					master.setComputation(drawingScaler); //... AND APPLY THEM
+					return false;
 			} catch (IllegalAccessException e) {
-				haltComputation();
+				master.haltComputation();
+				return true;
 			}
 		}		
 		
 		//REGIME COMPUTATION
-		if(((BooleanWritable)getAggregatedValue(MessagesAggregatorString)).get() && !(getComputation().toString().contains("Seeder"))){
+		if(((BooleanWritable)master.getAggregatedValue(MessagesAggregatorString)).get() && !(master.getComputation().toString().contains("Seeder"))){
 			if(settledSteps > 0)
 				updateTemperatureAggregator();	//COOL DOWN THE TEMPERATURE
-			setComputation(Seeder.class); //PERFORM THE LAYOUT UPDATE AND SEEDING
+			master.setComputation(seeder); //PERFORM THE LAYOUT UPDATE AND SEEDING
 			settledSteps++;
 		}else
-			if(!(getComputation().toString().contains("Propagator"))){
-				setComputation(AbstractPropagator.class); //PROPAGATE THE MESSAGES AND COMPUTE THE FORCES
+			if(!(master.getComputation().toString().contains("Propagator"))){
+				master.setComputation(propagator); //PROPAGATE THE MESSAGES AND COMPUTE THE FORCES
 			}	
 
-
+		return false;
 	}
 
 	/**
@@ -365,10 +393,10 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 */
 	protected boolean checkForConvergence(){
 		if(allVertices <= 0){
-			allVertices = getTotalNumVertices();
+			allVertices = master.getTotalNumVertices();
 			return false;
 		}
-		return ((LongWritable)getAggregatedValue(convergenceAggregatorString)).get()/allVertices > threshold;
+		return ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/allVertices > threshold;
 	}
 	
 	/**
@@ -376,14 +404,14 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 */
 	protected void computeComponentGridLayout() {
 		
-		float componentPadding = getConf().getFloat(FloodingMaster.componentPaddingConfString, defaultPadding);
-		float minRatioThreshold = getConf().getFloat(FloodingMaster.minRationThresholdString, defaultMinRatioThreshold );
+		float componentPadding = master.getConf().getFloat(LayoutRoutine.componentPaddingConfString, defaultPadding);
+		float minRatioThreshold = master.getConf().getFloat(LayoutRoutine.minRationThresholdString, defaultMinRatioThreshold );
 		
 		MapWritable offsets = new MapWritable();
 				
-		MapWritable maxCoordsMap = getAggregatedValue(maxCoords);
-		MapWritable minCoordsMap = getAggregatedValue(minCoords);
-		MapWritable componentsNo = getAggregatedValue(componentNoOfNodes);
+		MapWritable maxCoordsMap = master.getAggregatedValue(maxCoords);
+		MapWritable minCoordsMap = master.getAggregatedValue(minCoords);
+		MapWritable componentsNo = master.getAggregatedValue(componentNoOfNodes);
 		
 		//##### SORTER -- THE MAP CONTAINING THE COMPONENTS' SIZES IS SORTED BY ITS VALUES
 		
@@ -407,10 +435,10 @@ public class FloodingMaster extends DefaultMasterCompute {
 //		float componentPadding = getConf().getFloat(FloodingMaster.componentPaddingConfString, defaultPadding)*maxComponents[0];
 		cursor.setLocation((maxComponents[0] - translationCorrection[0]) + componentPadding, 0.0f); //THE BIGGEST COMPONENT IS PLACED IN THE UPPER LEFT CORNER.
 		tableOrigin.setLocation(cursor);
-			
+		
 		float coloumnMaxY = 0.0f;
 		int counter = 1;
-				
+		
 		for(int j=componentSizeSorter.length-2; j>=0; j--){ //THE OTHER SMALLER COMPONENTS ARE ARRANGED IN A GRID.
 			long currentComponent = componentSizeSorter[j].get();
 			maxComponents = ((FloatWritableArray)maxCoordsMap.get(new LongWritable(currentComponent))).get();
@@ -437,7 +465,7 @@ public class FloodingMaster extends DefaultMasterCompute {
 				counter = 1;
 			}
 		}
-		setAggregatedValue(offsetsAggregator, offsets); //THE VALUES COMPUTED TO LAYOUT THE COMPONENTS ARE STORED INTO AN AGGREGATOR.
+		master.setAggregatedValue(offsetsAggregator, offsets); //THE VALUES COMPUTED TO LAYOUT THE COMPONENTS ARE STORED INTO AN AGGREGATOR.
 	}
 	
 	/**
@@ -482,16 +510,16 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class DrawingBoundariesExplorer extends
-	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
+	public static class DrawingBoundariesExplorer<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+	AbstractComputation<I, V, E, M1, M2> {
 
 		protected float[] coords;
-		protected CoordinateWritable vValue;
+		protected V vValue;
 		
 		@Override
 		public void compute(
-				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
+				Vertex<I, V, E> vertex,
+				Iterable<M1> msgs) throws IOException {
 			vValue = vertex.getValue();
 			coords = vValue.getCoordinates();
 			MapWritable myCoordsPackage = new MapWritable();
@@ -500,12 +528,13 @@ public class FloodingMaster extends DefaultMasterCompute {
 			aggregate(minCoords, myCoordsPackage);
 		}
 		
-		public static class DrawingBoundariesExplorerWithComponentsNo extends DrawingBoundariesExplorer{
+		public static class DrawingBoundariesExplorerWithComponentsNo<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+		DrawingBoundariesExplorer<I, V, E, M1, M2>{
 			
 			@Override
 			public void compute(
-					Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-					Iterable<LayoutMessage> msgs) throws IOException {
+					Vertex<I, V, E> vertex,
+					Iterable<M1> msgs) throws IOException {
 				super.compute(vertex, msgs);
 				MapWritable information = new MapWritable();
 				information.put(new LongWritable(vValue.getComponent()), 
@@ -522,8 +551,8 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class DrawingScaler extends
-	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
+	public static class DrawingScaler <I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+	AbstractComputation<I, V, E, M1, M2>{
 		
 		MapWritable scaleFactors;
 		MapWritable minCoordinateMap;
@@ -537,9 +566,9 @@ public class FloodingMaster extends DefaultMasterCompute {
 
 		@Override
 		public void compute(
-				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-			CoordinateWritable vValue = vertex.getValue();
+				Vertex<I, V, E> vertex,
+				Iterable<M1> msgs) throws IOException {
+			V vValue = vertex.getValue();
 			float[] coords = vValue.getCoordinates();
 			float[] factors = ((FloatWritableArray)scaleFactors.get(new LongWritable(vValue.getComponent()))).get();
 			float[] minCoords = ((FloatWritableArray)minCoordinateMap.get(new LongWritable(vValue.getComponent()))).get();			
@@ -553,18 +582,18 @@ public class FloodingMaster extends DefaultMasterCompute {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class LayoutCCs extends
-	AbstractComputation<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage> {
-
+	public static class LayoutCCs <I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+	AbstractComputation<I, V, E, M1, M2>{
+		
 		MapWritable offsets;
 		
 		float componentPadding;
 		
 		@Override
 		public void compute(
-				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-				CoordinateWritable vValue = vertex.getValue();
+				Vertex<I, V, E> vertex,
+				Iterable<M1> msgs) throws IOException {
+				V vValue = vertex.getValue();
 				float[] coords = vValue.getCoordinates();
 				float[] ccOffset = ((FloatWritableArray)offsets.get(new LongWritable(vValue.getComponent()))).get();
 				vValue.setCoordinates(((coords[0] + ccOffset[0])*ccOffset[2]) + ccOffset[3], ((coords[1] + ccOffset[1])*ccOffset[2]) + ccOffset[4]);

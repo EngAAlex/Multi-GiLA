@@ -14,9 +14,15 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
+import unipg.gila.common.coordinatewritables.CoordinateWritable;
+import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;
+import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
+import unipg.gila.layout.LayoutRoutine.DrawingScaler;
+import unipg.gila.layout.LayoutRoutine.LayoutCCs;
+import unipg.gila.layout.single.NullWritable;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
@@ -95,5 +101,14 @@ public class MultiScaleLayout {
 			}
 		}
 	}
+	
+	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+	{}
+	
+	public static class MultiScaleDrawingScaler extends DrawingScaler<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+	{}
+	
+	public static class MultiScaleLayoutCCs extends LayoutCCs<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+	{}
 
 }

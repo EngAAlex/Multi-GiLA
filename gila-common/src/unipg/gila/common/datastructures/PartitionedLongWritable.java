@@ -19,7 +19,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.WritableFactory;
 
 /**
  * This class identifies a vertex by its id and partition.
@@ -27,7 +29,7 @@ import org.apache.hadoop.io.WritableComparable;
  * @author claudio
  *
  */
-public class PartitionedLongWritable implements WritableComparable<Object>{
+public class PartitionedLongWritable implements WritableComparable<Object>, WritableFactory{
 		
 		public static final String DELIMITER = "_";
 		protected short partition = -1;
@@ -92,8 +94,17 @@ public class PartitionedLongWritable implements WritableComparable<Object>{
 			return (int) id;
 		}
 
+		public void setPartition(short partition){
+			this.partition = partition;
+			
+		}
+		
 		public Short getPartition() {
 			return partition;
+		}
+		
+		public void setId(long id){
+			this.id = id;
 		}
 
 		public Long getId() {
@@ -106,6 +117,13 @@ public class PartitionedLongWritable implements WritableComparable<Object>{
 			}
 			PartitionedLongWritable other = (PartitionedLongWritable) o;
 			return this.id > other.id ? +1 : this.id < other.id ? -1 : 0;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.io.WritableFactory#newInstance()
+		 */
+		public Writable newInstance() {
+			return new PartitionedLongWritable();
 		}
 		
 			

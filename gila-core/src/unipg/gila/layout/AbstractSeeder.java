@@ -15,8 +15,8 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableFactories;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
@@ -55,7 +55,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 		CoordinateWritable vValue = vertex.getValue();
 
 		if(getSuperstep() == 0){ //FIRST SUPERSTEP, EACH VERTEX BROADCASTS ITS COORDINATES TO ITS NEIGHBOR.
-			aggregate(FloodingMaster.maxOneDegAggregatorString, new IntWritable(vValue.getOneDegreeVerticesQuantity()));
+			aggregate(LayoutRoutine.maxOneDegAggregatorString, new IntWritable(vValue.getOneDegreeVerticesQuantity()));
 			
 			gatherAndSend(vertex, vValue.getCoordinates());
 			vValue.resetAnalyzed();
@@ -91,20 +91,22 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 		}else
 			correctedDispModule = 0;
 
-		if((correctedDispModule < accuracy && getSuperstep() > 2) || getSuperstep() > FloodingMaster.maxSuperstep)
-			aggregate(FloodingMaster.convergenceAggregatorString, new LongWritable(1));
+		if((correctedDispModule < accuracy && getSuperstep() > 2) || getSuperstep() > LayoutRoutine.maxSuperstep)
+			aggregate(LayoutRoutine.convergenceAggregatorString, new LongWritable(1));
 
 		gatherAndSend(vertex, coords);
 		vValue.resetAnalyzed();
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void gatherAndSend(Vertex<I, V, E> vertex, float[] coords){
-		LayoutMessage toSend = new LayoutMessage(vertex.getId().getId(), 
-				ttlmax - 1,
-				coords);
+		M2 toSend = (M2) WritableFactories.newInstance(getConf().getOutgoingMessageValueClass());
+		toSend.setPayloadVertex(vertex.getId().getId());
+		toSend.setTTL(ttlmax - 1);
+		toSend.setValue(coords);
 		if(sendDegToo)
 			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
-		sendMessageToAllEdges(vertex, (M2) toSend);	
+		sendMessageToAllEdges(vertex, toSend);	
 	}
 	
 	/* (non-Javadoc)
@@ -118,13 +120,13 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		accuracy = getConf().getFloat(FloodingMaster.accuracyString, FloodingMaster.accuracyDefault);
-		ttlmax = getConf().getInt(FloodingMaster.ttlMaxString, FloodingMaster.ttlMaxDefault);		
+		accuracy = getConf().getFloat(LayoutRoutine.accuracyString, LayoutRoutine.accuracyDefault);
+		ttlmax = getConf().getInt(LayoutRoutine.ttlMaxString, LayoutRoutine.ttlMaxDefault);		
 
-		tempsMap = getAggregatedValue(FloodingMaster.tempAGG);
-		sizesMap = getAggregatedValue(FloodingMaster.correctedSizeAGG);
+		tempsMap = getAggregatedValue(LayoutRoutine.tempAGG);
+		sizesMap = getAggregatedValue(LayoutRoutine.correctedSizeAGG);
 		
-		sendDegToo = getConf().getBoolean(FloodingMaster.sendDegTooOptionString, false);
+		sendDegToo = getConf().getBoolean(LayoutRoutine.sendDegTooOptionString, false);
 	}
 
 }

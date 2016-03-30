@@ -22,6 +22,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Writable;
+
 /**
  * This class is used to carry the coordinates of the generating vertex across the graph as an array of floats.
  * 
@@ -118,5 +120,13 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 			out.writeInt(deg);
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.WritableFactory#newInstance()
+	 */
+	public Writable newInstance() {
+		return new LayoutMessage();
+	}
+	
 
 }
