@@ -3,7 +3,9 @@
  */
 package unipg.gila.layout.single;
 
+import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
+import org.apache.hadoop.io.IntWritable;
 
 import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
@@ -30,6 +32,10 @@ public class SingleScaleMaster extends DefaultMasterCompute{
 		
 		reintegrationRoutine = new GraphReintegrationRoutine();
 		reintegrationRoutine.initialize(this);
+		
+		registerPersistentAggregator(LayoutRoutine.ttlMaxAggregator, IntMaxAggregator.class);
+		
+		setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(getConf().getInt(LayoutRoutine.ttlMaxString, LayoutRoutine.ttlMaxDefault)));
 	}
 	
 	/* (non-Javadoc)

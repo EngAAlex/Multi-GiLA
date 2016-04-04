@@ -140,6 +140,7 @@ public class LayoutRoutine {
 	protected final static String componentNoOfNodes = "AGG_COMPONENT_NO_OF_NODES";
 	public static final String tempAggregator = "AGG_TEMP";
 	protected static final String offsetsAggregator = "AGG_CC_BOXES";
+	public static final String ttlMaxAggregator = "AGG_MAX_TTL";
 	
 	//COUNTERS
 	protected static final String COUNTER_GROUP = "Drawing Counters";

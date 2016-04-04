@@ -3,12 +3,18 @@
  */
 package unipg.gila.multi;
 
+import java.lang.reflect.InvocationTargetException;
+
+import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.MapWritable;
 
 import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
+import unipg.gila.multi.layout.AdaptationStrategy;
+import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeAndDensityDrivenAdaptationStrategy;
 import unipg.gila.multi.placers.SolarPlacerRoutine;
 
 /**
@@ -16,17 +22,21 @@ import unipg.gila.multi.placers.SolarPlacerRoutine;
  *
  */
 public class MultiScaleMaster extends DefaultMasterCompute {
+	
+	public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
 
 	LayoutRoutine layoutRoutine;
 	SolarMergerRoutine mergerRoutine;
 	SolarPlacerRoutine placerRoutine;
 	GraphReintegrationRoutine reintegrationRoutine;
-
+	AdaptationStrategy adaptationStrategy;
+	
 	boolean merging;
 	boolean placing;
 	boolean layout;
 	boolean reintegrating;
 	
+	@SuppressWarnings("unchecked")
 	public void initialize() throws InstantiationException ,IllegalAccessException {
 		layoutRoutine = new LayoutRoutine();
 		layoutRoutine.initialize(this, MultiScaleLayout.Seeder.class, MultiScaleLayout.Propagator.class);
@@ -39,6 +49,16 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		
 		reintegrationRoutine = new GraphReintegrationRoutine();
 		reintegrationRoutine.initialize(this);
+		
+		try {
+			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
+			adaptationStrategy = tClass.getConstructor().newInstance();
+		} catch (Exception e) {
+			adaptationStrategy = new SizeAndDensityDrivenAdaptationStrategy();
+		} 
+		
+		registerPersistentAggregator(LayoutRoutine.ttlMaxAggregator, IntMaxAggregator.class);
+		
 	}
 
 	public void compute() {
@@ -60,9 +80,15 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				else{
 					placing = false;
 					layout = true;
+					int noOfVertices = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator)).get(new IntWritable(currentLayer))).get();
+					int noOfEdges = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator)).get(new IntWritable(currentLayer))).get();
+					setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(
+							adaptationStrategy.returnCurrentK(currentLayer, ((IntWritable)getAggregatedValue(SolarMergerRoutine.layerNumberAggregator)).get(), 
+									noOfVertices, 
+									noOfEdges)));
 				}
 
-			if(layout)
+			if(layout){
 				if(!layoutRoutine.compute()){
 					return;
 				}else{
@@ -76,6 +102,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 						reintegrationRoutine.compute();
 					}
 				}
+			}
 		}
 		if(reintegrating)
 			if(reintegrationRoutine.compute())

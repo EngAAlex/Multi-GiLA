@@ -121,7 +121,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		accuracy = getConf().getFloat(LayoutRoutine.accuracyString, LayoutRoutine.accuracyDefault);
-		ttlmax = getConf().getInt(LayoutRoutine.ttlMaxString, LayoutRoutine.ttlMaxDefault);		
+		ttlmax = ((IntWritable)getAggregatedValue(LayoutRoutine.ttlMaxAggregator)).get();		
 
 		tempsMap = getAggregatedValue(LayoutRoutine.tempAGG);
 		sizesMap = getAggregatedValue(LayoutRoutine.correctedSizeAGG);

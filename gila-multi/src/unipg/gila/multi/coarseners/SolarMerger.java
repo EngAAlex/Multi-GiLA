@@ -40,7 +40,7 @@ public class SolarMerger{
 	/*
 	 * LOGGER 
 	 * */
-//	protected static Logger log = Logger.getLogger(SolarMerger.class);
+	//	protected static Logger log = Logger.getLogger(SolarMerger.class);
 
 	public static enum AstralBody{
 		SUN, MOON, PLANET, ASTEROID;
@@ -114,7 +114,7 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(vertex.getValue().isSun() && !vertex.getValue().isAssigned()){
 				sendMessageToAllEdges(vertex, new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER));
-//				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
+				//				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
 			}
 		}
 
@@ -218,9 +218,11 @@ public class SolarMerger{
 			//		SetWritable<LayeredPartitionedLongWritable> incomingInterfaces = null;
 			while(theMessages.hasNext()){
 				SolarMessage current = theMessages.next();
-				if(!current.getCode().equals(CODE.SUNOFFER) || (chosenOne != null && current.getValue().equals(chosenOne.getValue()))) // || sunsToIgnore.contains(current.getPayloadVertex().getId()))
+				if(!current.getCode().equals(CODE.SUNOFFER)) // || sunsToIgnore.contains(current.getPayloadVertex().getId()))
 					continue;
-				if(chosenOne == null || (current.getPayloadVertex().getId() > vertexId && current.getPayloadVertex().getId() > chosenOne.getPayloadVertex().getId())){	
+				if(chosenOne == null || 
+						(current.getPayloadVertex().getId() > vertexId && current.getPayloadVertex().getId() > chosenOne.getPayloadVertex().getId())
+						&&  !current.getValue().equals(chosenOne.getValue())){	
 					if(chosenOne != null){
 						if(refusedOffers == null)
 							refusedOffers = new SolarMessageSet();
@@ -240,16 +242,21 @@ public class SolarMerger{
 			//INFORM MY SUN THAT AN OFFER HAS BEEN REFUSED
 			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
 			smForMySun.addToExtraPayload(vertex.getId());
-			sendMessage(vertex.getValue().getProxy(), smForMySun);
+
+			if(refusedSun.getValue().equals(vertex.getValue().getSun()))
+				sendMessage(refusedSun.getPayloadVertex(), smForMySun);
+			else{
+				SolarMessage declinedMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - vertex.getValue().getDistanceFromSun(), vertex.getValue().getSun().copy(), CODE.REFUSEOFFER);
+				sendMessage(vertex.getValue().getProxy(), smForMySun);
+				sendMessage(refusedSun.getPayloadVertex(), declinedMessage);
+			}
 
 			//INFORM THE REFUSED SUN THAT ITS OFFER HAS BEEN DECLINED
-			SolarMessage declinedMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - vertex.getValue().getDistanceFromSun(), vertex.getValue().getSun().copy(), CODE.REFUSEOFFER);
 			//			log.info("Me, vertex " + vertex.getId().getId()  + "Refusing offer from " + refusedSun.getValue().getId() + " received from " + refusedSun.getPayloadVertex() + " sending thru " + refusedSun.getPayloadVertex());
-//			if(declinedMessage.getExtraPayload() != null)
-//				log.info("The declinedMessage contains extra payload " + declinedMessage.getExtraPayload().toString());
-//			else
-//				log.info("The declined message contains no extra payload");
-			sendMessage(refusedSun.getPayloadVertex(), declinedMessage);
+			//			if(declinedMessage.getExtraPayload() != null)
+			//				log.info("The declinedMessage contains extra payload " + declinedMessage.getExtraPayload().toString());
+			//			else
+			//				log.info("The declined message contains no extra payload");
 			aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 		}
 
@@ -286,10 +293,10 @@ public class SolarMerger{
 
 						if(currentMessage.getCode().equals(CODE.ACCEPTOFFER)) //A PLANET/MOON HAS ACCEPTED THE OFFER; IT IS STORED INTO THE APPROPRIATE DATA STRUCTURE
 							if(currentMessage.getTTL() == 1){
-//								log.info("Me, sun " + vertex.getId().getId() + " accept as a planet the vertex " + currentMessage.getPayloadVertex());
+								//								log.info("Me, sun " + vertex.getId().getId() + " accept as a planet the vertex " + currentMessage.getPayloadVertex());
 								value.addPlanet(currentMessage.getPayloadVertex().copy());
 							}else{
-//								log.info("Me, sun " + vertex.getId().getId() + " accept as a moon the vertex " + currentMessage.getPayloadVertex());
+								//								log.info("Me, sun " + vertex.getId().getId() + " accept as a moon the vertex " + currentMessage.getPayloadVertex());
 								value.addMoon(currentMessage.getPayloadVertex().copy());
 							}
 					}
@@ -297,11 +304,11 @@ public class SolarMerger{
 					while(msgIterator.hasNext()){
 						SolarMessage currentMessage =  msgIterator.next();					
 						if(currentMessage.getCode().equals(CODE.REFUSEOFFER) || currentMessage.getCode().equals(CODE.SUNDISCOVERY)){ //THE SUN OFFER HAS BEEN DECLINED. SAVING THE DATA INTO THE NEIGHBORING SYSTEMS DATA STR.
-//							log.info("Me, sun " + vertex.getId().getId() + " accept as a neighboring sun the vertex " + currentMessage.getValue());
-//							if(currentMessage.getExtraPayload() != null)
-//								log.info("Referrers " + currentMessage.getExtraPayload().toString());
-//							else
-//								log.info("No referrers in this message");
+							//							log.info("Me, sun " + vertex.getId().getId() + " accept as a neighboring sun the vertex " + currentMessage.getValue());
+							//							if(currentMessage.getExtraPayload() != null)
+							//								log.info("Referrers " + currentMessage.getExtraPayload().toString());
+							//							else
+							//								log.info("No referrers in this message");
 							value.addNeighbourSystem(currentMessage.getValue(), currentMessage.getExtraPayload(), currentMessage.getTTL());
 						}
 					}
@@ -324,12 +331,12 @@ public class SolarMerger{
 						//							aggregate(MultiScaleDirector.messagesDepleted, new BooleanWritable(false));
 						//						}else{
 						if((currentMessage.getCode().equals(CODE.REFUSEOFFER) && !vertex.getValue().isAssigned()) || currentMessage.getCode().equals(CODE.SUNDISCOVERY)){
-//							log.info("Me, vertex " + vertex.getId() + "Refusemessage from sun " + currentMessage.getValue() + " thru " + currentMessage.getPayloadVertex() +
-//									"I am adding my info to it with current info ");
-//							if(currentMessage.getExtraPayload() != null)
-//								log.info(currentMessage.getExtraPayload().toString());
-//							else
-//								log.info("Message contains no extra Payload");
+							//							log.info("Me, vertex " + vertex.getId() + "Refusemessage from sun " + currentMessage.getValue() + " thru " + currentMessage.getPayloadVertex() +
+							//									"I am adding my info to it with current info ");
+							//							if(currentMessage.getExtraPayload() != null)
+							//								log.info(currentMessage.getExtraPayload().toString());
+							//							else
+							//								log.info("Message contains no extra Payload");
 							SolarMessage messageToSend = (SolarMessage)currentMessage.propagate();
 							messageToSend.addToExtraPayload(vertex.getId());
 							sendMessage(value.getProxy(), messageToSend);
@@ -364,7 +371,7 @@ public class SolarMerger{
 				}
 			}
 		}
-		
+
 		/**
 		 * This computation receives the messages from the MoonSweep computation and creates fake refuse messages 
 		 * 
@@ -422,75 +429,55 @@ public class SolarMerger{
 					Iterable<SolarMessage> msgs) throws IOException{
 				if(!vertex.getValue().isSun())
 					return;
-				
+
 				aggregate(SolarMergerRoutine.mergerAttempts, new IntWritable(((IntWritable)getAggregatedValue(SolarMergerRoutine.mergerAttempts)).get()+1));
 				MapWritable infoToUpdate = new MapWritable();
 				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
-				aggregate(SolarMergerRoutine.layerSizeAggregator, infoToUpdate);
-				
+				aggregate(SolarMergerRoutine.layerVertexSizeAggregator, infoToUpdate);
+
 				AstralBodyCoordinateWritable value = vertex.getValue();
 				float[] coords = value.getCoordinates();
-			
+
 				LayeredPartitionedLongWritable homologousId = new LayeredPartitionedLongWritable(vertex.getId().getPartition(), 
 						vertex.getId().getId(), 
 						vertex.getId().getLayer()+1);
-				
-			
+
+
 				addEdgeRequest(vertex.getId(), EdgeFactory.create(homologousId, new FloatWritable(1.0f)));					
 
 				Iterator<LayeredPartitionedLongWritable> neighborSystems = vertex.getValue().neighbourSystemsIterator();
-//				log.info("Vertex " + vertex.getId() + " is creating " + homologousId);
-				
+				//				log.info("Vertex " + vertex.getId() + " is creating " + homologousId);
+
 				if(neighborSystems == null){
 					addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight(), 
 							coords[0], coords[1],value.getComponent()));					
 					return;
 				}
 
-//				log.info("Connecting edges on the upper level, vertex " + vertex.getId() + " its homologous " + homologousId);
+				//				log.info("Connecting edges on the upper level, vertex " + vertex.getId() + " its homologous " + homologousId);
 
 				ByteArrayEdges<LayeredPartitionedLongWritable, FloatWritable> outEdges = new ByteArrayEdges<LayeredPartitionedLongWritable, FloatWritable>();
 				outEdges.setConf(getSpecialConf());
-				
+
 				List<Edge<LayeredPartitionedLongWritable, FloatWritable>> edgeList = new LinkedList<Edge<LayeredPartitionedLongWritable, FloatWritable>>();
 				edgeList.add(EdgeFactory.create(vertex.getId(), new FloatWritable(1.0f)));
-				
+				int counter = 1;
+
 				while(neighborSystems.hasNext()){
 					LayeredPartitionedLongWritable neighborSun = neighborSystems.next();
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1), new FloatWritable(1.0f)));
+					counter++;
 				}
-				
+
 				outEdges.initialize(edgeList);
 				addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight(), 
-								coords[0], coords[1],value.getComponent()), outEdges);
+						coords[0], coords[1],value.getComponent()), outEdges);
+				MapWritable info = new MapWritable();
+				info.put(new IntWritable(currentLayer+1),new IntWritable(counter));
+				aggregate(SolarMergerRoutine.layerEdgeSizeAggregator, info);
 			}
 
 		}
-
-		//		public static class EdgeDuplicatesRemover extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage>{
-		//
-		//			@Override
-		//			protected void vertexInLayerComputation(
-		//					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-		//					Iterable<SolarMessage> msgs) throws IOException {
-		//				HashSet<Edge<LayeredPartitionedLongWritable, FloatWritable>> tempSack = new HashSet<Edge<LayeredPartitionedLongWritable, FloatWritable>>();
-		//				HashSet<LayeredPartitionedLongWritable> chechSack = new HashSet<LayeredPartitionedLongWritable>();
-		//				Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edgesIt = vertex.getEdges().iterator();
-		//				while(edgesIt.hasNext()){
-		//					Edge<LayeredPartitionedLongWritable, FloatWritable> current = edgesIt.next();
-		//					if(!chechSack.contains(current.getTargetVertexId())){
-		//						tempSack.add(EdgeFactory.create(current.getTargetVertexId().copy(), new FloatWritable(current.getValue().get())));
-		//						chechSack.add(current.getTargetVertexId().copy());
-		//					}
-		//				}
-		//				vertex.setEdges(tempSack);
-		//
-		//				MapWritable infoToUpdate = new MapWritable();
-		//				infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
-		//				aggregate(MultiScaleDirector.layerSizeAggregator, infoToUpdate);
-		//			}
-		//
-		//		}
 
 		public static class DummySolarMergerComputation extends MultiScaleComputation<AstralBodyCoordinateWritable,SolarMessage, SolarMessage>{
 
