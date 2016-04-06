@@ -27,6 +27,7 @@ import unipg.gila.common.datastructures.SetWritable;
 import unipg.gila.multi.MultiScaleComputation;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
+import unipg.gila.multi.common.LayeredPartitionedLongWritableSet;
 import unipg.gila.multi.common.SolarMessage;
 import unipg.gila.multi.common.SolarMessage.CODE;
 import unipg.gila.multi.common.SolarMessageSet;
@@ -192,7 +193,7 @@ public class SolarMerger{
 			SetWritable<SolarMessage> refused = (SetWritable<SolarMessage>) shuffled[1];
 
 			if(chosenOne != null){
-				value.setSun(chosenOne.getPayloadVertex().copy(), chosenOne.getValue().copy());
+				value.setSun(chosenOne.getValue().copy(), chosenOne.getPayloadVertex());
 				ackAndPropagateSunOffer(vertex, value, chosenOne);
 				//SET THE SUN
 				if(chosenOne.getTTL() == 1){
@@ -200,13 +201,23 @@ public class SolarMerger{
 					//					log.info("Me, vertex " + vertex.getId().getId() + " becoming a planet of sun " + chosenOne.getValue().getId());
 				}else{
 					//					log.info("Me, vertex " + vertex.getId().getId() + " becoming a moon of sun " + chosenOne.getValue().getId());
-
 					value.setAsMoon();
 				}
 			}
 
 			if(refused != null){
-				Iterator<SolarMessage> offersToRefuse =  (Iterator<SolarMessage>) refused.iterator();
+				Iterator<SolarMessage> offersToRefuse;
+				if(value.isMoon()){
+					LayeredPartitionedLongWritableSet proxies = new LayeredPartitionedLongWritableSet();
+					offersToRefuse =  (Iterator<SolarMessage>) refused.iterator();
+					while(offersToRefuse.hasNext()){ //build proxies
+						SolarMessage current = offersToRefuse.next();
+						if(current.getValue().equals(value.getSun()))
+							proxies.addElement(current.getPayloadVertex().copy());							
+					}						
+					value.setProxies(proxies);
+				}
+				offersToRefuse =  (Iterator<SolarMessage>) refused.iterator();
 				while(offersToRefuse.hasNext())
 					refuseOffer(vertex, offersToRefuse.next());
 			}
@@ -238,20 +249,20 @@ public class SolarMerger{
 			return new Writable[]{chosenOne, refusedOffers};//, incomingInterfaces};
 		}
 
+		@SuppressWarnings("unchecked")
 		protected void refuseOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex, SolarMessage refusedSun){
 			//INFORM MY SUN THAT AN OFFER HAS BEEN REFUSED
 			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
 			smForMySun.addToExtraPayload(vertex.getId());
-
-			if(refusedSun.getValue().equals(vertex.getValue().getSun()))
-				sendMessage(refusedSun.getPayloadVertex(), smForMySun);
-			else{
-				SolarMessage declinedMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - vertex.getValue().getDistanceFromSun(), vertex.getValue().getSun().copy(), CODE.REFUSEOFFER);
-				sendMessage(vertex.getValue().getProxy(), smForMySun);
-				sendMessage(refusedSun.getPayloadVertex(), declinedMessage);
-			}
+			if(vertex.getValue().isPlanet())
+				sendMessage(vertex.getValue().getSun(), smForMySun);
+			else
+				sendMessageToMultipleEdges((Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), smForMySun);
 
 			//INFORM THE REFUSED SUN THAT ITS OFFER HAS BEEN DECLINED
+			SolarMessage declinedMessage = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - vertex.getValue().getDistanceFromSun(), vertex.getValue().getSun().copy(), CODE.REFUSEOFFER);
+			sendMessage(refusedSun.getPayloadVertex(), declinedMessage);
+			
 			//			log.info("Me, vertex " + vertex.getId().getId()  + "Refusing offer from " + refusedSun.getValue().getId() + " received from " + refusedSun.getPayloadVertex() + " sending thru " + refusedSun.getPayloadVertex());
 			//			if(declinedMessage.getExtraPayload() != null)
 			//				log.info("The declinedMessage contains extra payload " + declinedMessage.getExtraPayload().toString());
@@ -395,7 +406,10 @@ public class SolarMerger{
 						if(!value.isSun()){
 							SolarMessage messageForSun = new SolarMessage(vertex.getId(), xu.getTTL() - 1, xu.getValue().copy(), CODE.SUNDISCOVERY);
 							messageForSun.addToExtraPayload(vertex.getId());
-							sendMessage(value.getProxy(), messageForSun);
+							if(vertex.getValue().isPlanet())
+								sendMessage(vertex.getValue().getSun(), messageForSun);
+							else
+								sendMessageToMultipleEdges((Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageForSun);
 						}else
 							value.addNeighbourSystem(xu.getValue().copy(), null, xu.getTTL() - 1);
 					}

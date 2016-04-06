@@ -35,7 +35,8 @@ import unipg.gila.common.datastructures.SetWritable;
  */
 public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
-	protected LayeredPartitionedLongWritable sunProxy;
+	protected LayeredPartitionedLongWritable favProxy;
+	protected LayeredPartitionedLongWritableSet sunProxies;
 	protected LayeredPartitionedLongWritable sun;
 	protected int distanceFromSun=-1;
 	protected MapWritable planets; //USED WHEN A BODY IS A SUN
@@ -47,29 +48,29 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public AstralBodyCoordinateWritable() {
 		super();
-		sunProxy = new LayeredPartitionedLongWritable();
-		sun = new LayeredPartitionedLongWritable();
+		//		sunProxy = new LayeredPartitionedLongWritable();
+		//		sun = new LayeredPartitionedLongWritable();
 	}
 
 
 	public AstralBodyCoordinateWritable(float x, float y, JSONArray oEs,
 			int component) throws JSONException {
 		super(x, y, oEs, component);
-		sunProxy = new LayeredPartitionedLongWritable();
-		sun = new LayeredPartitionedLongWritable();
+		//		sunProxy = new LayeredPartitionedLongWritable();
+		//		sun = new LayeredPartitionedLongWritable();
 	}
 
 	public AstralBodyCoordinateWritable(int lowerLevelWeigth, float x, float y, int component) {
 		super(x, y, component);
-		sunProxy = new LayeredPartitionedLongWritable();
-		sun = new LayeredPartitionedLongWritable();
+		//		sunProxy = new LayeredPartitionedLongWritable();
+		//		sun = new LayeredPartitionedLongWritable();
 		this.lowerLevelWeight = lowerLevelWeigth;
 	}
 
 	public AstralBodyCoordinateWritable(float x, float y, int component) {
 		super(x, y, component);
-		sunProxy = new LayeredPartitionedLongWritable();
-		sun = new LayeredPartitionedLongWritable();
+		//		sunProxy = new LayeredPartitionedLongWritable();
+		//		sun = new LayeredPartitionedLongWritable();
 	}
 
 	public int astralWeight(){
@@ -81,10 +82,14 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			moonsSize = moons.size();
 		return planetsSize + moonsSize;
 	}
-	
+
 	public int getLowerLevelWeight(){
 		return lowerLevelWeight;
 	}
+
+	//	public LayeredPartitionedLongWritable getProxy(){
+	//		return sunProxy;
+	//	}
 
 	public int getDistanceFromSun(){
 		return distanceFromSun;
@@ -112,7 +117,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public void resetAssigned() {
 		assigned = false;
 	}
-	
+
 	public boolean isAssigned(){
 		return assigned;
 	}
@@ -182,12 +187,12 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>> getPlanetsIterator(){
 		return (Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>>) planets.entrySet();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>> getMoonsIterator(){
 		if(moons == null || moons.size() == 0)
@@ -222,23 +227,37 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 
 
-	public void setSun(LayeredPartitionedLongWritable proxyAndSun){
-		sun = proxyAndSun;
-		sunProxy = sun;
+	public void setSun(LayeredPartitionedLongWritable sun){
+		this.sun = sun;
+		//		sunProxy = sun;
+	}
+	
+	public void setSun(LayeredPartitionedLongWritable sun, LayeredPartitionedLongWritable favProxy){
+		this.sun = sun;
+		this.favProxy = favProxy;
+	}
+	
+	public LayeredPartitionedLongWritable getProxy(){
+		if(isPlanet())
+			return sun;
+		return favProxy;
 	}
 
-	public void setSun(LayeredPartitionedLongWritable proxy, LayeredPartitionedLongWritable sun){
-		sunProxy = proxy;
-		this.sun = sun;
+	public void setProxies(LayeredPartitionedLongWritableSet proxies){
+		sunProxies = proxies;
+	}
+	
+	public LayeredPartitionedLongWritableSet getProxies(){
+		return sunProxies;
 	}
 
 	public LayeredPartitionedLongWritable getSun() {
 		return sun;
 	}
 
-	public LayeredPartitionedLongWritable getProxy(){
-		return sunProxy;
-	}
+	//	public LayeredPartitionedLongWritable getProxy(){
+	//		return sunProxy;
+	//	}
 
 	public void clearAstralInfo(){
 		cleared = true;
@@ -261,10 +280,14 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			neighborSystems = new LayeredPartitionedLongWritableSet();
 			neighborSystems.readFields(in);
 		}else{
-			sunProxy = new LayeredPartitionedLongWritable();
+			if(isMoon()){
+				sunProxies = new LayeredPartitionedLongWritableSet();
+				sunProxies.readFields(in);
+				favProxy = new LayeredPartitionedLongWritable();
+				favProxy.readFields(in);	
+			}
 			sun = new LayeredPartitionedLongWritable();
-			sunProxy.readFields(in);
-			sun.readFields(in);
+			sun.readFields(in);		
 		}
 	}
 
@@ -282,7 +305,10 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			moons.write(out);
 			neighborSystems.write(out);
 		}else{
-			sunProxy.write(out);
+			if(isMoon()){
+				sunProxies.write(out);
+				favProxy.write(out);
+			}
 			sun.write(out);
 		}
 	}

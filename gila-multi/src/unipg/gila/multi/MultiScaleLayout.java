@@ -4,8 +4,10 @@
 package unipg.gila.multi;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
+import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -63,6 +65,21 @@ public class MultiScaleLayout {
 			}
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
+		 */
+		@Override
+		public void sendMessageToAllEdges(
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
+				LayoutMessage message) {
+			Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+			while(edges.hasNext()){
+				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+				if(current.getLayer() == currentLayer)
+					sendMessage(current, message);
+			}
+		}
+		
 	}
 
 	public static class Propagator extends AbstractPropagator<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>{
@@ -96,6 +113,21 @@ public class MultiScaleLayout {
 				return;
 			else{
 				super.compute(vertex, messages);
+			}
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
+		 */
+		@Override
+		public void sendMessageToAllEdges(
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
+				LayoutMessage message) {
+			Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+			while(edges.hasNext()){
+				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+				if(current.getLayer() == currentLayer)
+					sendMessage(current, message);
 			}
 		}
 	}

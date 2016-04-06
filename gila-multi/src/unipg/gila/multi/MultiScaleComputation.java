@@ -4,9 +4,11 @@
 package unipg.gila.multi;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.conf.ImmutableClassesGiraphConfiguration;
+import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.AbstractComputation;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
@@ -58,6 +60,21 @@ public abstract class MultiScaleComputation<Z extends Writable, P extends Writab
 	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, FloatWritable> getSpecialConf() {
 		// TODO Auto-generated method stub
 		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, FloatWritable>) super.getConf();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
+	 */
+	@Override
+	public void sendMessageToAllEdges(
+			Vertex<LayeredPartitionedLongWritable, Z, FloatWritable> vertex,
+			T message) {
+		Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+		while(edges.hasNext()){
+			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+			if(current.getLayer() == currentLayer)
+				sendMessage(current, message);
+		}
 	}
 	
 }
