@@ -14,6 +14,7 @@ import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.layout.AdaptationStrategy;
+import unipg.gila.multi.layout.MultiScaleLayout;
 import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeAndDensityDrivenAdaptationStrategy;
 import unipg.gila.multi.placers.SolarPlacerRoutine;
 

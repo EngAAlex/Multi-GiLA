@@ -1,7 +1,7 @@
 /**
  * 
  */
-package unipg.gila.multi;
+package unipg.gila.multi.layout;
 
 import java.io.IOException;
 import java.util.Iterator;

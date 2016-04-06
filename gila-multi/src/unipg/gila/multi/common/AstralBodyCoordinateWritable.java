@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.Writable;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -49,7 +50,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public AstralBodyCoordinateWritable() {
 		super();
 		//		sunProxy = new LayeredPartitionedLongWritable();
-		//		sun = new LayeredPartitionedLongWritable();
+//				sun = new LayeredPartitionedLongWritable();
 	}
 
 
@@ -188,16 +189,16 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>> getPlanetsIterator(){
-		return (Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>>) planets.entrySet();
+	public Iterator<Entry<Writable, Writable>> getPlanetsIterator(){
+		if(planets == null || planets.size() == 0)
+			return null;		
+		return planets.entrySet().iterator();
 	}
 
-	@SuppressWarnings("unchecked")
-	public Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>> getMoonsIterator(){
+	public Iterator<Entry<Writable, Writable>> getMoonsIterator(){
 		if(moons == null || moons.size() == 0)
 			return null;
-		return (Iterator<Entry<LayeredPartitionedLongWritable, PathWritableSet>>) moons.entrySet();
+		return moons.entrySet().iterator();
 	}
 
 	public int neigbourSystemsNo(){
@@ -225,7 +226,11 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return result;
 	}
 
-
+	public LayeredPartitionedLongWritable getSun() {
+		if(sun == null)
+			return new LayeredPartitionedLongWritable();
+		return sun;
+	}
 
 	public void setSun(LayeredPartitionedLongWritable sun){
 		this.sun = sun;
@@ -247,12 +252,12 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		sunProxies = proxies;
 	}
 	
+	public void addToProxies(LayeredPartitionedLongWritable proxy){
+		sunProxies.addElement(proxy);
+	}
+	
 	public LayeredPartitionedLongWritableSet getProxies(){
 		return sunProxies;
-	}
-
-	public LayeredPartitionedLongWritable getSun() {
-		return sun;
 	}
 
 	//	public LayeredPartitionedLongWritable getProxy(){
@@ -286,8 +291,10 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				favProxy = new LayeredPartitionedLongWritable();
 				favProxy.readFields(in);	
 			}
-			sun = new LayeredPartitionedLongWritable();
-			sun.readFields(in);		
+			if(!isAsteroid()){
+				sun = new LayeredPartitionedLongWritable();
+				sun.readFields(in);
+			}
 		}
 	}
 
@@ -309,7 +316,8 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				sunProxies.write(out);
 				favProxy.write(out);
 			}
-			sun.write(out);
+			if(!isAsteroid())
+				sun.write(out);
 		}
 	}
 

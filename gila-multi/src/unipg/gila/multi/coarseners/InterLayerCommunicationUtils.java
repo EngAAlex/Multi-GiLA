@@ -8,6 +8,7 @@ import java.util.Iterator;
 
 import org.apache.giraph.graph.Vertex;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.Writable;
 
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.multi.MultiScaleComputation;
@@ -23,7 +24,7 @@ public class InterLayerCommunicationUtils{
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessage>{
+	public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage>{
 
 		/* (non-Javadoc)
 		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -31,7 +32,7 @@ public class InterLayerCommunicationUtils{
 		@Override
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-				Iterable<SolarMessage> msgs) throws IOException {
+				Iterable<LayoutMessage> msgs) throws IOException {
 			if(vertex.getValue().getLowerLevelWeight() > 0)
 				sendMessageToAllEdges(vertex, new LayoutMessage(vertex.getId().getId(), vertex.getValue().getCoordinates()));
 			}

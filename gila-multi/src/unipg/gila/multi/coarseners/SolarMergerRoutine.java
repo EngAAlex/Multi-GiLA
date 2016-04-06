@@ -18,6 +18,7 @@ import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggrega
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.AsteroidCaller;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.DummySolarMergerComputation;
+import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.MergerToPlacerDummyComputation;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.MoonSweep;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.RegimeMerger;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.SolarMergeVertexCreation;
@@ -56,9 +57,9 @@ public class SolarMergerRoutine {
 	public static final float sunChanceDefault = 0.2f;
 	public static final String sunChanceAggregatorString = "AGG_SUNCHANCE";
 	
-	//PLACER OPTIONS
-	public static final String placerDefaultLengthString = "coarsener.defaultLength";
-	public static final float placerDefaultLength = 15.0f;
+	//MERGER COUNTERS
+	private static final String COUNTER_GROUP = "Merging Counters";
+	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
 
 	//INSTANCE ATTRIBUTES
 	boolean creatingNewLayerVertices = false;
@@ -73,8 +74,8 @@ public class SolarMergerRoutine {
 
 	public boolean compute() {
 		if(terminate){
-			log.info("FINALRESULT LAST LAYER " + master.getAggregatedValue(currentLayer));
-//			haltComputation();
+			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get());
+			//haltComputation();
 			return true;
 		}
 		if(waitForDummy){
@@ -157,9 +158,11 @@ public class SolarMergerRoutine {
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
 				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
 					terminate = true;
+					master.setComputation(MergerToPlacerDummyComputation.class);
 				}else{
 //					if(layerSize != null)
 //						if(layerSize.get() == ((IntWritable)mp.get(new IntWritable(cLayer))).get()){ ###THERE IS STILL THE RISK OF SAME-SIZE LAYERS
+							master.setAggregatedValue(layerNumberAggregator, new IntWritable(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() + 1));
 							mp.put(new IntWritable(cLayer+1), new IntWritable(0));
 							master.setAggregatedValue(layerVertexSizeAggregator, mp);
 //						}else
