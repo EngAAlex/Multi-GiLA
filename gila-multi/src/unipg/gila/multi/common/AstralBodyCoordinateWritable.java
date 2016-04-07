@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -36,6 +37,9 @@ import unipg.gila.common.datastructures.SetWritable;
  */
 public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
+	//LOGGER
+	Logger log = Logger.getLogger(AstralBodyCoordinateWritable.class);
+	
 	protected LayeredPartitionedLongWritable favProxy;
 	protected LayeredPartitionedLongWritableSet sunProxies;
 	protected LayeredPartitionedLongWritable sun;
@@ -43,7 +47,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	protected MapWritable planets; //USED WHEN A BODY IS A SUN
 	protected MapWritable moons; //USED WHEN A BODY IS A SUN
 	protected SetWritable<LayeredPartitionedLongWritable> neighborSystems;
-	protected int lowerLevelWeight = 0;
+	protected int lowerLevelWeight = 1;
 	protected boolean cleared = false;
 	protected boolean assigned = false;
 
@@ -158,20 +162,21 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		moons.put(id.copy(), new PathWritableSet());
 	}
 
-	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, LinkedListWritable<LayeredPartitionedLongWritable> referrers, int ttl){
+	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, ReferrersList referrers, int ttl){
 		if(neighborSystems == null)
 			neighborSystems = new LayeredPartitionedLongWritableSet();
+		log.info("Preparing to add neighbor system " + sun + " with referrers " + (referrers == null ? "zero null" : referrers.size()));
 		neighborSystems.addElement(sun);
 		if(referrers == null)
 			return;
 		Iterator<LayeredPartitionedLongWritable> it = (Iterator<LayeredPartitionedLongWritable>) referrers.iterator();
-		int counter = 1;
 		while(it.hasNext()){
 			LayeredPartitionedLongWritable currentReferrer = it.next();
+			log.info("Current referrer: " + currentReferrer);
 			if(planets.containsKey(currentReferrer)){
+				log.info("Registering for planet " + currentReferrer + " neighbor " + sun);
 				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
-						counter, Integer.MAX_VALUE - (ttl - 1), sun));
-				counter++;
+						1, Integer.MAX_VALUE - (ttl - 1), sun));
 			}
 			else {
 				//########################################## WARNING!!
@@ -181,8 +186,8 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				if(moons != null){
 					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer); 
 					if(pSet != null){
-						pSet.addElement(new PathWritable(counter, Integer.MAX_VALUE - (ttl - 1), sun));
-						counter++;
+						log.info("Registering for moon " + currentReferrer + " neighbor " + sun);
+						pSet.addElement(new PathWritable(2, Integer.MAX_VALUE - (ttl - 1), sun));
 					}
 				}
 			}

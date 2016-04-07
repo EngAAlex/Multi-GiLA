@@ -70,5 +70,26 @@ public class PathWritable implements Writable {
 		out.writeInt(pathLength);
 		referencedSun.write(out);
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null || !this.getClass().equals(obj.getClass()))
+			return false;
+		PathWritable oPath = (PathWritable) obj;
+		if(this == obj || (this.positionInPath == oPath.getPositionInpath() && this.pathLength == oPath.getPathLength() && this.referencedSun.equals(oPath.getReferencedSun())))
+			return true;
+		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return (this.positionInPath+""+this.pathLength+""+this.referencedSun.toString()).hashCode();
+	}
 
 }

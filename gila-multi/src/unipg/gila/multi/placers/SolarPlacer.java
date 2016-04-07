@@ -47,22 +47,20 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			Iterable<LayoutMessage> msgs) throws IOException {
 		AstralBodyCoordinateWritable value = vertex.getValue();
 		
-		if(!value.isSun() && value.getLowerLevelWeight() == 0)
+		if(!value.isSun())// && value.getLowerLevelWeight() == 0)
 			return;
 		
-		log.info("I'm "+ vertex.getId() + " and these are my neighbors:\n");
+		log.info("These are my neighbors:");
 		log.info(value.neighborSystemsStateToString());
-		log.info("\nThese are my upward edges:\n");
+		log.info("Upper layer messages received:");
 		
-		Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
-		while(edges.hasNext()){
-			Edge<LayeredPartitionedLongWritable, FloatWritable> next = edges.next();
-			if(next.getTargetVertexId().getLayer() == currentLayer +1)
-				log.info(next.getTargetVertexId().getId());
-		}
-		
-		log.info("\nThese are the mesages received:\n");
-				
+//		Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+//		while(edges.hasNext()){
+//			Edge<LayeredPartitionedLongWritable, FloatWritable> next = edges.next();
+//			if(next.getTargetVertexId().getLayer() == currentLayer +1)
+//				log.info(next.getTargetVertexId().getId());
+//		}
+						
 		Iterator<LayoutMessage> itmsgs = msgs.iterator();
 		HashMap<Long, float[]> coordsMap = new HashMap<Long, float[]>();
 		HashMap<LayeredPartitionedLongWritable, float[]> planetsComputedCoordsMap = new HashMap<LayeredPartitionedLongWritable, float[]>();
@@ -70,11 +68,12 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 		
 		while(itmsgs.hasNext()){ //Check all messages and gather all the coordinates (including updating mine).
 			LayoutMessage msg = itmsgs.next();
-			log.info(msg.getPayloadVertex());
 			if(msg.getPayloadVertex() == vertex.getId().getId()){
 				value.setCoordinates(msg.getValue()[0], msg.getValue()[1]);
-			}else
-				coordsMap.put(msg.getPayloadVertex(), msg.getValue());			
+			}else{
+				log.info(msg.getPayloadVertex());
+				coordsMap.put(msg.getPayloadVertex(), msg.getValue());
+			}
 		}
 		
 		//ARRANGE PLANETS
@@ -110,21 +109,30 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	private void arrangeBodies(float[] myCoordinates,
 			Iterator<Entry<Writable, Writable>> bodiesIterator,
 			HashMap<LayeredPartitionedLongWritable, float[]> bodiesMap, HashMap<Long, float[]> coordsMap) {
+		log.info("Checking sets");
 		while(bodiesIterator.hasNext()){
 			float avgX = 0.0f, avgY = 0.0f;
 			Entry<Writable, Writable> current = bodiesIterator.next();
 			PathWritableSet deSet = (PathWritableSet) current.getValue();
+			log.info("My planet/moon " + ((LayeredPartitionedLongWritable)current.getKey()).getId());
+			if(deSet.size() == 0)
+				continue;
 			Iterator<PathWritable> deSetIterator = (Iterator<PathWritable>) deSet.iterator();
 			while(deSetIterator.hasNext()){
 				PathWritable currentPath = deSetIterator.next();
 				float deltaX = myCoordinates[0] - coordsMap.get(currentPath.getReferencedSun().getId())[0];
 				float deltaY = myCoordinates[1] - coordsMap.get(currentPath.getReferencedSun().getId())[1];
 				
+				log.info("path towards " + currentPath.getReferencedSun() +
+						" at position " + currentPath.getPositionInpath() + " on a total of " + currentPath.getPathLength());
+				
 				avgX += deltaX*(currentPath.getPositionInpath()/(float)currentPath.getPathLength());
 				avgY += deltaY*(currentPath.getPositionInpath()/(float)currentPath.getPathLength());
 
 			}
+			log.info("Total deset size "  + deSet.size());
 			bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), new float[]{avgX/deSet.size(), avgY/deSet.size()});
+			log.info("computed position: " + avgX/deSet.size() + " " + avgY/deSet.size());
 		}		
 	}
 

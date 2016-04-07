@@ -18,13 +18,17 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.log4j.Logger;
 
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
 public abstract class MultiScaleComputation<Z extends Writable, P extends Writable, T extends Writable> extends
 		AbstractComputation<LayeredPartitionedLongWritable, Z, FloatWritable, P, T> {
-		
+	
+	//LOGGER
+	Logger log = Logger.getLogger(MultiScaleComputation.class);
+	
 	protected int currentLayer;
 	
 	@Override	
@@ -34,6 +38,7 @@ public abstract class MultiScaleComputation<Z extends Writable, P extends Writab
 		if(vertex.getId().getLayer() != currentLayer)
 			return;
 		else{
+			log.info("I'm " + vertex.getId());
 			vertexInLayerComputation(vertex, msgs);
 		}
 	}

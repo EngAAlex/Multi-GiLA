@@ -15,14 +15,13 @@ import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
+import unipg.gila.multi.coarseners.SolarMerger.MoonSweep;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.AsteroidCaller;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.DummySolarMergerComputation;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.MergerToPlacerDummyComputation;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.MoonSweep;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.RegimeMerger;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.SolarMergeVertexCreation;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse.SunDiscovery;
+import unipg.gila.multi.coarseners.SolarMerger.AsteroidCaller;
+import unipg.gila.multi.coarseners.SolarMerger.DummySolarMergerComputation;
+import unipg.gila.multi.coarseners.SolarMerger.RegimeMerger;
+import unipg.gila.multi.coarseners.SolarMerger.SolarMergeVertexCreation;
+import unipg.gila.multi.coarseners.SolarMerger.SunDiscovery;
 import unipg.gila.multi.coarseners.SolarMerger.SolarSweep;
 import unipg.gila.multi.coarseners.SolarMerger.SunBroadcast;
 import unipg.gila.multi.coarseners.SolarMerger.SunGeneration;
@@ -62,7 +61,6 @@ public class SolarMergerRoutine {
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
 
 	//INSTANCE ATTRIBUTES
-	boolean creatingNewLayerVertices = false;
 	boolean checkForNewLayer = false;
 	boolean waitForDummy = false;
 	boolean timeForTheMoons = false;
@@ -73,11 +71,11 @@ public class SolarMergerRoutine {
 	MasterCompute master;
 
 	public boolean compute() {
-		if(terminate){
-			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get());
-			//haltComputation();
-			return true;
-		}
+//		if(terminate){
+//			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get());
+//			//haltComputation();
+//			return true;
+//		}
 		if(waitForDummy){
 			waitForDummy = false;
 			checkForNewLayer = true;
@@ -117,7 +115,6 @@ public class SolarMergerRoutine {
 			else{
 				master.setComputation(SolarMergeVertexCreation.class);
 				//				creatingNewLayerVertices = false;
-				creatingNewLayerVertices = true;
 				waitForDummy = true;
 				timeForTheMoons = false;
 			}
@@ -151,14 +148,14 @@ public class SolarMergerRoutine {
 		if(checkForNewLayer){
 			checkForNewLayer = false;
 			waitForDummy = false;
-			creatingNewLayerVertices = false;
 			MapWritable mp = (MapWritable)master.getAggregatedValue(layerVertexSizeAggregator);
 			int layerSize = ((IntWritable)mp.get(new IntWritable(cLayer+1))).get();
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
 				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
-					terminate = true;
-					master.setComputation(MergerToPlacerDummyComputation.class);
+					master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get());
+					//haltComputation();
+					return true;
 				}else{
 //					if(layerSize != null)
 //						if(layerSize.get() == ((IntWritable)mp.get(new IntWritable(cLayer))).get()){ ###THERE IS STILL THE RISK OF SAME-SIZE LAYERS

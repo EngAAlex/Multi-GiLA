@@ -39,8 +39,8 @@ public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<Laye
 				LayeredPartitionedLongWritable id = vertex.getId();
 				AstralBodyCoordinateWritable value = vertex.getValue();
 				float[] cohords = vertex.getValue().getCoordinates();
-				if(vertex.getValue().isMoon())
-					log.info("Moon " + vertex.getValue().getSun() + " of layer " + vertex.getId().getLayer() + " has " + vertex.getValue().getProxies().size() + " proxies");
+//				if(vertex.getValue().isMoon())
+//					log.info("Moon " + vertex.getValue().getSun() + " of layer " + vertex.getId().getLayer() + " has " + vertex.getValue().getProxies().size() + " proxies");
 				return new Text("[" + id.getId() + "," + id.getLayer() + "," + cohords[0] + "," + cohords[1] + "," + SolarMerger.AstralBody.toString(SolarMerger.AstralBody.buildBody(value.getDistanceFromSun())) + "," + ((LayeredPartitionedLongWritable)value.getSun()).getId() + ",[" + edgeBundler(vertex.getEdges()) + "]]");
 			}
 		}

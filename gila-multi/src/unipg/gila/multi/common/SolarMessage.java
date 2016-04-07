@@ -99,6 +99,8 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	}
 	
 	public void copyExtraPayload(ReferrersList toAdd){
+		if(toAdd == null)
+			return;
 		if(extraPayload == null)
 			extraPayload = new ReferrersList(toAdd);
 		extraPayload.addAll(toAdd);
@@ -136,7 +138,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		value.write(out);
 		out.writeInt(CODE.write(getCode()));
 		if(getCode().equals(CODE.REFUSEOFFER)){
-			int size = extraPayload == null ? 0 : extraPayload.size();
+			int size = (extraPayload == null ? 0 : extraPayload.size());
 			out.writeInt(size);
 			if(size > 0)
 				extraPayload.write(out);

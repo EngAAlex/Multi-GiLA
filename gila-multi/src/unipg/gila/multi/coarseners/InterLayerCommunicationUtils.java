@@ -65,4 +65,14 @@ public class InterLayerCommunicationUtils{
 			}
 		}
 	}
+	
+
+	public static class MergerToPlacerDummyComputation extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessage>{
+
+		@Override
+		protected void vertexInLayerComputation(
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
+				Iterable<SolarMessage> msgs) throws IOException {
+		}
+	}
 }
