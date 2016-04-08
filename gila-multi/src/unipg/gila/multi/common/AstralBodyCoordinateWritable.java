@@ -334,5 +334,25 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return new AstralBodyCoordinateWritable(x, y, component);
 	}
 
+
+	/**
+	 * @return
+	 */
+	public int planetsNo() {
+		if(planets == null)
+			return 0;
+		return planets.size();
+	}
+
+
+	/**
+	 * @return
+	 */
+	public int moonsNo() {
+		if(moons == null)
+			return 0;
+		return moons.size();
+	}
+
 }
 

@@ -99,7 +99,7 @@ public class PartitionedLongWritable implements WritableComparable<Object>, Writ
 			
 		}
 		
-		public Short getPartition() {
+		public short getPartition() {
 			return partition;
 		}
 		
@@ -107,7 +107,7 @@ public class PartitionedLongWritable implements WritableComparable<Object>, Writ
 			this.id = id;
 		}
 
-		public Long getId() {
+		public long getId() {
 			return id;
 		}
 

@@ -85,8 +85,9 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException {
 			if(vertex.getValue().isAsteroid() && Math.random() < sunChance){
 				vertex.getValue().setAsSun();
-				MapWritable myValue = new MapWritable();
-				myValue.put(new IntWritable(currentLayer), new IntWritable(1));
+				
+//				MapWritable myValue = new MapWritable();
+//				myValue.put(new IntWritable(currentLayer), new IntWritable(1));
 				aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 				sendMessageToAllEdges(vertex, new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER));
 			}
@@ -406,7 +407,9 @@ public class SolarMerger{
 			AstralBodyCoordinateWritable value = vertex.getValue();
 			while(messages.hasNext()){
 				SolarMessage xu = messages.next();
-				if(xu.getCode().equals(CODE.SUNDISCOVERY) && !xu.getValue().equals(value.getSun())){
+				if(xu.getCode().equals(CODE.SUNDISCOVERY)){
+					if((value.isSun() && xu.getValue().equals(vertex.getId()) || xu.getValue().equals(value.getSun())))
+						continue;
 					aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 					SolarMessage messageForReferrer = new SolarMessage(xu.getPayloadVertex().copy(), Integer.MAX_VALUE - value.getDistanceFromSun(), (value.isSun() ? vertex.getId() : value.getSun()), CODE.REFUSEOFFER);
 					sendMessage(xu.getPayloadVertex().copy(), messageForReferrer);
@@ -490,6 +493,8 @@ public class SolarMerger{
 				Iterator<LayeredPartitionedLongWritable> neighborSystems = vertex.getValue().neighbourSystemsIterator();
 				while(neighborSystems.hasNext()){
 					LayeredPartitionedLongWritable neighborSun = neighborSystems.next();
+//					if(neighborSun.equals(homologousId))
+//						continue;
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
 							new FloatWritable(1.0f)));
 					counter++;
@@ -513,10 +518,10 @@ public class SolarMerger{
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
 			vertex.getValue().resetAssigned();
-			if(vertex.getValue().isSun()){
-				log.info("I'm " + vertex.getId() + " and these are my neighs\n");
-				log.info(vertex.getValue().neighborSystemsStateToString());
-			}
+//			if(vertex.getValue().isSun()){
+//				log.info("I'm " + vertex.getId() + " and these are my neighs\n");
+//				log.info(vertex.getValue().neighborSystemsStateToString());
+//			}
 		}
 	}
 

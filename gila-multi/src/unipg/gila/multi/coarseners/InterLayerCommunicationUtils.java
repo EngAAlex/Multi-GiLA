@@ -63,6 +63,9 @@ public class InterLayerCommunicationUtils{
 				while(it.hasNext())
 					sendMessage(lowerID, (LayoutMessage) it.next().propagateAndDie());
 			}
+			//REACTIVATE TO PURGE UPPER LAYERS
+//			vertex.getValue().clearAstralInfo();
+//			removeVertexRequest(vertex.getId());
 		}
 	}
 	

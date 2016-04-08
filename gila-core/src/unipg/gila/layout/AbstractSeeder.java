@@ -17,6 +17,8 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
+import org.apache.log4j.Logger;
+import org.mortbay.log.Log;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
@@ -45,6 +47,9 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 	MapWritable sizesMap;
 	
 	boolean sendDegToo;
+	
+	//LOGGER
+	Logger log = Logger.getLogger(AbstractSeeder.class);
 	
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -91,7 +96,8 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 		}else
 			correctedDispModule = 0;
 
-		if((correctedDispModule < accuracy && getSuperstep() > 2) || getSuperstep() > LayoutRoutine.maxSuperstep)
+		log.info("Seeder here, displacement for vertex :" + vertex.getId() + " " + correctedDispModule );
+		if(correctedDispModule < accuracy)// || LayoutRoutine.relativeSupersteps > LayoutRoutine.maxSuperstep)
 			aggregate(LayoutRoutine.convergenceAggregatorString, new LongWritable(1));
 
 		gatherAndSend(vertex, coords);

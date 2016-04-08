@@ -83,11 +83,11 @@ public class LayeredPartitionedLongWritable extends PartitionedLongWritable {
 		if (this == o) {
 			return true;
 		}
-		if (o == null || !getClass().equals(o.getClass())) {
+		if (o == null || !o.getClass().equals(this.getClass())) {
 			return false;
 		}
 		LayeredPartitionedLongWritable other = (LayeredPartitionedLongWritable) o;
-		if (this.partition == other.getPartition() && this.id == other.getId() && this.layer == other.getLayer()) {
+		if (super.equals(other) && other.getLayer() == this.layer) {
 			return true;
 		}
 		return false;

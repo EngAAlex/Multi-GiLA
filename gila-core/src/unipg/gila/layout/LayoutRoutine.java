@@ -40,6 +40,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.log4j.Logger;
 
 import unipg.gila.aggregators.SetAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMaxAggregator;
@@ -70,6 +71,9 @@ import com.google.common.collect.Lists;
 @SuppressWarnings("rawtypes")
 public class LayoutRoutine {
 		
+	//LOGGER
+	Logger log = Logger.getLogger(this.getClass());
+	
 	//#############CLINT OPTIONS
 	
 	//COMPUTATION OPTIONS
@@ -150,13 +154,15 @@ public class LayoutRoutine {
 
 	//VARIABLES
 	protected long propagationSteps;
-	protected long allVertices;
+//	protected long allVertices;
 	protected float threshold;
 	protected boolean halting;
 	long settledSteps;
 	protected int readyToSleep;
 	protected CoolingStrategy coolingStrategy;
 	static int maxSuperstep;
+	private boolean ignition;
+	private long egira;
 	
 	protected MasterCompute master;
 	protected Class<? extends AbstractSeeder> seeder;
@@ -182,6 +188,8 @@ public class LayoutRoutine {
 //		this.layoutCC = layoutCC;
 //		this.dummyComputation = dummyComputation;
 //		this.drawingScaler = drawingScaler;
+		
+		ignition = true;
 		
 		maxSuperstep = master.getConf().getInt(computationLimit, maxSstepsDefault);
 
@@ -263,9 +271,19 @@ public class LayoutRoutine {
 			float[] minCurrent = ((FloatWritableArray)aggregatedMinComponentData.get(key)).get();
 			
 			int noOfNodes = ((IntWritable)componentNodesMap.get(key)).get();
+			if(noOfNodes == 1){
+				float[] correctedSizes = new float[]{1, 1};
+				float[] scaleFactors = new float[]{1, 1};
+				float[] temps = new float[]{0, 0};
+				
+				correctedSizeMap.put(key, new FloatWritableArray(correctedSizes));
+				tempMap.put(key, new FloatWritableArray(temps));
+				scaleFactorMap.put(key, new FloatWritableArray(scaleFactors));
+				continue;
+			}
 			
-			float w = (maxCurrent[0] - minCurrent[0]) + k;
-			float h = (maxCurrent[1] - minCurrent[1]) + k;
+			float w = Toolbox.floatFuzzyMath((maxCurrent[0] - minCurrent[0])) + k;
+			float h = Toolbox.floatFuzzyMath((maxCurrent[1] - minCurrent[1])) + k;
 						
 			float ratio = h/w;
 			float W = new Double(Math.sqrt(noOfNodes/ratio)*k).floatValue();	
@@ -304,24 +322,33 @@ public class LayoutRoutine {
 		master.setAggregatedValue(tempAGG, newTempsMap);
 	}
 
+	public boolean compute(){
+		return compute(master.getTotalNumVertices());
+	}
+	
 	/**
 	 * 
 	 * The main master compute method. 
 	 * 
 	 */
-	public boolean compute(){
-		if(master.getSuperstep() == 0){
+	public boolean compute(long noOfVertices){
+		if(ignition){
+			master.setComputation(DrawingBoundariesExplorerWithComponentsNo.class);
+			egira = master.getSuperstep();
+			ignition = false;
 			return false;
 		}
-		
-		if(checkForConvergence())
+		long relativeSuperstep = master.getSuperstep() - egira;
+		log.info("computing with no of vertices " + noOfVertices);
+		if(relativeSuperstep > 5 && (checkForConvergence(noOfVertices) || relativeSuperstep > LayoutRoutine.maxSuperstep)){
+			ignition = true;
 			return true; //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS
-		
-		if(master.getSuperstep() == 1){
+		}
+		if(relativeSuperstep == 1){
 			try {
 				superstepOneSpecials(); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
-					master.setComputation(DrawingBoundariesExplorerWithComponentsNo.class); //... AND APPLY THEM
-					return false;
+				master.setComputation(DrawingScaler.class); //... AND APPLY THEM
+				return false;
 			} catch (IllegalAccessException e) {
 				master.haltComputation();
 				return true;
@@ -338,7 +365,6 @@ public class LayoutRoutine {
 			if(!(master.getComputation().toString().contains("Propagator"))){
 				master.setComputation(propagator); //PROPAGATE THE MESSAGES AND COMPUTE THE FORCES
 			}	
-
 		return false;
 	}
 
@@ -348,11 +374,25 @@ public class LayoutRoutine {
 	 * threshold.
 	 */
 	protected boolean checkForConvergence(){
-		if(allVertices <= 0){
-			allVertices = master.getTotalNumVertices();
-			return false;
-		}
-		return ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/allVertices > threshold;
+//		if(allVertices <= 0){
+//			allVertices = master.getTotalNumVertices();
+//			return false;
+//		}
+		return ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/master.getTotalNumVertices() > threshold;
+	}
+	
+	/**
+	 * Check for graph equilibrium.
+	 * @return true if the number of vertices which did not move above the threshold is higher than the convergence
+	 * threshold.
+	 */
+	protected boolean checkForConvergence(long subsetOfVertices){
+//		if(allVertices <= 0){
+//			allVertices = master.getTotalNumVertices();
+//			return false;
+//		}
+		log.info("The convergence is " + ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/subsetOfVertices + " and da thres " + threshold);
+		return ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/subsetOfVertices > threshold;
 	}
 	
 

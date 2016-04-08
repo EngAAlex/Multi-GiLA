@@ -52,14 +52,14 @@ public class LayoutAdaptationStrategy{
 	public static class SizeAndDensityDrivenAdaptationStrategy implements AdaptationStrategy{
 		
 		private DensityDrivenAdaptationStrategy ddas;
-		private SizeAndDensityDrivenAdaptationStrategy ssas;
+		private SizeDrivenAdaptationStrategy ssas;
 		
 		/**
 		 * 
 		 */
 		public SizeAndDensityDrivenAdaptationStrategy() {
 			ddas = new DensityDrivenAdaptationStrategy();
-			ssas = new SizeAndDensityDrivenAdaptationStrategy();
+			ssas = new SizeDrivenAdaptationStrategy();
 		}
 		
 		/* (non-Javadoc)

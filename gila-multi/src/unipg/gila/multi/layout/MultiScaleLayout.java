@@ -61,6 +61,8 @@ public class MultiScaleLayout {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
+				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
+					throw new IOException("NAN detected");
 				super.compute(vertex, messages);
 			}
 		}
@@ -112,6 +114,8 @@ public class MultiScaleLayout {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
+				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
+					throw new IOException("NAN detected");
 				super.compute(vertex, messages);
 			}
 		}
@@ -132,13 +136,13 @@ public class MultiScaleLayout {
 		}
 	}
 	
-	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
-	{}
-	
-	public static class MultiScaleDrawingScaler extends DrawingScaler<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
-	{}
-	
-	public static class MultiScaleLayoutCCs extends LayoutCCs<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
-	{}
+//	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+//	{}
+//	
+//	public static class MultiScaleDrawingScaler extends DrawingScaler<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+//	{}
+//	
+//	public static class MultiScaleLayoutCCs extends LayoutCCs<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+//	{}
 
 }
