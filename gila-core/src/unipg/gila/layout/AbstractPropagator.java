@@ -17,6 +17,7 @@ import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
+import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
@@ -42,17 +43,15 @@ import unipg.gila.utils.Toolbox;
  */
 public class AbstractPropagator<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends AbstractComputation<I, V, E, M1, M2> {
 
+	//LOGGER
+	Logger log = Logger.getLogger(this.getClass());
+	
 	protected boolean useQueues;
 	protected float minimumForceThreshold;
-	protected Float k;
 	protected float walshawConstant;
 	private float queueFlushRatio;
 
 	protected Force force;
-	protected boolean useCosSin;
-
-	protected float cos;
-	protected float sin;
 
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -71,9 +70,10 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 
 		float[] finalForce = new float[]{0.0f, 0.0f};
 		float[] repulsiveForce = new float[]{0.0f, 0.0f};
+		float[] tempForce = new float[]{0.0f, 0.0f};;
 
 		int v1Deg;
-		int v2Deg;
+		int v2Deg;		
 
 		while(it.hasNext()){	
 			LayoutMessage currentMessage = it.next();
@@ -84,6 +84,8 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 				continue;
 
 			foreigncoords=currentMessage.getValue();
+			
+			log.info("Received coordinates " + foreigncoords[0] + foreigncoords[1] + " from " + currentMessage.getPayloadVertex());
 
 			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
 			distance = (float) Math.sqrt(squareDistance);
@@ -91,27 +93,24 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			float deltaX = (foreigncoords[0] - mycoords[0]);
 			float deltaY = (foreigncoords[1] - mycoords[1]);		
 
-
-			cos = deltaX/distance;
-			sin = deltaY/distance;
-
-			float computedForce = 0.0f;
-
 			v1Deg = vertex.getNumEdges() + vValue.getOneDegreeVerticesQuantity();
 			v2Deg = currentMessage.getDeg();
 
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
-				computedForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
-				finalForce[0] += (computedForce*cos);
-				finalForce[1] += (computedForce*sin);
+				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);				
+				finalForce[0] += tempForce[0];
+				finalForce[1] += tempForce[1];
+				log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
+//				finalForce[0] += (computedForce*cos);
+//				finalForce[1] += (computedForce*sin);
 			}
 
 			//REPULSIVE FORCES
-			computedForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
+			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
 
-			repulsiveForce[0] += (computedForce*cos);
-			repulsiveForce[1] += (computedForce*sin);
+			repulsiveForce[0] += tempForce[0];
+			repulsiveForce[1] += tempForce[1];
 
 			vValue.analyze(currentPayload);
 
@@ -125,6 +124,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 
 		}
 
+		
 		//REPULSIVE FORCE MODERATION
 		repulsiveForce[0] *= walshawConstant;
 		repulsiveForce[1] *= walshawConstant;
@@ -132,6 +132,8 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		finalForce[0] -= repulsiveForce[0];
 		finalForce[1] -= repulsiveForce[1];
 
+		log.info("computed repuslive " + repulsiveForce[0] + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
+		
 		vValue.setAsMoving();
 		vValue.addToForceVector(finalForce);
 
@@ -164,7 +166,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+//		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 		walshawConstant = ((FloatWritable)getAggregatedValue(LayoutRoutine.walshawConstant_agg)).get();
 
 		useQueues = getConf().getBoolean(LayoutRoutine.useQueuesString, false);

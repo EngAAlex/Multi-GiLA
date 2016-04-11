@@ -30,7 +30,7 @@ public class SolarPlacerRoutine {
 	
 	public boolean compute(){
 		int currentLayer = ((IntWritable)master.getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-		counter = ((currentLayer == 0 && counter == 0) ? 2 : counter);
+//		counter = ((currentLayer == 0 && counter == 0) ? 2 : counter);
 		switch(counter){
 		case 0 : master.setComputation(CoordinatesBroadcast.class); counter++; return false;
 		case 1 : master.setComputation(InterLayerDataTransferComputation.class); counter++; return false;
@@ -39,7 +39,7 @@ public class SolarPlacerRoutine {
 				master.setAggregatedValue(SolarMergerRoutine.currentLayer, new IntWritable(currentLayer - 1));
 			counter++; return false;
 		case 3 : master.setComputation(PlacerCoordinateDelivery.class); counter++; return false;
-		default : reset(); if(currentLayer == 0) return true; else return false;
+		default : reset(); return true;
 //		default: reset(); if(currentLayer == 0) return true; else return false;
 		}
 	}

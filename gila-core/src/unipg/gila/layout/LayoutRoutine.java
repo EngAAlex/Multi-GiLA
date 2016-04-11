@@ -15,50 +15,39 @@
  *******************************************************************************/
 package unipg.gila.layout;
 
-import java.awt.geom.Point2D;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.giraph.aggregators.BooleanAndAggregator;
 import org.apache.giraph.aggregators.FloatMaxAggregator;
+import org.apache.giraph.aggregators.FloatOverwriteAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.aggregators.LongSumAggregator;
 import org.apache.giraph.graph.AbstractComputation;
-import org.apache.giraph.graph.Computation;
 import org.apache.giraph.graph.Vertex;
-import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.giraph.master.MasterCompute;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
-import unipg.gila.aggregators.SetAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMaxAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMinAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentMapOverwriteAggregator;
+import unipg.gila.aggregators.SetAggregator;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.coolingstrategies.CoolingStrategy;
 import unipg.gila.coolingstrategies.LinearCoolingStrategy;
-import unipg.gila.layout.GraphReintegration.FairShareReintegrateOneEdges;
-import unipg.gila.layout.GraphReintegration.PlainDummyComputation;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer.DrawingBoundariesExplorerWithComponentsNo;
 import unipg.gila.utils.Toolbox;
-
-import com.google.common.collect.Lists;
 
 /**
  * This class defines the behaviour of the layout phase of the algorithm, loading the appropriate computations at the right time. It defines
@@ -167,25 +156,28 @@ public class LayoutRoutine {
 	protected MasterCompute master;
 	protected Class<? extends AbstractSeeder> seeder;
 	protected Class<? extends AbstractPropagator> propagator;
-//	protected Class<? extends DrawingBoundariesExplorer> drawingExplorer;
-//	protected Class<? extends DrawingBoundariesExplorerWithComponentsNo> drawingExplorerWithCCs;
-//	protected Class<? extends DrawingScaler> drawingScaler;
-//	protected Class<? extends LayoutCCs> layoutCC;
+	protected Class<? extends DrawingBoundariesExplorer> drawingExplorer;
+	protected Class<? extends DrawingBoundariesExplorerWithComponentsNo> drawingExplorerWithCCs;
+	protected Class<? extends DrawingScaler> drawingScaler;
+	protected Class<? extends LayoutCCs> layoutCC;
 //	protected Class<? extends Computation> dummyComputation;
 	
 	public void initialize(MasterCompute myMaster
-			, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator)//,
-//			Class<? extends DrawingBoundariesExplorer> explorer, Class<? extends DrawingBoundariesExplorerWithComponentsNo> explorerWithCCs,
-//			Class<? extends DrawingScaler> drawingScaler,
-//			Class<? extends LayoutCCs> layoutCC,
+			, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator){}
+	
+	public void initialize(MasterCompute myMaster
+			, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator,
+			Class<? extends DrawingBoundariesExplorer> explorer, Class<? extends DrawingBoundariesExplorerWithComponentsNo> explorerWithCCs,
+			Class<? extends DrawingScaler> drawingScaler,
+			Class<? extends LayoutCCs> layoutCC)//,
 //			Class<? extends Computation> dummyComputation)
 					throws InstantiationException,	IllegalAccessException {
 		master = myMaster;
 		this.seeder = seeder;
 		this.propagator = propagator;
-//		drawingExplorer = explorer;
-//		drawingExplorerWithCCs = explorerWithCCs;
-//		this.layoutCC = layoutCC;
+		drawingExplorer = explorer;
+		drawingExplorerWithCCs = explorerWithCCs;
+		this.layoutCC = layoutCC;
 //		this.dummyComputation = dummyComputation;
 //		this.drawingScaler = drawingScaler;
 		
@@ -232,6 +224,7 @@ public class LayoutRoutine {
 		float nw = master.getConf().getFloat(node_width ,defaultNodeValue);
 		float ns = master.getConf().getFloat(node_separation ,defaultNodeValue);
 		float k = new Double(ns + Toolbox.computeModule(new float[]{nl, nw})).floatValue();
+		log.info("Coimputed k " + k);
 		master.setAggregatedValue(k_agg, new FloatWritable(k));
 		
 		float walshawModifier = master.getConf().getFloat(walshawModifierString, walshawModifierDefault);
@@ -339,7 +332,7 @@ public class LayoutRoutine {
 			return false;
 		}
 		long relativeSuperstep = master.getSuperstep() - egira;
-		log.info("computing with no of vertices " + noOfVertices);
+		log.info("Relative superstep " + relativeSuperstep);
 		if(relativeSuperstep > 5 && (checkForConvergence(noOfVertices) || relativeSuperstep > LayoutRoutine.maxSuperstep)){
 			ignition = true;
 			return true; //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS

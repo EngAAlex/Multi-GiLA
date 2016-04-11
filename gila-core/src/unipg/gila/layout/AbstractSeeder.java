@@ -75,7 +75,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 		float displacementModule = Toolbox.computeModule(forces);
 		float correctedDispModule;
 		
-		if(displacementModule > 0 && getSuperstep() > 2){
+		if(displacementModule > 0){
 			
 			float tempX;
 			float tempY;
