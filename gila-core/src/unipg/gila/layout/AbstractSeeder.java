@@ -110,8 +110,9 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 		toSend.setPayloadVertex(vertex.getId().getId());
 		toSend.setTTL(ttlmax - 1);
 		toSend.setValue(coords);
-		if(sendDegToo)
-			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
+		toSend.setWeight(vertex.getValue().getWeight());
+//		if(sendDegToo)
+//			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
 		sendMessageToAllEdges(vertex, toSend);	
 	}
 	

@@ -49,7 +49,7 @@ public class FR extends Force {
 	 */
 	@Override
 	public float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
-		log.info("k us " + k);
+		log.info(deltaX + " " + deltaY + " " + distance);
 		return new float[]{
 				deltaX*distance/k,
 				deltaY*distance/k};

@@ -102,7 +102,7 @@ public class LayoutRoutine {
 	public static final String accuracyString = "layout.accuracy";
 	public static final float walshawModifierDefault = 0.052f;
 	public final static float defaultNodeValue = 20.0f;
-	public float defaultInitialTempFactor = 0.4f;
+	public float defaultInitialTempFactor = 2.0f;
 	public final String defaultCoolingSpeed = "0.93";
 	public static final float accuracyDefault = 0.01f;
 	public static final String forceMethodOptionString = "layout.forceModel";
@@ -249,6 +249,7 @@ public class LayoutRoutine {
 		Iterator<Entry<Writable, Writable>> iteratorOverComponents = aggregatedMaxComponentData.entrySet().iterator();
 
 		float k = ((FloatWritable)master.getAggregatedValue(k_agg)).get();
+		log.info("recovered jk " + k);
 		float tempConstant = master.getConf().getFloat(initialTempFactorString, defaultInitialTempFactor);
 		
 		MapWritable correctedSizeMap = new MapWritable();

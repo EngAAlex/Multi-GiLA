@@ -88,6 +88,10 @@ public class MiniCoordinateWritable implements Writable, WritableFactory{
 			return 0;
 		return oneEdges.size();
 	}
+	
+	public int getWeight(){
+		return getOneDegreeVerticesQuantity() + 1;
+	}
 
 	/**
 	 * Returns an iterator on the one degree neighbors ids of the vertex.

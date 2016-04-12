@@ -83,9 +83,6 @@ public class SolarMergerRoutine {
 			return false;
 		}
 		
-		log.info("Going to add to layer 0" + master.getTotalNumVertices());
-		log.info("Going to add to vertex 0 edges " + master.getTotalNumEdges());
-		
 		if(master.getSuperstep() == 0){
 			return false;
 		}
@@ -160,16 +157,16 @@ public class SolarMergerRoutine {
 			checkForNewLayer = false;
 			waitForDummy = false;
 			int layerSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerVertexSizeAggregator)).get(new IntWritable(cLayer+1))).get();
+			master.setAggregatedValue(layerNumberAggregator, new IntWritable(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() + 1));
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
 				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
-					master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get());
+					master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() +1);
 					//haltComputation();
 					return true;
 				}else{
 //					if(layerSize != null)
 //						if(layerSize.get() == ((IntWritable)mp.get(new IntWritable(cLayer))).get()){ ###THERE IS STILL THE RISK OF SAME-SIZE LAYERS
-							master.setAggregatedValue(layerNumberAggregator, new IntWritable(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() + 1));
 //							MapWritable mpV = master.getAggregatedValue(layerVertexSizeAggregator);
 //							MapWritable mpE = master.getAggregatedValue(layerEdgeSizeAggregator);
 //							mpV.put(new IntWritable(cLayer+1), new IntWritable(0));

@@ -200,9 +200,9 @@ public class SolarMerger{
 				//SET THE SUN
 				if(chosenOne.getTTL() == 1){
 					value.setAsPlanet();
-					//					log.info("Me, vertex " + vertex.getId().getId() + " becoming a planet of sun " + chosenOne.getValue().getId());
+										log.info("Me, vertex " + vertex.getId().getId() + " becoming a planet of sun " + chosenOne.getValue().getId() + " since " + chosenOne.getTTL());
 				}else{
-					//					log.info("Me, vertex " + vertex.getId().getId() + " becoming a moon of sun " + chosenOne.getValue().getId());
+										log.info("Me, vertex " + vertex.getId().getId() + " becoming a moon of sun " + chosenOne.getValue().getId() + " since " + chosenOne.getTTL());
 					value.setAsMoon();
 					LayeredPartitionedLongWritableSet proxies = new LayeredPartitionedLongWritableSet();
 					proxies.addElement(chosenOne.getPayloadVertex().copy());
@@ -232,6 +232,7 @@ public class SolarMerger{
 			//		SetWritable<LayeredPartitionedLongWritable> incomingInterfaces = null;
 			while(theMessages.hasNext()){
 				SolarMessage current = theMessages.next();
+				log.info("Received " + current);
 				if(!current.getCode().equals(CODE.SUNOFFER)) // || sunsToIgnore.contains(current.getPayloadVertex().getId()))
 					continue;
 				if(chosenOne == null || 
@@ -282,7 +283,9 @@ public class SolarMerger{
 			//IF NEEDED PROPAGATE THE SOLAR MESSAGE
 			if(chosenOne.getCode().equals(CODE.SUNOFFER) && !chosenOne.isAZombie()){
 				chosenOne.spoofPayloadVertex(vertex.getId());
-				sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
+				SolarMessage sls = (SolarMessage) chosenOne.propagate();
+				log.info("I'm " + vertex.getId() + " and I-m propagating " + sls);
+				sendMessageToAllEdges(vertex, sls);
 			}
 
 			aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
@@ -502,7 +505,7 @@ public class SolarMerger{
 			}
 
 			outEdges.initialize(edgeList);
-			addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight() + value.getLowerLevelWeight(), 
+			addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.getWeight(), 
 					coords[0], coords[1],value.getComponent()), outEdges);
 			MapWritable info = new MapWritable();
 			info.put(new IntWritable(currentLayer+1),new IntWritable(counter));

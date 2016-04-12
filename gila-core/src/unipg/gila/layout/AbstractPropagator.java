@@ -50,6 +50,8 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 	protected float minimumForceThreshold;
 	protected float walshawConstant;
 	private float queueFlushRatio;
+	
+	protected float k;
 
 	protected Force force;
 
@@ -75,6 +77,8 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		int v1Deg;
 		int v2Deg;		
 
+		v1Deg = vertex.getNumEdges() + vValue.getWeight();
+
 		while(it.hasNext()){	
 			LayoutMessage currentMessage = it.next();
 
@@ -85,7 +89,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 
 			foreigncoords=currentMessage.getValue();
 			
-			log.info("Received coordinates " + foreigncoords[0] + foreigncoords[1] + " from " + currentMessage.getPayloadVertex());
+			log.info("Received coordinates " + foreigncoords[0] + " " + foreigncoords[1] + " from " + currentMessage.getPayloadVertex());
 
 			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
 			distance = (float) Math.sqrt(squareDistance);
@@ -93,9 +97,15 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			float deltaX = (foreigncoords[0] - mycoords[0]);
 			float deltaY = (foreigncoords[1] - mycoords[1]);		
 
-			v1Deg = vertex.getNumEdges() + vValue.getOneDegreeVerticesQuantity();
-			v2Deg = currentMessage.getDeg();
-
+			v2Deg = currentMessage.getWeight();
+			
+			
+//			float weightRatio = v2Deg/(float)v1Deg;
+			
+			float weightRatio = 1;
+			
+			log.info("Ma weight vs theirs " + v1Deg + " " + v2Deg + " " + weightRatio);
+			
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
 				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);				
@@ -109,8 +119,8 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			//REPULSIVE FORCES
 			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
 
-			repulsiveForce[0] += tempForce[0];
-			repulsiveForce[1] += tempForce[1];
+			repulsiveForce[0] += tempForce[0]*weightRatio;
+			repulsiveForce[1] += tempForce[1]*weightRatio;
 
 			vValue.analyze(currentPayload);
 
@@ -132,7 +142,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		finalForce[0] -= repulsiveForce[0];
 		finalForce[1] -= repulsiveForce[1];
 
-		log.info("computed repuslive " + repulsiveForce[0] + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
+		log.info("computed repuslive " + repulsiveForce[0] + " " + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
 		
 		vValue.setAsMoving();
 		vValue.addToForceVector(finalForce);
@@ -166,7 +176,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-//		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 		walshawConstant = ((FloatWritable)getAggregatedValue(LayoutRoutine.walshawConstant_agg)).get();
 
 		useQueues = getConf().getBoolean(LayoutRoutine.useQueuesString, false);
@@ -177,6 +187,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		} catch (Exception e) {
 			force = new FR();
 		}
+		force.generateForce(getConf().getStrings(LayoutRoutine.forceMethodOptionExtraOptionsString, ""), k);
 	}
 
 }

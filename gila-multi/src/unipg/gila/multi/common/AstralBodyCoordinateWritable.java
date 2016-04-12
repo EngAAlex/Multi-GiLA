@@ -272,6 +272,14 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public void clearAstralInfo(){
 		cleared = true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.coordinatewritables.MiniCoordinateWritable#getWeight()
+	 */
+	@Override
+	public int getWeight() {
+		return super.getWeight() + lowerLevelWeight + astralWeight();
+	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {

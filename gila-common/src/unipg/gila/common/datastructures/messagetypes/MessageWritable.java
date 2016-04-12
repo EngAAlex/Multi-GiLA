@@ -37,7 +37,8 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	protected int ttl;
 	protected P payloadVertex;
 	protected T value;
-		
+	protected int weight;
+
 	/**
 	 * Parameter-less constructor.
 	 * 
@@ -82,6 +83,20 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	 */
 	public int getTTL(){
 		return ttl;
+	}
+	
+	/**
+	 * @return the weight
+	 */
+	public int getWeight() {
+		return weight;
+	}
+
+	/**
+	 * @param weight the weight to set
+	 */
+	public void setWeight(int weight) {
+		this.weight = weight;
 	}
 
 	public void setPayloadVertex(P payloadVertex){
@@ -134,11 +149,13 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	
 	public void readFields(DataInput in) throws IOException{
 		ttl = in.readInt();
+		weight = in.readInt();
 		specificRead(in);
 	}
 	
 	public void write(DataOutput out) throws IOException{
 		out.writeInt(ttl);
+		out.writeInt(weight);
 		specificWrite(out);
 	}
 	
@@ -160,6 +177,14 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	 * @throws IOException
 	 */
 	protected abstract void specificWrite(DataOutput out) throws IOException;
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return payloadVertex.toString()+ " " + getValue().toString() + " ttl " + getTTL();
+	}
 
 }
 

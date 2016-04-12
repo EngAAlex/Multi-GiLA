@@ -32,7 +32,7 @@ import org.apache.hadoop.io.Writable;
  */
 public class LayoutMessage extends MessageWritable<Long, float[]> {
 
-	private int deg;
+//	private int deg;
 	
 	/**
 	 * Parameter-less constructor
@@ -63,13 +63,13 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 		super(payloadVertex, ttl, coords);		
 	}
 	
-	public void setDeg(int deg){
-		this.deg = deg;
-	}
-
-	public int getDeg(){
-		return deg;
-	}
+//	public void setDeg(int deg){
+//		this.deg = deg;
+//	}
+//
+//	public int getDeg(){
+//		return deg;
+//	}
 	
 	/* (non-Javadoc)
 	 * @see unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagate()
@@ -77,8 +77,9 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	@Override
 	public MessageWritable<Long, float[]> propagate() {
 		LayoutMessage toReturn = new LayoutMessage(payloadVertex, ttl-1, new float[]{value[0], value[1]});
-		if(getDeg() != -1)
-			toReturn.setDeg(getDeg());
+		toReturn.setWeight(weight);
+//		if(getDeg() != -1)
+//			toReturn.setDeg(getDeg());
 		return toReturn;
 	}
 
@@ -88,6 +89,7 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	@Override
 	public MessageWritable<Long, float[]> propagateAndDie() {
 		LayoutMessage toReturn = new LayoutMessage(payloadVertex, new float[]{value[0], value[1]});
+		toReturn.setWeight(weight);
 		return toReturn;
 	}
 
@@ -100,8 +102,8 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 		value = new float[2];
 		value[0] = in.readFloat();
 		value[1] = in.readFloat();
-		if(in.readBoolean())
-			deg = in.readInt();
+//		if(in.readBoolean())
+//			deg = in.readInt();
 			
 	}
 
@@ -113,12 +115,12 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 		out.writeLong(payloadVertex);
 		out.writeFloat(value[0]);
 		out.writeFloat(value[1]);
-		if(getDeg() == -1)
-			out.writeBoolean(false);
-		else{
-			out.writeBoolean(true);
-			out.writeInt(deg);
-		}
+//		if(getDeg() == -1)
+//			out.writeBoolean(false);
+//		else{
+//			out.writeBoolean(true);
+//			out.writeInt(deg);
+//		}
 	}
 
 	/* (non-Javadoc)
