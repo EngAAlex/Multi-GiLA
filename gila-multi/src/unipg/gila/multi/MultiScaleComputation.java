@@ -20,20 +20,21 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
-public abstract class MultiScaleComputation<Z extends Writable, P extends Writable, T extends Writable> extends
-		AbstractComputation<LayeredPartitionedLongWritable, Z, FloatWritable, P, T> {
-	
+public abstract class MultiScaleComputation<Z extends Writable, P extends MessageWritable, T extends MessageWritable> extends
+AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
+
 	//LOGGER
 	Logger log = Logger.getLogger(MultiScaleComputation.class);
-	
+
 	protected int currentLayer;
-	
+
 	@Override	
 	public void compute(
-			Vertex<LayeredPartitionedLongWritable, Z, FloatWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
 			Iterable<P> msgs) throws IOException {
 		if(vertex.getId().getLayer() != currentLayer)
 			return;
@@ -46,41 +47,70 @@ public abstract class MultiScaleComputation<Z extends Writable, P extends Writab
 	@Override
 	public void initialize(
 			GraphState graphState,
-			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, Z, FloatWritable> workerClientRequestProcessor,
-			GraphTaskManager<LayeredPartitionedLongWritable, Z, FloatWritable> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, Z, IntWritable> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, Z, IntWritable> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
 	}
-	
-	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, FloatWritable> vertex,
+
+	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
 			Iterable<P> msgs) throws IOException;
-	
+
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.conf.DefaultImmutableClassesGiraphConfigurable#getConf()
 	 */
 	@SuppressWarnings("unchecked")
-	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, FloatWritable> getSpecialConf() {
+	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, IntWritable> getSpecialConf() {
 		// TODO Auto-generated method stub
-		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, FloatWritable>) super.getConf();
+		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, IntWritable>) super.getConf();
+	}
+
+	public void sendMessageWithWeight(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+						LayeredPartitionedLongWritable id, T msg){
+//		MessageWritable w = (MessageWritable) msg;
+		msg.addToWeight(((IntWritable)vertex.getEdgeValue(id)).get());
+		sendMessage(id, msg);
+	}
+
+	/**
+	 * 
+	 */
+	public void sendMessageToMultipleEdgesWithWeight(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex, Iterator<LayeredPartitionedLongWritable> vertexIdIterator, T message) {
+		while(vertexIdIterator.hasNext())
+			sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)message.copy());
 	}
 	
+	/**
+	 * 
+	 */
+	public void sendMessageToAllEdgesWithWeight(
+			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+			T message) {
+		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
+		while(edges.hasNext()){			
+			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+			if(current.getLayer() == currentLayer)
+				sendMessageWithWeight(vertex, current, (T) message.copy());
+		}
+	}
+
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
 	 */
 	@Override
 	public void sendMessageToAllEdges(
-			Vertex<LayeredPartitionedLongWritable, Z, FloatWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
 			T message) {
-		Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 		while(edges.hasNext()){
 			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
 			if(current.getLayer() == currentLayer)
 				sendMessage(current, message);
 		}
 	}
-	
+
 }
 

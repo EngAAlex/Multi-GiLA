@@ -11,6 +11,7 @@ import java.util.Iterator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.Vertex;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
@@ -20,10 +21,10 @@ import unipg.gila.multi.coarseners.SolarMerger;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
-public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> {
+public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> {
 
 	@Override
-	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable>.TextVertexWriter createVertexWriter(
+	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable>.TextVertexWriter createVertexWriter(
 			TaskAttemptContext arg0) throws IOException, InterruptedException {
 			return new JavaSolarMergerTestVertexWriter();
 		}
@@ -34,7 +35,7 @@ public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<Laye
 			
 			@Override
 			protected Text convertVertexToLine(
-					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex)
+					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex)
 					throws IOException {
 				LayeredPartitionedLongWritable id = vertex.getId();
 				AstralBodyCoordinateWritable value = vertex.getValue();
@@ -45,12 +46,12 @@ public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<Laye
 			}
 		}
 
-		private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges){
+		private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, IntWritable>> edges){
 			String result = "";
-			Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> it = edges.iterator();
+			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> it = edges.iterator();
 			while(it.hasNext()){
-				Edge<LayeredPartitionedLongWritable, FloatWritable> edge = it.next();
-				result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "]";
+				Edge<LayeredPartitionedLongWritable, IntWritable> edge = it.next();
+				result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "," + edge.getValue().get() + "]";
 				if(it.hasNext())
 					result += ",";
 			}

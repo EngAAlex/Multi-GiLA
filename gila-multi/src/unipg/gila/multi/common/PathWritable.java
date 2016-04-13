@@ -30,30 +30,30 @@ import org.apache.hadoop.io.Writable;
 public class PathWritable implements Writable {
 
 	private int positionInPath;
-	private int pathLength;
+//	private int pathLength;
 	private LayeredPartitionedLongWritable referencedSun;
 	
 	public PathWritable() {
 		referencedSun = new LayeredPartitionedLongWritable();
 	}
 	
-	public PathWritable(int positionInPath, int pathLength, LayeredPartitionedLongWritable ref){
+	public PathWritable(int positionInPath, LayeredPartitionedLongWritable ref){
 		this.positionInPath = positionInPath;
-		this.pathLength = pathLength;
+//		this.pathLength = pathLength;
 		referencedSun = ref;
 	}
 	
 	public PathWritable copy(){
-		return new PathWritable(positionInPath, pathLength, referencedSun.copy());
+		return new PathWritable(positionInPath, referencedSun.copy());
 	}
 	
 	public int getPositionInpath(){
 		return positionInPath;
 	}
 	
-	public int getPathLength(){
-		return pathLength;
-	}
+//	public int getPathLength(){
+//		return pathLength;
+//	}
 	
 	public LayeredPartitionedLongWritable getReferencedSun(){
 		return referencedSun;
@@ -61,13 +61,13 @@ public class PathWritable implements Writable {
 
 	public void readFields(DataInput in) throws IOException {
 		positionInPath = in.readInt();
-		pathLength = in.readInt();
+//		pathLength = in.readInt();
 		referencedSun.readFields(in);
 	}
 
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(positionInPath);
-		out.writeInt(pathLength);
+//		out.writeInt(pathLength);
 		referencedSun.write(out);
 	}
 	
@@ -79,7 +79,7 @@ public class PathWritable implements Writable {
 		if(obj == null || !this.getClass().equals(obj.getClass()))
 			return false;
 		PathWritable oPath = (PathWritable) obj;
-		if(this == obj || (this.positionInPath == oPath.getPositionInpath() && this.pathLength == oPath.getPathLength() && this.referencedSun.equals(oPath.getReferencedSun())))
+		if(this == obj || (this.positionInPath == oPath.getPositionInpath() && this.referencedSun.equals(oPath.getReferencedSun())))
 			return true;
 		return false;
 	}
@@ -89,7 +89,7 @@ public class PathWritable implements Writable {
 	 */
 	@Override
 	public int hashCode() {
-		return (this.positionInPath+""+this.pathLength+""+this.referencedSun.toString()).hashCode();
+		return (this.positionInPath+" "+this.referencedSun.toString()).hashCode();
 	}
 
 }

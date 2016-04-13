@@ -119,4 +119,12 @@ public class PartitionMessage extends MessageWritable<Long, Short> {
 		return new PartitionMessage();
 	}
 
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.datastructures.messagetypes.MessageWritable#copy()
+	 */
+	@Override
+	public MessageWritable copy() {
+		return new PartitionMessage(payloadVertex, ttl, value);
+	}
+
 }

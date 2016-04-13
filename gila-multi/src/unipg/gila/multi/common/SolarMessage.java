@@ -83,6 +83,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	
 	public SolarMessage copy() {
 		SolarMessage tmp = new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
+		tmp.setWeight(weight);
 		if(extraPayload != null)
 			tmp.copyExtraPayload(extraPayload);
 		return tmp;
@@ -92,10 +93,14 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		this.payloadVertex = payloadVertex;
 	}
 	
-	public void addToExtraPayload(LayeredPartitionedLongWritable toAdd){
+	public int getExtraPayloadSize(){
+		return extraPayload == null ? 0 : extraPayload.size();
+	}
+	
+	public void addToExtraPayload(LayeredPartitionedLongWritable toAdd, int weight){
 		if(extraPayload == null)
 			extraPayload = new ReferrersList();
-		extraPayload.enqueue(toAdd);
+		extraPayload.enqueue(new Referrer(toAdd, weight));
 	}
 	
 	public void copyExtraPayload(ReferrersList toAdd){
@@ -111,8 +116,8 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		return extraPayload;
 	}
 	
-	public Iterator<LayeredPartitionedLongWritable> getExtraPayloadIterator(){
-		return (Iterator<LayeredPartitionedLongWritable>) extraPayload.iterator();
+	public Iterator<Referrer> getExtraPayloadIterator(){
+		return (Iterator<Referrer>) extraPayload.iterator();
 	}
 	
 	public CODE getCode(){
@@ -150,13 +155,11 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	 */
 	@Override
 	public MessageWritable<LayeredPartitionedLongWritable, LayeredPartitionedLongWritable> propagate() {
-		if(!code.equals(CODE.REFUSEOFFER))
-			return new SolarMessage(getPayloadVertex().copy(), getTTL() - 1, getValue().copy(), getCode());
-		else{
-			SolarMessage propagatedSolarMessage = new SolarMessage(getPayloadVertex().copy(), getTTL() - 1, getValue().copy(), getCode());
-			propagatedSolarMessage.copyExtraPayload(extraPayload);
-			return propagatedSolarMessage;
-		}
+		SolarMessage toReturn = new SolarMessage(getPayloadVertex().copy(), getTTL() - 1, getValue().copy(), getCode());
+		toReturn.setWeight(weight);
+		if(code.equals(CODE.REFUSEOFFER))
+			toReturn.copyExtraPayload(extraPayload);
+		return toReturn;
 	}
 
 	/* (non-Javadoc)
@@ -164,13 +167,11 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	 */
 	@Override
 	public MessageWritable<LayeredPartitionedLongWritable, LayeredPartitionedLongWritable> propagateAndDie() {
-		if(!code.equals(CODE.REFUSEOFFER))
-			return new SolarMessage(getPayloadVertex(), getValue(), getCode());
-		else{
-			SolarMessage propagatedSolarMessage = new SolarMessage(getPayloadVertex(), getValue(), getCode());
-			propagatedSolarMessage.copyExtraPayload(extraPayload);
-			return propagatedSolarMessage;
-		}
+		SolarMessage toReturn = new SolarMessage(getPayloadVertex().copy(), getValue().copy(), getCode());
+		toReturn.setWeight(weight);
+		if(code.equals(CODE.REFUSEOFFER))
+			toReturn.copyExtraPayload(extraPayload);
+		return toReturn;
 	}
 
 	/* (non-Javadoc)
@@ -178,6 +179,14 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	 */
 	public Writable newInstance() {
 		return new SolarMessage();
+	}
+	
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.datastructures.messagetypes.MessageWritable#toString()
+	 */
+	@Override
+	public String toString() {
+		return "code " + code.toString() + " payload " + getPayloadVertex() + " value " + getValue() + " weight " + weight;
 	}
 
 

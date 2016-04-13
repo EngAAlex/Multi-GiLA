@@ -29,7 +29,7 @@ import org.apache.hadoop.io.Writable;
  */
 public class DegMessage extends MessageWritable<Long, Integer> {
 	
-	private long component;
+	private int component;
 
 	/**
 	 * Parameter-less constructor.
@@ -95,7 +95,7 @@ public class DegMessage extends MessageWritable<Long, Integer> {
 	@Override
 	public void specificRead(DataInput input) throws IOException {
 		payloadVertex = input.readLong();
-		component = input.readLong();
+		component = input.readInt();
 		value = input.readInt();
 	}
 
@@ -105,7 +105,7 @@ public class DegMessage extends MessageWritable<Long, Integer> {
 	@Override
 	public void specificWrite(DataOutput output) throws IOException {
 		output.writeLong(payloadVertex);
-		output.writeLong(component);
+		output.writeInt(component);
 		output.writeInt(value);
 	}
 
@@ -134,6 +134,14 @@ public class DegMessage extends MessageWritable<Long, Integer> {
 	 */
 	public Writable newInstance() {
 		return new DegMessage();
+	}
+
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.datastructures.messagetypes.MessageWritable#copy()
+	 */
+	@Override
+	public MessageWritable copy() {
+		return new DegMessage(payloadVertex, ttl, component, value);
 	}
 
 }

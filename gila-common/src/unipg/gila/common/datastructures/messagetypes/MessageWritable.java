@@ -57,6 +57,7 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 		this.payloadVertex = payloadVertex;
 		this.value = value;
 		this.ttl = 0;
+		this.weight = 0;
 	}
 	
 	/**
@@ -70,6 +71,7 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 		this.payloadVertex = payloadVertex;
 		this.ttl = ttl;
 		this.value = value;
+		this.weight = 0;
 	}
 	
 	public void setTTL(int ttl){
@@ -86,6 +88,13 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	}
 	
 	/**
+	 * @param ttl the ttl to set
+	 */
+	public void setTTl(int ttl) {
+		this.ttl = ttl;
+	}
+	
+	/**
 	 * @return the weight
 	 */
 	public int getWeight() {
@@ -93,10 +102,17 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	}
 
 	/**
-	 * @param weight the weight to set
+	 * @param f the weight to set
 	 */
-	public void setWeight(int weight) {
-		this.weight = weight;
+	public void setWeight(int f) {
+		this.weight = f;
+	}
+	
+	/**
+	 * 
+	 */
+	public void addToWeight(int f) {
+		this.weight += f;
 	}
 
 	public void setPayloadVertex(P payloadVertex){
@@ -178,12 +194,14 @@ public abstract class MessageWritable<P, T> implements Writable, WritableFactory
 	 */
 	protected abstract void specificWrite(DataOutput out) throws IOException;
 	
+	public abstract MessageWritable copy();
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return payloadVertex.toString()+ " " + getValue().toString() + " ttl " + getTTL();
+		return payloadVertex.toString()+ " " + getValue().toString() + " ttl " + getTTL() + " weight " + weight;
 	}
 
 }

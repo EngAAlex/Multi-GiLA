@@ -129,6 +129,14 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	public Writable newInstance() {
 		return new LayoutMessage();
 	}
+
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.datastructures.messagetypes.MessageWritable#copy()
+	 */
+	@Override
+	public MessageWritable copy() {
+		return new LayoutMessage(payloadVertex, ttl, value);
+	}
 	
 
 }

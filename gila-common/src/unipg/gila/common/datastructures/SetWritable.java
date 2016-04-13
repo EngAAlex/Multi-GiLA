@@ -104,4 +104,11 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 			it.next().write(out);
 	}
 
+	/**
+	 * 
+	 */
+	public void clear() {
+		internalState.clear();
+	}
+
 }	

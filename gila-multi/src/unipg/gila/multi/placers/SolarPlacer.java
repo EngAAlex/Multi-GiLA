@@ -16,10 +16,12 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
@@ -36,23 +38,23 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	//LOGGER
 	protected Logger log = Logger.getLogger(SolarPlacer.class);
 
-	protected float defaultLength;
+	protected float k;
 
 	/* (non-Javadoc)
 	 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 	 */
 	@Override
 	protected void vertexInLayerComputation(
-			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 			Iterable<LayoutMessage> msgs) throws IOException {
 		AstralBodyCoordinateWritable value = vertex.getValue();
 
 		if(!value.isSun())// && value.getLowerLevelWeight() == 0)
 			return;
 
-		log.info("These are my neighbors:");
-		log.info(value.neighborSystemsStateToString());
-		log.info("Upper layer messages received:");
+//		log.info("These are my neighbors:");
+//		log.info(value.neighborSystemsStateToString());
+//		log.info("Upper layer messages received:");
 
 		//		Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
 		//		while(edges.hasNext()){
@@ -79,7 +81,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 		//ARRANGE PLANETS
 		if(value.planetsNo() > 0){
 			Iterator<Entry<Writable, Writable>> planetsIterator = vertex.getValue().getPlanetsIterator();
-			arrangeBodies(value.getCoordinates(), planetsIterator, planetsComputedCoordsMap, coordsMap);
+			arrangeBodies(value.getCoordinates(), planetsIterator, planetsComputedCoordsMap, coordsMap, value);
 
 			
 			//SEND ALL PACKETS TO PLANETS
@@ -93,7 +95,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			if(value.moonsNo() > 0){
 				Iterator<Entry<Writable, Writable>> moonsIterator = vertex.getValue().getMoonsIterator();
 				if(moonsIterator != null)
-					arrangeBodies(value.getCoordinates(), moonsIterator, moonsComputedCoordsMap, coordsMap);		
+					arrangeBodies(value.getCoordinates(), moonsIterator, moonsComputedCoordsMap, coordsMap, value);		
 				
 				//SEND ALL PACKETS TO MOONS
 				Iterator<Entry<LayeredPartitionedLongWritable, float[]>> finalIteratorOnMoons = moonsComputedCoordsMap.entrySet().iterator();
@@ -114,7 +116,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	@SuppressWarnings("unchecked")
 	private void arrangeBodies(float[] myCoordinates,
 			Iterator<Entry<Writable, Writable>> bodiesIterator,
-			HashMap<LayeredPartitionedLongWritable, float[]> bodiesMap, HashMap<Long, float[]> coordsMap) throws IOException{
+			HashMap<LayeredPartitionedLongWritable, float[]> bodiesMap, HashMap<Long, float[]> coordsMap, AstralBodyCoordinateWritable allNeighbors) throws IOException{
 		log.info("Checking sets");
 		while(bodiesIterator.hasNext()){
 			float avgX = 0.0f, avgY = 0.0f;
@@ -130,10 +132,10 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				float deltaY = myCoordinates[1] - coordsMap.get(currentPath.getReferencedSun().getId())[1];
 
 				log.info("path towards " + currentPath.getReferencedSun() +
-						" at position " + currentPath.getPositionInpath() + " on a total of " + currentPath.getPathLength());
+						" at position " + currentPath.getPositionInpath() + " on a total of " + allNeighbors.getPathLengthForNeighbor(currentPath.getReferencedSun()));
 
-				avgX += deltaX*(currentPath.getPositionInpath()/(float)currentPath.getPathLength());
-				avgY += deltaY*(currentPath.getPositionInpath()/(float)currentPath.getPathLength());
+				avgX += deltaX*(currentPath.getPositionInpath()/(float)allNeighbors.getPathLengthForNeighbor(currentPath.getReferencedSun()));
+				avgY += deltaY*(currentPath.getPositionInpath()/(float)allNeighbors.getPathLengthForNeighbor(currentPath.getReferencedSun()));
 
 			}
 			log.info("Total deset size "  + deSet.size());
@@ -148,13 +150,13 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	@Override
 	public void initialize(
 			GraphState graphState,
-			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> workerClientRequestProcessor,
-			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		defaultLength = getConf().getFloat(SolarPlacerRoutine.placerDefaultLengthString, SolarPlacerRoutine.placerDefaultLength);
+		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 	}
 
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
@@ -44,9 +45,10 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	protected LayeredPartitionedLongWritableSet sunProxies;
 	protected LayeredPartitionedLongWritable sun;
 	protected int distanceFromSun=-1;
+	protected int weightFromSun=-1;
 	protected MapWritable planets; //USED WHEN A BODY IS A SUN
 	protected MapWritable moons; //USED WHEN A BODY IS A SUN
-	protected SetWritable<LayeredPartitionedLongWritable> neighborSystems;
+	protected MapWritable neighborSystems;
 	protected int lowerLevelWeight = 1;
 	protected boolean cleared = false;
 	protected boolean assigned = false;
@@ -100,16 +102,34 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return distanceFromSun;
 	}
 
+	/**
+	 * @return the weightFromSun
+	 */
+	public int getWeightFromSun() {
+		return weightFromSun;
+	}
+
+
+	/**
+	 * @param weightFromSun the weightFromSun to set
+	 */
+	public void setWeightFromSun(int weightFromSun) {
+		this.weightFromSun = weightFromSun;
+	}
+
+
 	public void setAsSun(){
 		distanceFromSun = 0;
 	}
 
-	public void setAsPlanet() {
+	public void setAsPlanet(int weightFromSun) {
 		distanceFromSun = 1;
+		this.weightFromSun = weightFromSun;
 	}
 
-	public void setAsMoon() {
+	public void setAsMoon(int weightFromSun) {
 		distanceFromSun = 2;
+		this.weightFromSun = weightFromSun;
 	}
 
 	public void setAssigned(){
@@ -154,29 +174,38 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(planets == null)
 			planets	=	new MapWritable();
 		planets.put(id.copy(), new PathWritableSet());
+		log.info("Me, sun accept as a planet the vertex " + id);
 	}
 
 	public void addMoon(LayeredPartitionedLongWritable id){
 		if(moons == null)
 			moons =	new MapWritable();
 		moons.put(id.copy(), new PathWritableSet());
+		log.info("Me, sun accept as a moon the vertex " + id);
 	}
 
-	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, ReferrersList referrers, int ttl){
+	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, ReferrersList referrers, int weight){
 		if(neighborSystems == null)
-			neighborSystems = new LayeredPartitionedLongWritableSet();
-		log.info("Preparing to add neighbor system " + sun + " with referrers " + (referrers == null ? "zero null" : referrers.size()));
-		neighborSystems.addElement(sun);
+			neighborSystems = new MapWritable();
+//		log.info("Preparing to add neighbor system " + sun + " with referrers " + (referrers == null ? "zero null" : referrers.size()));
+		if(neighborSystems.containsKey(sun)){
+			if(weight > ((IntWritable)neighborSystems.get(sun)).get())
+				neighborSystems.put(sun, new IntWritable(weight));
+		}else
+			neighborSystems.put(sun, new IntWritable(weight));
+
 		if(referrers == null)
 			return;
-		Iterator<LayeredPartitionedLongWritable> it = (Iterator<LayeredPartitionedLongWritable>) referrers.iterator();
+		Iterator<Referrer> it = (Iterator<Referrer>) referrers.iterator();
 		while(it.hasNext()){
-			LayeredPartitionedLongWritable currentReferrer = it.next();
-			log.info("Current referrer: " + currentReferrer);
-			if(planets.containsKey(currentReferrer)){
-				log.info("Registering for planet " + currentReferrer + " neighbor " + sun);
-				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
-						1, Integer.MAX_VALUE - (ttl - 1), sun));
+			Referrer currentReferrer = it.next();
+			log.info("currentReferrer " + currentReferrer.getEventGenerator());
+			if(planets.containsKey(currentReferrer.getEventGenerator())){
+				log.info("Registering for planet neighbor " + sun + " total " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
+//				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
+//						1, Integer.MAX_VALUE - (ttl - 1), sun));
+				((PathWritableSet)planets.get(currentReferrer.getEventGenerator())).addElement(new PathWritable(
+						(weight - currentReferrer.getDistanceAccumulator()), sun));
 			}
 			else {
 				//########################################## WARNING!!
@@ -184,14 +213,18 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				//with the conflict generating vertex. The problem has no fix yet, so this patch should allow the computation to end ignoring the vertices into the referrer stacjk
 				//that are neither planets nor moons.
 				if(moons != null){
-					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer); 
+					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer.getEventGenerator()); 
 					if(pSet != null){
-						log.info("Registering for moon " + currentReferrer + " neighbor " + sun);
-						pSet.addElement(new PathWritable(2, Integer.MAX_VALUE - (ttl - 1), sun));
+						log.info("Registering for moon neighbor " + sun + " weight " + weight + " total " + currentReferrer.getDistanceAccumulator());
+						pSet.addElement(new PathWritable((weight - currentReferrer.getDistanceAccumulator()), sun));
 					}
 				}
 			}
 		}
+	}
+	
+	public int getPathLengthForNeighbor(LayeredPartitionedLongWritable neighbor){
+		return ((IntWritable)neighborSystems.get(neighbor)).get();
 	}
 
 	public Iterator<Entry<Writable, Writable>> getPlanetsIterator(){
@@ -212,24 +245,23 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return 0;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Iterator<LayeredPartitionedLongWritable> neighbourSystemsIterator(){
+	public Iterator<Entry<Writable,Writable>> neighbourSystemsIterator(){
 		if(neighborSystems != null)
-			return (Iterator<LayeredPartitionedLongWritable>) neighborSystems.iterator();
+			return neighborSystems.entrySet().iterator();
 		return null;
 	}	
 
-	public String neighborSystemsStateToString(){
-		if(neighborSystems == null)
-			return "No neighboring system";
-		Iterator<LayeredPartitionedLongWritable> it = neighbourSystemsIterator();
-		String result = "";
-		while(it.hasNext()){
-			LayeredPartitionedLongWritable current = it.next();
-			result+= "Neighbor system: "+current.getId()+ " at layer " + current.getLayer()+"\n";
-		}
-		return result;
-	}
+//	public String neighborSystemsStateToString(){
+//		if(neighborSystems == null)
+//			return "No neighboring system";
+//		Iterator<LayeredPartitionedLongWritable> it = neighbourSystemsIterator();
+//		String result = "";
+//		while(it.hasNext()){
+//			LayeredPartitionedLongWritable current = it.next();
+//			result+= "Neighbor system: "+current.getId()+ " at layer " + current.getLayer()+"\n";
+//		}
+//		return result;
+//	}
 
 	public LayeredPartitionedLongWritable getSun() {
 		if(sun == null)
@@ -252,12 +284,10 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			return sun;
 		return favProxy;
 	}
-
-	public void setProxies(LayeredPartitionedLongWritableSet proxies){
-		sunProxies = proxies;
-	}
 	
 	public void addToProxies(LayeredPartitionedLongWritable proxy){
+		if(sunProxies == null)
+			sunProxies = new LayeredPartitionedLongWritableSet();
 		sunProxies.addElement(proxy);
 	}
 	
@@ -288,6 +318,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(cleared)
 			return;
 		distanceFromSun = in.readInt();
+		weightFromSun = in.readInt();
 		assigned = in.readBoolean();
 		lowerLevelWeight = in.readInt();
 		if(isSun()){
@@ -295,7 +326,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			moons = new MapWritable();
 			planets.readFields(in);
 			moons.readFields(in);
-			neighborSystems = new LayeredPartitionedLongWritableSet();
+			neighborSystems = new MapWritable();
 			neighborSystems.readFields(in);
 		}else{
 			if(isMoon()){
@@ -318,6 +349,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(cleared)
 			return;
 		out.writeInt(distanceFromSun);
+		out.writeInt(weightFromSun);
 		out.writeBoolean(assigned);
 		out.writeInt(lowerLevelWeight);		
 		if(isSun()){
