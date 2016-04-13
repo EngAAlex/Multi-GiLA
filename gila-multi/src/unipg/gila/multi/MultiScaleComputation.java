@@ -72,6 +72,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 						LayeredPartitionedLongWritable id, T msg){
 //		MessageWritable w = (MessageWritable) msg;
 		msg.addToWeight(((IntWritable)vertex.getEdgeValue(id)).get());
+		log.info("sendind " + msg);
 		sendMessage(id, msg);
 	}
 
@@ -79,8 +80,10 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 	 * 
 	 */
 	public void sendMessageToMultipleEdgesWithWeight(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex, Iterator<LayeredPartitionedLongWritable> vertexIdIterator, T message) {
-		while(vertexIdIterator.hasNext())
-			sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)message.copy());
+		while(vertexIdIterator.hasNext()){
+			MessageWritable messageCopy = message.copy();
+			sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)messageCopy);
+		}
 	}
 	
 	/**

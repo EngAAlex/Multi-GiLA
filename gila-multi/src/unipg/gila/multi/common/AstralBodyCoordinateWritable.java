@@ -120,6 +120,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public void setAsSun(){
 		distanceFromSun = 0;
+		weightFromSun = 0;
 	}
 
 	public void setAsPlanet(int weightFromSun) {
@@ -215,7 +216,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				if(moons != null){
 					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer.getEventGenerator()); 
 					if(pSet != null){
-						log.info("Registering for moon neighbor " + sun + " weight " + weight + " total " + currentReferrer.getDistanceAccumulator());
+						log.info("Registering for moon neighbor " + sun + " weight " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
 						pSet.addElement(new PathWritable((weight - currentReferrer.getDistanceAccumulator()), sun));
 					}
 				}

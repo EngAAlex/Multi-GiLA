@@ -360,7 +360,7 @@ public class SolarMerger{
 						//							else
 						//								log.info("Message contains no extra Payload");
 						SolarMessage messageToSend = (SolarMessage)currentMessage.propagate();
-						log.info("Propagating message old " + currentMessage.getExtraPayloadSize() + " new " + currentMessage.getExtraPayloadSize());
+						log.info("Propagating " + currentMessage + " with " + messageToSend);
 						messageToSend.addToExtraPayload(vertex.getId(), messageToSend.getWeight());
 						if(vertex.getValue().isPlanet()){
 							sendMessageWithWeight(vertex, vertex.getValue().getSun(), messageToSend);
@@ -368,7 +368,6 @@ public class SolarMerger{
 							sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageToSend);
 						aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 					}
-					continue;
 				}
 				break;
 			}
