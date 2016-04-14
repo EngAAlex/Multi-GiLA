@@ -27,6 +27,7 @@ import unipg.gila.layout.LayoutRoutine.LayoutCCs;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
+import unipg.gila.multi.common.SuperLayoutMessage;
 
 /**
  * @author Alessio Arleo
@@ -36,7 +37,7 @@ public class MultiScaleLayout {
 	
 	protected static Logger log = Logger.getLogger(MultiScaleLayout.class);
 	
-	public static class Seeder extends AbstractSeeder<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>{
+	public static class Seeder extends AbstractSeeder<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable, SuperLayoutMessage, SuperLayoutMessage>{
 		
 		protected int currentLayer;
 		
@@ -46,8 +47,8 @@ public class MultiScaleLayout {
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -60,8 +61,8 @@ public class MultiScaleLayout {
 		 */
 		@Override
 		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-				Iterable<LayoutMessage> messages) throws IOException {
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Iterable<SuperLayoutMessage> messages) throws IOException {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
@@ -77,9 +78,9 @@ public class MultiScaleLayout {
 		 */
 		@Override
 		public void sendMessageToAllEdges(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-				LayoutMessage message) {
-			Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				SuperLayoutMessage message) {
+			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 			while(edges.hasNext()){
 				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
 				if(current.getLayer() == currentLayer)
@@ -89,7 +90,7 @@ public class MultiScaleLayout {
 		
 	}
 
-	public static class Propagator extends AbstractPropagator<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>{
+	public static class Propagator extends AbstractPropagator<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable, SuperLayoutMessage, SuperLayoutMessage>{
 	
 		protected int currentLayer;
 
@@ -99,8 +100,8 @@ public class MultiScaleLayout {
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -114,8 +115,8 @@ public class MultiScaleLayout {
 		 */
 		@Override
 		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-				Iterable<LayoutMessage> messages) throws IOException {
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Iterable<SuperLayoutMessage> messages) throws IOException {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
@@ -127,13 +128,26 @@ public class MultiScaleLayout {
 		}
 		
 		/* (non-Javadoc)
+		 * @see unipg.gila.layout.AbstractPropagator#requestOptimalEdgeLength(org.apache.giraph.graph.Vertex, unipg.gila.common.datastructures.PartitionedLongWritable)
+		 */
+		@Override
+		protected float requestOptimalEdgeLength(
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				LayeredPartitionedLongWritable currentPayload) {
+			if(currentLayer > 0)
+				return super.requestOptimalEdgeLength(vertex, currentPayload);
+			else
+				return super.requestOptimalEdgeLength(vertex, currentPayload)*k;
+		}
+		
+		/* (non-Javadoc)
 		 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
 		 */
 		@Override
 		public void sendMessageToAllEdges(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-				LayoutMessage message) {
-			Iterator<Edge<LayeredPartitionedLongWritable, FloatWritable>> edges = vertex.getEdges().iterator();
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				SuperLayoutMessage message) {
+			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 			while(edges.hasNext()){
 				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
 				if(current.getLayer() == currentLayer)
@@ -143,7 +157,7 @@ public class MultiScaleLayout {
 	}
 	
 	
-	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable, SuperLayoutMessage, SuperLayoutMessage>
 	{
 		protected int currentLayer;
 		
@@ -152,8 +166,8 @@ public class MultiScaleLayout {
 		 */
 		@Override
 		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Iterable<SuperLayoutMessage> msgs) throws IOException {
 			if(vertex.getId().getLayer() == currentLayer)
 				return;
 			super.compute(vertex, msgs);
@@ -165,8 +179,8 @@ public class MultiScaleLayout {
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -175,45 +189,45 @@ public class MultiScaleLayout {
 
 		}
 		
-		public class MultiScaleGraphExplorerWithComponentsNo extends DrawingBoundariesExplorerWithComponentsNo<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+		public class MultiScaleGraphExplorerWithComponentsNo extends DrawingBoundariesExplorerWithComponentsNo<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable, SuperLayoutMessage, SuperLayoutMessage>
 		{
 			/* (non-Javadoc)
 			 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer.DrawingBoundariesExplorerWithComponentsNo#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 			 */
 			@Override
 			public void compute(
-					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-					Iterable<LayoutMessage> msgs) throws IOException {
+					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+					Iterable<SuperLayoutMessage> msgs) throws IOException {
 				if(vertex.getId().getLayer() == currentLayer)
 					return;
 				super.compute(vertex, msgs);
 			}
 		}
 		
-		public class MultiScaleDrawingScaler extends DrawingScaler<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+		public class MultiScaleDrawingScaler extends DrawingScaler<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable, SuperLayoutMessage, SuperLayoutMessage>
 		{
 			/* (non-Javadoc)
 			 * @see unipg.gila.layout.LayoutRoutine.DrawingScaler#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 			 */
 			@Override
 			public void compute(
-					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-					Iterable<LayoutMessage> msgs) throws IOException {
+					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+					Iterable<SuperLayoutMessage> msgs) throws IOException {
 				if(vertex.getId().getLayer() == currentLayer)
 					return;
 				super.compute(vertex, msgs);
 			}
 		}
 		
-		public class MultiScaleLayoutCC extends LayoutCCs<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable, LayoutMessage, LayoutMessage>
+		public class MultiScaleLayoutCC extends LayoutCCs<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable, SuperLayoutMessage, SuperLayoutMessage>
 		{
 			/* (non-Javadoc)
 			 * @see unipg.gila.layout.LayoutRoutine.LayoutCCs#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 			 */
 			@Override
 			public void compute(
-					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, FloatWritable> vertex,
-					Iterable<LayoutMessage> msgs) throws IOException {
+					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+					Iterable<SuperLayoutMessage> msgs) throws IOException {
 				if(vertex.getId().getLayer() == currentLayer)
 					return;
 				super.compute(vertex, msgs);

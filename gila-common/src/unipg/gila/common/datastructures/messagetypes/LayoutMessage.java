@@ -24,13 +24,15 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.Writable;
 
+import unipg.gila.common.datastructures.PartitionedLongWritable;
+
 /**
  * This class is used to carry the coordinates of the generating vertex across the graph as an array of floats.
  * 
  * @author Alessio Arleo
  *
  */
-public class LayoutMessage extends MessageWritable<Long, float[]> {
+public class LayoutMessage extends MessageWritable<PartitionedLongWritable, float[]> {
 
 //	private int deg;
 	
@@ -48,7 +50,7 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	 * @param payloadVertex
 	 * @param coords
 	 */
-	public LayoutMessage(long payloadVertex, float[] coords){
+	public LayoutMessage(PartitionedLongWritable payloadVertex, float[] coords){
 		super(payloadVertex, coords);		
 	}
 	
@@ -59,7 +61,7 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	 * @param ttl
 	 * @param coords
 	 */
-	public LayoutMessage(long payloadVertex, int ttl, float[] coords){
+	public LayoutMessage(PartitionedLongWritable payloadVertex, int ttl, float[] coords){
 		super(payloadVertex, ttl, coords);		
 	}
 	
@@ -75,7 +77,7 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	 * @see unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagate()
 	 */
 	@Override
-	public MessageWritable<Long, float[]> propagate() {
+	public MessageWritable<PartitionedLongWritable, float[]> propagate() {
 		LayoutMessage toReturn = new LayoutMessage(payloadVertex, ttl-1, new float[]{value[0], value[1]});
 		toReturn.setWeight(weight);
 //		if(getDeg() != -1)
@@ -87,7 +89,7 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	 * @see unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagateAndDie()
 	 */
 	@Override
-	public MessageWritable<Long, float[]> propagateAndDie() {
+	public MessageWritable<PartitionedLongWritable, float[]> propagateAndDie() {
 		LayoutMessage toReturn = new LayoutMessage(payloadVertex, new float[]{value[0], value[1]});
 		toReturn.setWeight(weight);
 		return toReturn;
@@ -98,7 +100,8 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	 */
 	@Override
 	protected void specificRead(DataInput in) throws IOException {
-		payloadVertex = in.readLong();
+		payloadVertex = new PartitionedLongWritable();
+		payloadVertex.readFields(in);
 		value = new float[2];
 		value[0] = in.readFloat();
 		value[1] = in.readFloat();
@@ -112,7 +115,7 @@ public class LayoutMessage extends MessageWritable<Long, float[]> {
 	 */
 	@Override
 	protected void specificWrite(DataOutput out) throws IOException {
-		out.writeLong(payloadVertex);
+		payloadVertex.write(out);
 		out.writeFloat(value[0]);
 		out.writeFloat(value[1]);
 //		if(getDeg() == -1)

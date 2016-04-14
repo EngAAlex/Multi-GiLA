@@ -28,12 +28,13 @@ import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.multi.common.PathWritable;
 import unipg.gila.multi.common.PathWritableSet;
+import unipg.gila.multi.common.SuperLayoutMessage;
 
 /**
  * @author Alessio Arleo
  *
  */
-public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage> {
+public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWritable, SuperLayoutMessage, SuperLayoutMessage> {
 
 	//LOGGER
 	protected Logger log = Logger.getLogger(SolarPlacer.class);
@@ -46,7 +47,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	@Override
 	protected void vertexInLayerComputation(
 			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-			Iterable<LayoutMessage> msgs) throws IOException {
+			Iterable<SuperLayoutMessage> msgs) throws IOException {
 		AstralBodyCoordinateWritable value = vertex.getValue();
 
 		if(!value.isSun())// && value.getLowerLevelWeight() == 0)
@@ -63,14 +64,14 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 		//				log.info(next.getTargetVertexId().getId());
 		//		}
 
-		Iterator<LayoutMessage> itmsgs = msgs.iterator();
-		HashMap<Long, float[]> coordsMap = new HashMap<Long, float[]>();
+		Iterator<SuperLayoutMessage> itmsgs = msgs.iterator();
+		HashMap<LayeredPartitionedLongWritable, float[]> coordsMap = new HashMap<LayeredPartitionedLongWritable, float[]>();
 		HashMap<LayeredPartitionedLongWritable, float[]> planetsComputedCoordsMap = new HashMap<LayeredPartitionedLongWritable, float[]>();
 		HashMap<LayeredPartitionedLongWritable, float[]> moonsComputedCoordsMap = new HashMap<LayeredPartitionedLongWritable, float[]>();
 
 		while(itmsgs.hasNext()){ //Check all messages and gather all the coordinates (including updating mine).
-			LayoutMessage msg = itmsgs.next();
-			if(msg.getPayloadVertex() == vertex.getId().getId()){
+			SuperLayoutMessage msg = itmsgs.next();
+			if(msg.getPayloadVertex().equals(vertex.getId())){
 				value.setCoordinates(msg.getValue()[0], msg.getValue()[1]);
 			}else{
 				log.info(msg.getPayloadVertex());
@@ -88,7 +89,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			Iterator<Entry<LayeredPartitionedLongWritable, float[]>> finalIteratorOnPlanets = planetsComputedCoordsMap.entrySet().iterator();
 			while(finalIteratorOnPlanets.hasNext()){
 				Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnPlanets.next();
-				sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey().getId(), currentRecipient.getValue()));
+				sendMessage(currentRecipient.getKey().copy(), new SuperLayoutMessage(currentRecipient.getKey(), currentRecipient.getValue()));
 			}
 			
 			//ARRANGE MOONS
@@ -101,7 +102,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				Iterator<Entry<LayeredPartitionedLongWritable, float[]>> finalIteratorOnMoons = moonsComputedCoordsMap.entrySet().iterator();
 				while(finalIteratorOnMoons.hasNext()){
 					Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnMoons.next();
-					sendMessageToAllEdges(vertex, new LayoutMessage(currentRecipient.getKey().getId(), 1, currentRecipient.getValue()));
+					sendMessageToAllEdges(vertex, new SuperLayoutMessage(currentRecipient.getKey(), 1, currentRecipient.getValue()));
 				}
 				
 			}
@@ -116,7 +117,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	@SuppressWarnings("unchecked")
 	private void arrangeBodies(float[] myCoordinates,
 			Iterator<Entry<Writable, Writable>> bodiesIterator,
-			HashMap<LayeredPartitionedLongWritable, float[]> bodiesMap, HashMap<Long, float[]> coordsMap, AstralBodyCoordinateWritable allNeighbors) throws IOException{
+			HashMap<LayeredPartitionedLongWritable, float[]> bodiesMap, HashMap<LayeredPartitionedLongWritable, float[]> coordsMap, AstralBodyCoordinateWritable allNeighbors) throws IOException{
 		log.info("Checking sets");
 		while(bodiesIterator.hasNext()){
 			float avgX = 0.0f, avgY = 0.0f;

@@ -95,6 +95,15 @@ public class CoordinateWritable extends MiniCoordinateWritable{
 	}
 	
 	/**
+	 * Set a new vertex as analyzed.
+	 * 
+	 * @param neigh The vertex id to be set as analyzed.
+	 */
+	public void analyze(long neigh){
+		analyze(new LongWritable(neigh));
+	}
+	
+	/**
 	 * At the end of a drawing cycle (seeding + propagation) this method resets the Analyzed set.
 	 */
 	public void resetAnalyzed(){

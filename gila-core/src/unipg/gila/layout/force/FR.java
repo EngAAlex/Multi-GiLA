@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 public class FR extends Force {
 	
 	Logger log = Logger.getLogger(this.getClass());
-	private float k;
 	
 	/**
 	 * Parameter-less constructor.
@@ -40,19 +39,18 @@ public class FR extends Force {
 	 * @see unipg.dafne.layout.force.Force#generateForce(java.lang.String[])
 	 */
 	@Override
-	public void generateForce(String[] args, float k) {
-		this.k = k;
+	public void generateForce(String[] args) {
 	}
 
 	/* (non-Javadoc)
 	 * @see unipg.dafne.layout.force.Force#computeAttractiveForce(float[], float)
 	 */
 	@Override
-	public float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
+	public float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg) {
 		log.info(deltaX + " " + deltaY + " " + distance);
 		return new float[]{
-				deltaX*distance/k,
-				deltaY*distance/k};
+				deltaX*distance/desiredDistance,
+				deltaY*distance/desiredDistance};
 		//		return squareDistance/k;
 	}
 
@@ -60,7 +58,7 @@ public class FR extends Force {
 	 * @see unipg.dafne.layout.force.Force#computeRepulsiveForce(float[], float)
 	 */
 	@Override
-	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
+	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg) {
 		return new float[]{
 				deltaX/squareDistance,
 				deltaY/squareDistance};

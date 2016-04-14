@@ -15,6 +15,7 @@ import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
@@ -22,6 +23,7 @@ import org.apache.log4j.Logger;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.layout.force.FR;
 import unipg.gila.layout.force.Force;
 import unipg.gila.utils.Toolbox;
@@ -41,7 +43,7 @@ import unipg.gila.utils.Toolbox;
  * @author Alessio Arleo
  *
  */
-public class AbstractPropagator<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends AbstractComputation<I, V, E, M1, M2> {
+public class AbstractPropagator<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends AbstractComputation<I, V, E, M1, M2> {
 
 	//LOGGER
 	Logger log = Logger.getLogger(this.getClass());
@@ -80,9 +82,9 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		v1Deg = vertex.getNumEdges() + vValue.getWeight();
 
 		while(it.hasNext()){	
-			LayoutMessage currentMessage = it.next();
+			M1 currentMessage = it.next();
 
-			LongWritable currentPayload = new LongWritable(currentMessage.getPayloadVertex());
+			I currentPayload = currentMessage.getPayloadVertex();
 
 			if(currentMessage.getPayloadVertex().equals(vertex.getId().getId()) || vValue.isAnalyzed(currentPayload))
 				continue;
@@ -108,7 +110,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
-				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);				
+				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalEdgeLength(vertex, currentPayload), v1Deg, v2Deg);				
 				finalForce[0] += tempForce[0];
 				finalForce[1] += tempForce[1];
 				log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
@@ -117,12 +119,12 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			}
 
 			//REPULSIVE FORCES
-			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
+			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalEdgeLength(vertex, currentPayload), v1Deg, v2Deg);
 
 			repulsiveForce[0] += tempForce[0]*weightRatio;
 			repulsiveForce[1] += tempForce[1]*weightRatio;
 
-			vValue.analyze(currentPayload);
+			vValue.analyze(currentPayload.getId());
 
 			if(!currentMessage.isAZombie()){
 				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
@@ -164,6 +166,13 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 
 	}
 
+	/**
+	 * @return
+	 */
+	protected float requestOptimalEdgeLength(Vertex<I,V,E> vertex, I currentPayload) {
+		return k;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
 	 */
@@ -187,7 +196,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		} catch (Exception e) {
 			force = new FR();
 		}
-		force.generateForce(getConf().getStrings(LayoutRoutine.forceMethodOptionExtraOptionsString, ""), k);
+		force.generateForce(getConf().getStrings(LayoutRoutine.forceMethodOptionExtraOptionsString, ""));
 	}
 
 }

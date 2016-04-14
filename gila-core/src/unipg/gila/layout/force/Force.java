@@ -32,7 +32,7 @@ public abstract class Force {
 	 * @param args The arguments.
 	 * @param k The optimal spring length.
 	 */
-	public abstract void generateForce(String args[], float k);
+	public abstract void generateForce(String args[]);
 	
 	/**
 	 * This method computes the attractive force module between two vertices. It will be split into its X and Y components into
@@ -46,7 +46,7 @@ public abstract class Force {
 	 * @param v2Deg The degree of the second vertex.
 	 * @return The attractive force module exerted by v2 on v1.
 	 */
-	public abstract float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg);
+	public abstract float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg);
 
 	/**
 	 * 
@@ -57,10 +57,11 @@ public abstract class Force {
 	 * @param deltaY The vertices distance on the Y axis.
 	 * @param distance The distance module.
 	 * @param squareDistance The distance square module.
+	 * @param desiredDistance the desired edge length
 	 * @param v1Deg The degree of the first vertex.
 	 * @param v2Deg The degree of the second vertex.
 	 * @return The repulsive force module exerted by v2 on v1.
 	 */
-	public abstract float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg);
+	public abstract float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg);
 
 }

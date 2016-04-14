@@ -12,6 +12,7 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -24,6 +25,7 @@ import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.utils.Toolbox;
 
 /**
@@ -37,7 +39,7 @@ import unipg.gila.utils.Toolbox;
  * @author Alessio Arleo
  *
  */
-public class AbstractSeeder<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends AbstractComputation<I, V, E, M1, M2> {
+public class AbstractSeeder<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends AbstractComputation<I, V, E, M1, M2> {
 
 	float initialTemp;
 	float accuracy;
@@ -107,7 +109,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 	@SuppressWarnings("unchecked")
 	protected void gatherAndSend(Vertex<I, V, E> vertex, float[] coords){
 		M2 toSend = (M2) WritableFactories.newInstance(getConf().getOutgoingMessageValueClass());
-		toSend.setPayloadVertex(vertex.getId().getId());
+		toSend.setPayloadVertex(vertex.getId());
 		toSend.setTTL(ttlmax - 1);
 		toSend.setValue(coords);
 		toSend.setWeight(vertex.getValue().getWeight());

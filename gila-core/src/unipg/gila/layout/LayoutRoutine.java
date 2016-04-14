@@ -44,6 +44,7 @@ import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.coolingstrategies.CoolingStrategy;
 import unipg.gila.coolingstrategies.LinearCoolingStrategy;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer.DrawingBoundariesExplorerWithComponentsNo;
@@ -397,8 +398,7 @@ public class LayoutRoutine {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class DrawingBoundariesExplorer<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
-	AbstractComputation<I, V, E, M1, M2> {
+	public static class DrawingBoundariesExplorer<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends AbstractComputation<I, V, E, M1, M2> {
 
 		protected float[] coords;
 		protected V vValue;
@@ -415,7 +415,7 @@ public class LayoutRoutine {
 			aggregate(minCoords, myCoordsPackage);
 		}
 		
-		public static class DrawingBoundariesExplorerWithComponentsNo<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+		public static class DrawingBoundariesExplorerWithComponentsNo<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends
 		DrawingBoundariesExplorer<I, V, E, M1, M2>{
 			
 			@Override
@@ -438,7 +438,7 @@ public class LayoutRoutine {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class DrawingScaler <I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+	public static class DrawingScaler <I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends
 	AbstractComputation<I, V, E, M1, M2>{
 		
 		MapWritable scaleFactors;
@@ -469,7 +469,7 @@ public class LayoutRoutine {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class LayoutCCs <I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
+	public static class LayoutCCs <I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends
 	AbstractComputation<I, V, E, M1, M2>{
 		
 		MapWritable offsets;

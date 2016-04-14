@@ -22,6 +22,7 @@ import unipg.gila.multi.MultiScaleComputation;
 import unipg.gila.multi.common.AstralBodyCoordinateWritable;
 import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.multi.common.SolarMessage;
+import unipg.gila.multi.common.SuperLayoutMessage;
 import unipg.gila.partitioning.Spinner;
 
 public class InterLayerCommunicationUtils{
@@ -32,7 +33,7 @@ public class InterLayerCommunicationUtils{
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage>{
+	public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, SuperLayoutMessage, SuperLayoutMessage>{
 
 		/* (non-Javadoc)
 		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -40,9 +41,9 @@ public class InterLayerCommunicationUtils{
 		@Override
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
+				Iterable<SuperLayoutMessage> msgs) throws IOException {
 			if(vertex.getValue().getLowerLevelWeight() > 0)
-				sendMessageToAllEdges(vertex, new LayoutMessage(vertex.getId().getId(), vertex.getValue().getCoordinates()));
+				sendMessageToAllEdges(vertex, new SuperLayoutMessage(vertex.getId(), vertex.getValue().getCoordinates()));
 			}
 	}
 	
@@ -53,7 +54,7 @@ public class InterLayerCommunicationUtils{
 	 *
 	 */
 	public static class InterLayerDataTransferComputation extends
-	MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage> {
+	MultiScaleComputation<AstralBodyCoordinateWritable, SuperLayoutMessage, SuperLayoutMessage> {
 
 		/* (non-Javadoc)
 		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -61,15 +62,15 @@ public class InterLayerCommunicationUtils{
 		@Override
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
+				Iterable<SuperLayoutMessage> msgs) throws IOException {
 			AstralBodyCoordinateWritable value = vertex.getValue();
 			if(value.getLowerLevelWeight() > 0){
 				LayeredPartitionedLongWritable mineId = vertex.getId();
 				LayeredPartitionedLongWritable lowerID = new LayeredPartitionedLongWritable(mineId.getPartition(), mineId.getId(), mineId.getLayer() - 1);
-				sendMessage(lowerID, new LayoutMessage(mineId.getId(), value.getCoordinates()));
-				Iterator<LayoutMessage> it = msgs.iterator();
+				sendMessage(lowerID, new SuperLayoutMessage(mineId, value.getCoordinates()));
+				Iterator<SuperLayoutMessage> it = msgs.iterator();
 				while(it.hasNext())
-					sendMessage(lowerID, (LayoutMessage) it.next().propagateAndDie());
+					sendMessage(lowerID, (SuperLayoutMessage) it.next().propagateAndDie());
 			}
 			//REACTIVATE TO PURGE UPPER LAYERS
 //			vertex.getValue().clearAstralInfo();
@@ -78,7 +79,7 @@ public class InterLayerCommunicationUtils{
 	}
 	
 
-	public static class MergerToPlacerDummyComputation extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessage>{
+	public static class MergerToPlacerDummyComputation extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, SuperLayoutMessage>{
 
 		Random rnd;
 		
