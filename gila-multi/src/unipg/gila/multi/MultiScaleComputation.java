@@ -21,8 +21,8 @@ import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
 public abstract class MultiScaleComputation<Z extends Writable, P extends MessageWritable, T extends MessageWritable> extends
 AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {

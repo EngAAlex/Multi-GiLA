@@ -23,7 +23,10 @@ import org.apache.log4j.Logger;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.force.FR;
 import unipg.gila.layout.force.Force;
 import unipg.gila.utils.Toolbox;
@@ -43,7 +46,7 @@ import unipg.gila.utils.Toolbox;
  * @author Alessio Arleo
  *
  */
-public class AbstractPropagator<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends AbstractComputation<I, V, E, M1, M2> {
+public class AbstractPropagator<V extends CoordinateWritable, E extends IntWritable> extends AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
 	//LOGGER
 	Logger log = Logger.getLogger(this.getClass());
@@ -62,9 +65,9 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+	public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
 			throws IOException {
-		Iterator<M1> it = messages.iterator();
+		Iterator<LayoutMessage> it = messages.iterator();
 		CoordinateWritable vValue = vertex.getValue();
 
 		float[] mycoords = vValue.getCoordinates();;	
@@ -82,14 +85,15 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		v1Deg = vertex.getNumEdges() + vValue.getWeight();
 
 		while(it.hasNext()){	
-			M1 currentMessage = it.next();
+			LayoutMessage currentMessage = it.next();
 
-			I currentPayload = currentMessage.getPayloadVertex();
+			LayeredPartitionedLongWritable currentPayload = currentMessage.getPayloadVertex();
+			log.info("Message payload" + currentPayload);
 
-			if(currentMessage.getPayloadVertex().equals(vertex.getId().getId()) || vValue.isAnalyzed(currentPayload))
+			if(currentPayload.equals(vertex.getId()) || vValue.isAnalyzed(currentPayload))
 				continue;
 
-			foreigncoords=currentMessage.getValue();
+			foreigncoords = currentMessage.getValue();
 			
 			log.info("Received coordinates " + foreigncoords[0] + " " + foreigncoords[1] + " from " + currentMessage.getPayloadVertex());
 
@@ -104,13 +108,13 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			
 //			float weightRatio = v2Deg/(float)v1Deg;
 			
-			float weightRatio = 1;
+//			float weightRatio = 1;
 			
-			log.info("Ma weight vs theirs " + v1Deg + " " + v2Deg + " " + weightRatio);
+//			log.info("Ma weight vs theirs " + v1Deg + " " + v2Deg + " " + weightRatio);
 			
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
-				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalEdgeLength(vertex, currentPayload), v1Deg, v2Deg);				
+				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalSpringLength(vertex, currentPayload), v1Deg, v2Deg);				
 				finalForce[0] += tempForce[0];
 				finalForce[1] += tempForce[1];
 				log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
@@ -119,23 +123,26 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 			}
 
 			//REPULSIVE FORCES
-			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalEdgeLength(vertex, currentPayload), v1Deg, v2Deg);
+			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
 
-			repulsiveForce[0] += tempForce[0]*weightRatio;
-			repulsiveForce[1] += tempForce[1]*weightRatio;
+			log.info("computed repulsive " + tempForce[0] + " " + tempForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
+
+			repulsiveForce[0] += tempForce[0];
+			repulsiveForce[1] += tempForce[1];
 
 			vValue.analyze(currentPayload.getId());
 
 			if(!currentMessage.isAZombie()){
 				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
 				if(!useQueues)
-					sendMessageToAllEdges(vertex, (M2) currentMessage.propagate());					
+					sendMessageToAllEdges(vertex, (LayoutMessage) currentMessage.propagate());					
 				else
 					vertex.getValue().enqueueMessage(currentMessage.propagate());	
 			}
 
 		}
 
+		log.info("Going to moderate on " + walshawConstant + " from " + repulsiveForce[0] + " " + repulsiveForce[1]);
 		
 		//REPULSIVE FORCE MODERATION
 		repulsiveForce[0] *= walshawConstant;
@@ -155,10 +162,10 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 		Writable[] toDequeue = vValue.dequeueMessages(new Double(Math.ceil(queueFlushRatio*vertex.getNumEdges())).intValue());
 
 		for(int i=0; i<toDequeue.length; i++){
-			M2 current = (M2) toDequeue[i];
+			LayoutMessage current = (LayoutMessage) toDequeue[i];
 			if(current != null){
 				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
-				sendMessageToAllEdges(vertex, (M2) current);
+				sendMessageToAllEdges(vertex, (LayoutMessage) current);
 			}
 			else
 				break;
@@ -169,7 +176,7 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 	/**
 	 * @return
 	 */
-	protected float requestOptimalEdgeLength(Vertex<I,V,E> vertex, I currentPayload) {
+	protected float requestOptimalSpringLength(Vertex<LayeredPartitionedLongWritable,V,E> vertex, LayeredPartitionedLongWritable currentPayload) {
 		return k;
 	}
 
@@ -179,8 +186,8 @@ public class AbstractPropagator<I extends PartitionedLongWritable, V extends Coo
 	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(GraphState graphState,
-			WorkerClientRequestProcessor<I, V, E> workerClientRequestProcessor,
-			GraphTaskManager<I, V, E> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, V, E> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, V, E> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,

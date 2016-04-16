@@ -16,13 +16,14 @@
 /**
  * 
  */
-package unipg.gila.multi.common;
+package unipg.gila.common.multi;
 
 import java.io.DataInput;
 import java.io.IOException;
 import java.util.HashSet;
 
 import unipg.gila.common.datastructures.SetWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 
 /**
  * @author Alessio Arleo

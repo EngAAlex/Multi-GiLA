@@ -84,9 +84,9 @@ public class GraphReintegrationRoutine {
 		
 		//##### SORTER -- THE MAP CONTAINING THE COMPONENTS' SIZES IS SORTED BY ITS VALUES
 		
-		LinkedHashMap<LongWritable, IntWritable> sortedMap = (LinkedHashMap<LongWritable, IntWritable>)sortMapByValues(componentsNo);
+		LinkedHashMap<IntWritable, IntWritable> sortedMap = (LinkedHashMap<IntWritable, IntWritable>)sortMapByValues(componentsNo);
 	
-		LongWritable[] componentSizeSorter = sortedMap.keySet().toArray(new LongWritable[0]);
+		IntWritable[] componentSizeSorter = sortedMap.keySet().toArray(new IntWritable[0]);
 		IntWritable[] componentSizeSorterValues = sortedMap.values().toArray(new IntWritable[0]);
 				
 		int coloumnNo = new Double(Math.ceil(Math.sqrt(componentsNo.size() - 1))).intValue();
@@ -94,13 +94,13 @@ public class GraphReintegrationRoutine {
 		Point2D.Float cursor = new Point2D.Float(0.0f, 0.0f);
 		Point2D.Float tableOrigin = new Point2D.Float(0.0f, 0.0f);
 		
-		Long maxID = componentSizeSorter[componentSizeSorter.length-1].get();
+		int maxID = componentSizeSorter[componentSizeSorter.length-1].get();
 		int maxNo = componentSizeSorterValues[componentSizeSorter.length-1].get();// ((LongWritable)componentsNo.get(new LongWritable(maxID))).get();
 		
-		float[] translationCorrection = ((FloatWritableArray)minCoordsMap.get(new LongWritable(maxID))).get();
-		offsets.put(new LongWritable(maxID), new FloatWritableArray(new float[]{-translationCorrection[0], -translationCorrection[1], 1.0f, cursor.x, cursor.y}));
+		float[] translationCorrection = ((FloatWritableArray)minCoordsMap.get(new IntWritable(maxID))).get();
+		offsets.put(new IntWritable(maxID), new FloatWritableArray(new float[]{-translationCorrection[0], -translationCorrection[1], 1.0f, cursor.x, cursor.y}));
 		
-		float[] maxComponents = ((FloatWritableArray)maxCoordsMap.get(new LongWritable(maxID))).get();
+		float[] maxComponents = ((FloatWritableArray)maxCoordsMap.get(new IntWritable(maxID))).get();
 //		float componentPadding = getConf().getFloat(FloodingMaster.componentPaddingConfString, defaultPadding)*maxComponents[0];
 		cursor.setLocation((maxComponents[0] - translationCorrection[0]) + componentPadding, 0.0f); //THE BIGGEST COMPONENT IS PLACED IN THE UPPER LEFT CORNER.
 		tableOrigin.setLocation(cursor);
@@ -109,10 +109,10 @@ public class GraphReintegrationRoutine {
 		int counter = 1;
 		
 		for(int j=componentSizeSorter.length-2; j>=0; j--){ //THE OTHER SMALLER COMPONENTS ARE ARRANGED IN A GRID.
-			long currentComponent = componentSizeSorter[j].get();
-			maxComponents = ((FloatWritableArray)maxCoordsMap.get(new LongWritable(currentComponent))).get();
+			int currentComponent = componentSizeSorter[j].get();
+			maxComponents = ((FloatWritableArray)maxCoordsMap.get(new IntWritable(currentComponent))).get();
 			float sizeRatio = (float)componentSizeSorterValues[j].get()/maxNo;
-			translationCorrection = ((FloatWritableArray)minCoordsMap.get(new LongWritable(currentComponent))).get();
+			translationCorrection = ((FloatWritableArray)minCoordsMap.get(new IntWritable(currentComponent))).get();
 						
 			if(sizeRatio < minRatioThreshold)	
 				sizeRatio = minRatioThreshold;
@@ -122,7 +122,7 @@ public class GraphReintegrationRoutine {
 			maxComponents[0] *= sizeRatio;
 			maxComponents[1] *= sizeRatio;
 			
-			offsets.put(new LongWritable(currentComponent), new FloatWritableArray(new float[]{-translationCorrection[0], -translationCorrection[1], sizeRatio,  cursor.x, cursor.y}));
+			offsets.put(new IntWritable(currentComponent), new FloatWritableArray(new float[]{-translationCorrection[0], -translationCorrection[1], sizeRatio,  cursor.x, cursor.y}));
 			if(maxComponents[1] > coloumnMaxY)
 				coloumnMaxY = maxComponents[1];
 			if(counter % coloumnNo != 0){

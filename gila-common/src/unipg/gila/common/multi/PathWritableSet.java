@@ -16,7 +16,7 @@
 /**
  * 
  */
-package unipg.gila.multi.common;
+package unipg.gila.common.multi;
 
 import java.io.DataInput;
 import java.io.IOException;

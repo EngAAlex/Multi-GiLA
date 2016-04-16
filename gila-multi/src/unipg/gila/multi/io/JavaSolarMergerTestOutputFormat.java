@@ -17,9 +17,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
 import org.mortbay.log.Log;
 
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.multi.coarseners.SolarMerger;
-import unipg.gila.multi.common.AstralBodyCoordinateWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
 public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> {
 

@@ -13,16 +13,18 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.multi.MultiScaleComputation;
-import unipg.gila.multi.common.AstralBodyCoordinateWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
 /**
  * @author Alessio Arleo
  *
  */
-public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage> {
+public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessageMatrix<LayeredPartitionedLongWritable>> {
 
 	/* (non-Javadoc)
 	 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -34,21 +36,19 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		Iterator<LayoutMessage> ms = msgs.iterator();
 		if(!ms.hasNext() || vertex.getValue().isSun())
 			return;
-		Long currentVertexID = vertex.getId().getId();
-		HashMap<Long, LayeredPartitionedLongWritable> myNeighbors = new HashMap<Long, LayeredPartitionedLongWritable>();
 		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 		while(edges.hasNext()){
 			Edge<LayeredPartitionedLongWritable, IntWritable> currentEdge = edges.next();
-			myNeighbors.put(currentEdge.getTargetVertexId().getId(), currentEdge.getTargetVertexId());
+//			myNeighbors.put(currentEdge.getTargetVertexId().getId(), currentEdge.getTargetVertexId());
 		}
 		while(ms.hasNext()){
-			LayoutMessage current = ms.next();
-			if(current.getPayloadVertex().equals(currentVertexID))
+			LayoutMessage current = (LayoutMessage) ms.next();
+			if(current.getPayloadVertex().equals(vertex.getId()))
 				vertex.getValue().setCoordinates(vertex.getValue().getCoordinates()[0] + current.getValue()[0], vertex.getValue().getCoordinates()[1] + current.getValue()[1]);
 			else
 				if(!current.isAZombie())
-					if(myNeighbors.containsKey(current.getPayloadVertex()))
-						sendMessage(myNeighbors.get(current.getPayloadVertex()), (LayoutMessage)current.propagateAndDie());				
+					if(vertex.getEdgeValue(current.getPayloadVertex()) != null)
+						sendMessage(current.getPayloadVertex(), (LayoutMessage)current.propagateAndDie());				
 		}
 	}
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package unipg.gila.multi.common;
+package unipg.gila.common.coordinatewritables;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -28,9 +28,12 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.LinkedListWritable;
-import unipg.gila.common.datastructures.SetWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritableSet;
+import unipg.gila.common.multi.PathWritable;
+import unipg.gila.common.multi.PathWritableSet;
+import unipg.gila.common.multi.Referrer;
+import unipg.gila.common.multi.ReferrersList;
 
 /**
  * @author Alessio Arleo

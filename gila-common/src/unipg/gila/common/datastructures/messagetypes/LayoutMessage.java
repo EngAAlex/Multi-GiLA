@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright 2016 Alessio Arleo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
-/**
- * 
- */
 package unipg.gila.common.datastructures.messagetypes;
 
 import java.io.DataInput;
@@ -24,24 +6,20 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.Writable;
 
-import unipg.gila.common.datastructures.PartitionedLongWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
+
 
 /**
- * This class is used to carry the coordinates of the generating vertex across the graph as an array of floats.
- * 
  * @author Alessio Arleo
  *
  */
-public class LayoutMessage extends MessageWritable<PartitionedLongWritable, float[]> {
+public class LayoutMessage extends LayoutMessageMatrix<LayeredPartitionedLongWritable> {
 
-//	private int deg;
-	
 	/**
-	 * Parameter-less constructor
-	 * 
+	 * Parameter-less constructor. 
 	 */
 	public LayoutMessage() {
-		super();
+
 	}
 	
 	/**
@@ -50,10 +28,10 @@ public class LayoutMessage extends MessageWritable<PartitionedLongWritable, floa
 	 * @param payloadVertex
 	 * @param coords
 	 */
-	public LayoutMessage(PartitionedLongWritable payloadVertex, float[] coords){
+	public LayoutMessage(LayeredPartitionedLongWritable payloadVertex, float[] coords){
 		super(payloadVertex, coords);		
 	}
-	
+
 	/**
 	 * Creates a new PlainMessage with the given ttl.
 	 * 
@@ -61,27 +39,19 @@ public class LayoutMessage extends MessageWritable<PartitionedLongWritable, floa
 	 * @param ttl
 	 * @param coords
 	 */
-	public LayoutMessage(PartitionedLongWritable payloadVertex, int ttl, float[] coords){
+	public LayoutMessage(LayeredPartitionedLongWritable payloadVertex, int ttl, float[] coords){
 		super(payloadVertex, ttl, coords);		
 	}
-	
-//	public void setDeg(int deg){
-//		this.deg = deg;
-//	}
-//
-//	public int getDeg(){
-//		return deg;
-//	}
-	
+
 	/* (non-Javadoc)
 	 * @see unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagate()
 	 */
 	@Override
-	public MessageWritable<PartitionedLongWritable, float[]> propagate() {
+	public MessageWritable<LayeredPartitionedLongWritable, float[]> propagate() {
 		LayoutMessage toReturn = new LayoutMessage(payloadVertex, ttl-1, new float[]{value[0], value[1]});
 		toReturn.setWeight(weight);
-//		if(getDeg() != -1)
-//			toReturn.setDeg(getDeg());
+		//			if(getDeg() != -1)
+		//				toReturn.setDeg(getDeg());
 		return toReturn;
 	}
 
@@ -89,7 +59,7 @@ public class LayoutMessage extends MessageWritable<PartitionedLongWritable, floa
 	 * @see unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagateAndDie()
 	 */
 	@Override
-	public MessageWritable<PartitionedLongWritable, float[]> propagateAndDie() {
+	public MessageWritable<LayeredPartitionedLongWritable, float[]> propagateAndDie() {
 		LayoutMessage toReturn = new LayoutMessage(payloadVertex, new float[]{value[0], value[1]});
 		toReturn.setWeight(weight);
 		return toReturn;
@@ -100,14 +70,11 @@ public class LayoutMessage extends MessageWritable<PartitionedLongWritable, floa
 	 */
 	@Override
 	protected void specificRead(DataInput in) throws IOException {
-		payloadVertex = new PartitionedLongWritable();
-		payloadVertex.readFields(in);
+		payloadVertex = new LayeredPartitionedLongWritable();
+		payloadVertex.readFields(in);;
 		value = new float[2];
 		value[0] = in.readFloat();
 		value[1] = in.readFloat();
-//		if(in.readBoolean())
-//			deg = in.readInt();
-			
 	}
 
 	/* (non-Javadoc)
@@ -118,12 +85,6 @@ public class LayoutMessage extends MessageWritable<PartitionedLongWritable, floa
 		payloadVertex.write(out);
 		out.writeFloat(value[0]);
 		out.writeFloat(value[1]);
-//		if(getDeg() == -1)
-//			out.writeBoolean(false);
-//		else{
-//			out.writeBoolean(true);
-//			out.writeInt(deg);
-//		}
 	}
 
 	/* (non-Javadoc)
@@ -137,9 +98,19 @@ public class LayoutMessage extends MessageWritable<PartitionedLongWritable, floa
 	 * @see unipg.gila.common.datastructures.messagetypes.MessageWritable#copy()
 	 */
 	@Override
-	public MessageWritable copy() {
-		return new LayoutMessage(payloadVertex, ttl, value);
+	public LayoutMessage copy() {
+		return new LayoutMessage(payloadVertex.copy(), ttl, value);
 	}
 	
+	/* (non-Javadoc)
+	 * @see unipg.gila.common.datastructures.messagetypes.MessageWritable#toString()
+	 */
+	@Override
+	public String toString() {
+		return payloadVertex.toString()+ " " + getValue().toString() + " ttl " + getTTL() + " weight " + weight;
+	}
+
 
 }
+
+

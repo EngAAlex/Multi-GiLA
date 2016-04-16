@@ -30,6 +30,9 @@ import org.apache.hadoop.io.NullWritable;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
@@ -38,7 +41,7 @@ import unipg.gila.layout.LayoutRoutine.LayoutCCs;
 
 public class SingleScaleLayout {
 	
-	public static class Seeder extends AbstractSeeder<PartitionedLongWritable, CoordinateWritable, IntWritable, LayoutMessage, LayoutMessage>{
+	public static class Seeder extends AbstractSeeder<CoordinateWritable, IntWritable>{
 		
 		/* (non-Javadoc)
 		 * @see unipg.gila.layout.AbstractSeeder#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
@@ -46,8 +49,8 @@ public class SingleScaleLayout {
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<PartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<PartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -59,10 +62,11 @@ public class SingleScaleLayout {
 		 */
 		@Override
 		public void compute(
-				Vertex<PartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
 				Iterable<LayoutMessage> messages) throws IOException {
 			super.compute(vertex, messages);
 		}
+
 	}
 	
 
@@ -80,7 +84,7 @@ public class SingleScaleLayout {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class Propagator extends AbstractPropagator<PartitionedLongWritable, CoordinateWritable, IntWritable, LayoutMessage, LayoutMessage>{
+	public static class Propagator extends AbstractPropagator<CoordinateWritable, IntWritable>{
 
 
 		/* (non-Javadoc)
@@ -89,8 +93,8 @@ public class SingleScaleLayout {
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<PartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<PartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -102,19 +106,10 @@ public class SingleScaleLayout {
 		 */
 		@Override
 		public void compute(
-				Vertex<PartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
 				Iterable<LayoutMessage> messages) throws IOException {
 			super.compute(vertex, messages);
 		}
 	}
-	
-//	public static class SingleScaleGraphExplorer extends DrawingBoundariesExplorer<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
-//	{}
-//	
-//	public static class SingleScaleDrawingScaler extends DrawingScaler<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
-//	{}
-//	
-//	public static class SingleScaleLayoutCCs extends LayoutCCs<PartitionedLongWritable, CoordinateWritable, NullWritable, LayoutMessage, LayoutMessage>
-//	{}
 	
 }

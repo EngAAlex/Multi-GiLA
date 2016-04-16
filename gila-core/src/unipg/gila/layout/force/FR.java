@@ -20,6 +20,8 @@ package unipg.gila.layout.force;
 
 import org.apache.log4j.Logger;
 
+import unipg.gila.utils.Toolbox;
+
 /**
  * @author Alessio Arleo
  *
@@ -47,7 +49,6 @@ public class FR extends Force {
 	 */
 	@Override
 	public float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg) {
-		log.info(deltaX + " " + deltaY + " " + distance);
 		return new float[]{
 				deltaX*distance/desiredDistance,
 				deltaY*distance/desiredDistance};
@@ -58,10 +59,10 @@ public class FR extends Force {
 	 * @see unipg.dafne.layout.force.Force#computeRepulsiveForce(float[], float)
 	 */
 	@Override
-	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg) {
+	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
 		return new float[]{
-				deltaX/squareDistance,
-				deltaY/squareDistance};
+				deltaX/Toolbox.floatFuzzyMath(squareDistance),
+				deltaY/Toolbox.floatFuzzyMath(squareDistance)};
 //		return 1/distance;
 	}
 }

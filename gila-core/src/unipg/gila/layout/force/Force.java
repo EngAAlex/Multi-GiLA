@@ -62,6 +62,6 @@ public abstract class Force {
 	 * @param v2Deg The degree of the second vertex.
 	 * @return The repulsive force module exerted by v2 on v1.
 	 */
-	public abstract float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg);
+	public abstract float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg);
 
 }

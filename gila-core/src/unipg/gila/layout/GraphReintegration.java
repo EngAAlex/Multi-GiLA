@@ -38,6 +38,7 @@ import org.apache.hadoop.io.WritableFactories;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
 import unipg.gila.utils.Toolbox;
 
 /**
@@ -54,13 +55,13 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class PlainDummyComputation<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends
-	AbstractComputation<I, V, E, M1, M2>{
+	public static class PlainDummyComputation<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable> extends
+	AbstractComputation<I, V, E, LayoutMessage, LayoutMessage>{
 		
 		@Override
 		public void compute(
 				Vertex<I, V, E> vertex,
-				Iterable<M1> messages) throws IOException {
+				Iterable<LayoutMessage> messages) throws IOException {
 			return;
 		}
 
@@ -71,13 +72,13 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class RadialReintegrateOneEdges<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends PlainGraphReintegration<I, V, E, M1, M2>{
+	public static class RadialReintegrateOneEdges<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable> extends PlainGraphReintegration<I, V, E>{
 
 		/* (non-Javadoc)
 		 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 		 */
 		@Override
-		public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+		public void compute(Vertex<I, V, E> vertex, Iterable<LayoutMessage> messages)
 				throws IOException {
 			int size = vertex.getValue().getOneDegreeVerticesQuantity();
 			if(size == 0)
@@ -100,13 +101,13 @@ public class GraphReintegration {
 	 * @author general
 	 *
 	 */
-	public static class ConeReintegrateOneEdges<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends PlainGraphReintegration<I,V,E,M1,M2>{
+	public static class ConeReintegrateOneEdges<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable> extends PlainGraphReintegration<I,V,E>{
 
 		/* (non-Javadoc)
 		 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 		 */
 		@Override
-		public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+		public void compute(Vertex<I, V, E> vertex, Iterable<LayoutMessage> messages)
 				throws IOException {
 			int size = vertex.getValue().getOneDegreeVerticesQuantity();
 			if(size == 0)
@@ -128,7 +129,7 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class MaxSlopeReintegrateOneDegrees<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends PlainGraphReintegration<I, V, E, M1, M2>{
+	public static class MaxSlopeReintegrateOneDegrees<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable> extends PlainGraphReintegration<I, V, E>{
 
 		private float maxSlope;
 		float selectedStart = 0;
@@ -137,7 +138,7 @@ public class GraphReintegration {
 		 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 		 */
 		@Override
-		public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+		public void compute(Vertex<I, V, E> vertex, Iterable<LayoutMessage> messages)
 				throws IOException {
 			int size = vertex.getValue().getOneDegreeVerticesQuantity();			
 			if(size == 0)
@@ -145,10 +146,10 @@ public class GraphReintegration {
 			computePositions(size, vertex, messages);			
 		}
 
-		protected void computePositions(int size, Vertex<I, V, E> vertex, Iterable<M1> itl) throws IOException{
+		protected void computePositions(int size, Vertex<I, V, E> vertex, Iterable<LayoutMessage> itl) throws IOException{
 			maxSlope = Float.MIN_VALUE;
 			float[] myCoordinates = vertex.getValue().getCoordinates();
-			Iterator<M1> its = itl.iterator();		
+			Iterator<LayoutMessage> its = itl.iterator();		
 			if(vertex.getNumEdges() == 0){ 
 				float[][] verticesCollection = computeOneDegreeVerticesCoordinates(vertex, size, new Double(Math.PI*2).floatValue(), 0);
 				reconstructGraph(verticesCollection, vertex);
@@ -190,7 +191,7 @@ public class GraphReintegration {
 			rebuild(size, vertex);
 		}
 
-		private LinkedList<Double> buildSlopesList(Iterator<M1> its,
+		private LinkedList<Double> buildSlopesList(Iterator<LayoutMessage> its,
 				Vertex<I, V, E> vertex) throws IOException {
 			LinkedList<Double> tempList = new LinkedList<Double>();
 			float[] myCoordinates = vertex.getValue().getCoordinates();
@@ -233,7 +234,7 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class FairShareReintegrateOneEdges<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends MaxSlopeReintegrateOneDegrees<I, V, E, M1, M2>{
+	public static class FairShareReintegrateOneEdges<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable> extends MaxSlopeReintegrateOneDegrees<I, V, E>{
 
 		protected HashMap<Float, Float> slopes; 	
 		protected float lowThreshold;
@@ -242,7 +243,7 @@ public class GraphReintegration {
 		 * @see unipg.gila.layout.GraphReintegration.MaxSlopeReintegrateOneDegrees#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 		 */
 		@Override
-		public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+		public void compute(Vertex<I, V, E> vertex, Iterable<LayoutMessage> messages)
 				throws IOException {
 			slopes = new HashMap<Float, Float>();
 			super.compute(vertex, messages);
@@ -302,7 +303,7 @@ public class GraphReintegration {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static abstract class PlainGraphReintegration<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable, M1 extends LayoutMessage, M2 extends LayoutMessage> extends AbstractComputation<I, V, E, M1, M2>{
+	public static abstract class PlainGraphReintegration<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends Writable> extends AbstractComputation<I, V, E, LayoutMessage, LayoutMessage>{
 
 		protected static final double DEGREE_TO_RADIANS_CONSTANT = Math.PI/180;
 		protected static final double RADIANS_TO_DEGREE_CONSTANT = 180/Math.PI;		
@@ -396,12 +397,12 @@ public class GraphReintegration {
 			}
 		}
 
-		protected float[][] placeVerticesInCone(Vertex<I, V, E> vertex, int size, Iterable<M1> itl) throws IOException{
+		protected float[][] placeVerticesInCone(Vertex<I, V, E> vertex, int size, Iterable<LayoutMessage> itl) throws IOException{
 			float[] statusCopy = vertex.getValue().getCoordinates();			
 			float[] force = new float[]{0.0f, 0.0f};
 
 			//			CoordinateWritable<Float> vValue = vertex.getValue();
-			Iterator<M1> cohords = itl.iterator();
+			Iterator<LayoutMessage> cohords = itl.iterator();
 
 			while(cohords.hasNext()){
 

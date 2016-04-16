@@ -25,7 +25,9 @@ import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
+import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
 
 /**
@@ -39,7 +41,8 @@ import unipg.gila.utils.Toolbox;
  * @author Alessio Arleo
  *
  */
-public class AbstractSeeder<I extends PartitionedLongWritable, V extends CoordinateWritable, E extends IntWritable, M1 extends MessageWritable<I, float[]>, M2 extends MessageWritable<I, float[]>> extends AbstractComputation<I, V, E, M1, M2> {
+public abstract class AbstractSeeder<V extends CoordinateWritable, E extends IntWritable>
+	extends AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
 	float initialTemp;
 	float accuracy;
@@ -57,7 +60,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 	 */
 	@Override
-	public void compute(Vertex<I, V, E> vertex, Iterable<M1> messages)
+	public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
 			throws IOException {
 		CoordinateWritable vValue = vertex.getValue();
 
@@ -69,7 +72,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 			return;
 		}
 
-		long component = vValue.getComponent();
+		int component = vValue.getComponent();
 		
 		float coords[] = vValue.getCoordinates();	
 		float[] forces = vValue.getForceVector();
@@ -82,7 +85,7 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 			float tempX;
 			float tempY;
 			
-			float[] temps = ((FloatWritableArray)tempsMap.get(new LongWritable(component))).get();
+			float[] temps = ((FloatWritableArray)tempsMap.get(new IntWritable(component))).get();
 
 			tempX = (forces[0] / displacementModule * Math.min(displacementModule, temps[0]));
 			tempY = (forces[1] / displacementModule * Math.min(displacementModule, temps[1]));
@@ -107,12 +110,13 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void gatherAndSend(Vertex<I, V, E> vertex, float[] coords){
-		M2 toSend = (M2) WritableFactories.newInstance(getConf().getOutgoingMessageValueClass());
+	protected void gatherAndSend(Vertex<LayeredPartitionedLongWritable, V, E> vertex, float[] coords){
+		LayoutMessage toSend = new LayoutMessage();
 		toSend.setPayloadVertex(vertex.getId());
 		toSend.setTTL(ttlmax - 1);
 		toSend.setValue(coords);
 		toSend.setWeight(vertex.getValue().getWeight());
+		log.info(toSend);
 //		if(sendDegToo)
 //			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
 		sendMessageToAllEdges(vertex, toSend);	
@@ -123,8 +127,8 @@ public class AbstractSeeder<I extends PartitionedLongWritable, V extends Coordin
 	 */
 	@Override
 	public void initialize(GraphState graphState,
-			WorkerClientRequestProcessor<I, V, E> workerClientRequestProcessor,
-			GraphTaskManager<I, V, E> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, V, E> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, V, E> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,

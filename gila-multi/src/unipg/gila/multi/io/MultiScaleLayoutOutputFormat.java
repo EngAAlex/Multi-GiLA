@@ -25,11 +25,11 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
-import unipg.gila.multi.common.AstralBodyCoordinateWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 
 /**
  * Algorithm final output format. Each line represents a vertex and is formatted as follows:

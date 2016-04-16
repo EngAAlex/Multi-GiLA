@@ -23,16 +23,16 @@ import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.datastructures.SetWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritableSet;
+import unipg.gila.common.multi.PathWritable;
+import unipg.gila.common.multi.PathWritableSet;
+import unipg.gila.common.multi.SolarMessage;
+import unipg.gila.common.multi.SolarMessageSet;
+import unipg.gila.common.multi.SolarMessage.CODE;
 import unipg.gila.multi.MultiScaleComputation;
-import unipg.gila.multi.common.AstralBodyCoordinateWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritableSet;
-import unipg.gila.multi.common.PathWritable;
-import unipg.gila.multi.common.PathWritableSet;
-import unipg.gila.multi.common.SolarMessage;
-import unipg.gila.multi.common.SolarMessage.CODE;
-import unipg.gila.multi.common.SolarMessageSet;
 
 /**
  * @author Alessio Arleo
@@ -519,7 +519,8 @@ public class SolarMerger{
 			List<Edge<LayeredPartitionedLongWritable, IntWritable>> edgeList = new LinkedList<Edge<LayeredPartitionedLongWritable, IntWritable>>();
 			edgeList.add(EdgeFactory.create(vertex.getId(), new IntWritable(1)));
 			int counter = 0;
-
+			int weightCounter = 0;
+			
 			if(vertex.getValue().neigbourSystemsNo() > 0){
 				Iterator<Entry<Writable, Writable>> neighborSystems = vertex.getValue().neighbourSystemsIterator();
 				while(neighborSystems.hasNext()){
@@ -530,6 +531,7 @@ public class SolarMerger{
 					log.info("connecting vertex " + neighborSun);
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
 							(IntWritable)current.getValue()));
+					weightCounter += ((IntWritable)current.getValue()).get();
 					counter++;
 				}
 			}
@@ -537,9 +539,14 @@ public class SolarMerger{
 			outEdges.initialize(edgeList);
 			addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.getWeight(), 
 					coords[0], coords[1],value.getComponent()), outEdges);
-			MapWritable info = new MapWritable();
-			info.put(new IntWritable(currentLayer+1),new IntWritable(counter));
-			aggregate(SolarMergerRoutine.layerEdgeSizeAggregator, info);
+			MapWritable infoEdges = new MapWritable();
+			MapWritable infoWeights = new MapWritable();
+			
+			infoWeights.put(new IntWritable(currentLayer+1), new IntWritable(weightCounter));
+			aggregate(SolarMergerRoutine.layerEdgeWeightsAggregator, infoWeights);
+			
+			infoEdges.put(new IntWritable(currentLayer+1),new IntWritable(counter));
+			aggregate(SolarMergerRoutine.layerEdgeSizeAggregator, infoEdges);
 		}
 
 	}

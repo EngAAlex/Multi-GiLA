@@ -19,9 +19,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
-import unipg.gila.multi.common.AstralBodyCoordinateWritable;
-import unipg.gila.multi.common.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
 
 import com.google.common.collect.Lists;
