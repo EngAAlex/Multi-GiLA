@@ -159,6 +159,7 @@ public class LayoutRoutine {
 	static int maxSuperstep;
 	private boolean ignition;
 	private long egira;
+	private boolean firstCall;
 
 	protected MasterCompute master;
 	protected Class<? extends AbstractSeeder> seeder;
@@ -189,6 +190,7 @@ public class LayoutRoutine {
 		this.drawingScaler = drawingScaler;
 
 		ignition = true;
+		firstCall = false;
 
 		maxSuperstep = master.getConf().getInt(computationLimit, maxSstepsDefault);
 
@@ -340,7 +342,11 @@ public class LayoutRoutine {
 		if(relativeSuperstep == 1){
 			try {
 				superstepOneSpecials(optimalEdgeLength); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
-				master.setComputation(drawingScaler); //... AND APPLY THEM
+				if(!firstCall){
+					firstCall = true;
+					master.setComputation(drawingScaler); //... AND APPLY THEM
+				}else
+					master.setComputation(seeder);
 				return false;
 			} catch (IllegalAccessException e) {
 				master.haltComputation();
