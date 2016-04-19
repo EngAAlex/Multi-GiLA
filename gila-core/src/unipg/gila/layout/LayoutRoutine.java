@@ -32,6 +32,7 @@ import org.apache.giraph.master.MasterCompute;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -127,6 +128,7 @@ public class LayoutRoutine {
 	public static final String MessagesAggregatorString = "AGG_MESSAGES";
 	public static final String maxOneDegAggregatorString = "AGG_ONEDEG_MAX";
 	public final static String k_agg = "K_AGG";
+	public static final String max_K_agg = "MAX_K_AGG";
 	public static final String walshawConstant_agg = "WALSHAW_AGG";
 	public final static String maxCoords = "AGG_MAX_COORDINATES";
 	public final static String minCoords = "AGG_MIN_COORDINATES";
@@ -144,6 +146,7 @@ public class LayoutRoutine {
 
 	protected static final String minRationThresholdString = "layout.minRatioThreshold";
 	protected static final float defaultMinRatioThreshold = 0.2f;
+
 
 	//VARIABLES
 	protected long propagationSteps;
@@ -215,6 +218,7 @@ public class LayoutRoutine {
 
 		// CONSTANT AGGREGATORS
 
+		master.registerPersistentAggregator(max_K_agg, FloatMaxAggregator.class);
 		master.registerPersistentAggregator(k_agg, FloatMaxAggregator.class);		
 		master.registerPersistentAggregator(walshawConstant_agg, FloatMaxAggregator.class);	
 
@@ -226,6 +230,12 @@ public class LayoutRoutine {
 
 		//		float walshawModifier = master.getConf().getFloat(walshawModifierString, walshawModifierDefault);
 
+		float nl = master.getConf().getFloat(LayoutRoutine.node_length , LayoutRoutine.defaultNodeValue);
+		float nw = master.getConf().getFloat(LayoutRoutine.node_width ,LayoutRoutine.defaultNodeValue);
+		float ns = master.getConf().getFloat(LayoutRoutine.node_separation ,LayoutRoutine.defaultNodeValue);
+		float k = new Double(ns + Toolbox.computeModule(new float[]{nl, nw})).floatValue();
+		master.setAggregatedValue(LayoutRoutine.k_agg, new FloatWritable(k));
+		
 		coolingStrategy = new LinearCoolingStrategy(new String[]{master.getConf().get(LayoutRoutine.coolingSpeed, defaultCoolingSpeed )});
 	}
 
@@ -267,7 +277,8 @@ public class LayoutRoutine {
 				scaleFactorMap.put(key, new FloatWritableArray(scaleFactors));
 				continue;
 			}
-
+			
+			log.info("Suggested optimal edge length");;
 			float w = Toolbox.floatFuzzyMath((maxCurrent[0] - minCurrent[0])) + optimalEdgeLength;
 			float h = Toolbox.floatFuzzyMath((maxCurrent[1] - minCurrent[1])) + optimalEdgeLength;
 
@@ -335,8 +346,7 @@ public class LayoutRoutine {
 				master.haltComputation();
 				return true;
 			}
-		}		
-
+		}
 		//REGIME COMPUTATION
 		if(((BooleanWritable)master.getAggregatedValue(MessagesAggregatorString)).get() && !(master.getComputation().toString().contains("Seeder"))){
 			if(settledSteps > 0)

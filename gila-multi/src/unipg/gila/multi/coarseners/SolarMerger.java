@@ -197,7 +197,7 @@ public class SolarMerger{
 
 			if(chosenOne != null){
 				log.info("Chosen message " + chosenOne);
-				value.setSun(chosenOne.getValue().copy(), chosenOne.getPayloadVertex());
+				value.setSun(chosenOne.getValue().copy(), chosenOne.getPayloadVertex().copy());
 				ackAndPropagateSunOffer(vertex, value, chosenOne);
 				//SET THE SUN
 				if(chosenOne.getTTL() == 1){
@@ -344,8 +344,11 @@ public class SolarMerger{
 				msgIterator = msgs.iterator();					
 				while(msgIterator.hasNext()){
 					SolarMessage currentMessage =  msgIterator.next();
-					if(currentMessage.getCode().equals(CODE.ACCEPTOFFER) && currentMessage.getValue().equals(value.getSun()))
+					log.info("Received " + currentMessage);
+					if(currentMessage.getCode().equals(CODE.ACCEPTOFFER) && currentMessage.getValue().equals(value.getSun())){
 						sendMessage(value.getProxy(), (SolarMessage)currentMessage.propagate());
+						aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
+					}
 					//						SolarMessage messageToSend;
 					//						if(!currentMessage.getCode().equals(CODE.REFUSEOFFER)){
 					//							SolarMessage messageToSend = (SolarMessage)currentMessage.propagate();

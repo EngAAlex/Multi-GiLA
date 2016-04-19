@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.graph.GraphState;
@@ -75,9 +76,13 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				coordsMap.put(msg.getPayloadVertex(), msg.getValue());
 			}
 		}
-
+		
+		float[] myCoords = vertex.getValue().getCoordinates();
+		log.info("Arranging bodies");
 		//ARRANGE PLANETS
 		if(value.planetsNo() > 0){
+			log.info("Arranging planets");
+
 			Iterator<Entry<Writable, Writable>> planetsIterator = vertex.getValue().getPlanetsIterator();
 			arrangeBodies(value.getCoordinates(), planetsIterator, planetsComputedCoordsMap, coordsMap, value);
 
@@ -86,11 +91,13 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			Iterator<Entry<LayeredPartitionedLongWritable, float[]>> finalIteratorOnPlanets = planetsComputedCoordsMap.entrySet().iterator();
 			while(finalIteratorOnPlanets.hasNext()){
 				Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnPlanets.next();
-				sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), currentRecipient.getValue()));
+				sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), new float[]{myCoords[0] + currentRecipient.getValue()[0],
+																														myCoords[1] + currentRecipient.getValue()[1]}));
 			}
 			
 			//ARRANGE MOONS
 			if(value.moonsNo() > 0){
+				log.info("Arranging moons");
 				Iterator<Entry<Writable, Writable>> moonsIterator = vertex.getValue().getMoonsIterator();
 				if(moonsIterator != null)
 					arrangeBodies(value.getCoordinates(), moonsIterator, moonsComputedCoordsMap, coordsMap, value);		
@@ -99,7 +106,8 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				Iterator<Entry<LayeredPartitionedLongWritable, float[]>> finalIteratorOnMoons = moonsComputedCoordsMap.entrySet().iterator();
 				while(finalIteratorOnMoons.hasNext()){
 					Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnMoons.next();
-					sendMessageToAllEdges(vertex, new LayoutMessage(currentRecipient.getKey(), 1, currentRecipient.getValue()));
+					sendMessageToAllEdges(vertex, new LayoutMessage(currentRecipient.getKey(), 1, new float[]{myCoords[0] + currentRecipient.getValue()[0],
+																												myCoords[1] + currentRecipient.getValue()[1]}));
 				}
 				
 			}
@@ -121,8 +129,9 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			Entry<Writable, Writable> current = bodiesIterator.next();
 			PathWritableSet deSet = (PathWritableSet) current.getValue();
 			log.info("My planet/moon " + ((LayeredPartitionedLongWritable)current.getKey()).getId());
-			if(deSet.size() == 0)
+			if(deSet.size() == 0){
 				continue;
+			}
 			Iterator<PathWritable> deSetIterator = (Iterator<PathWritable>) deSet.iterator();
 			while(deSetIterator.hasNext()){
 				PathWritable currentPath = deSetIterator.next();
@@ -133,8 +142,8 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				
 				log.info("Analyzing + " + currentPath.getReferencedSun() + " thru " + translatedId);
 				
-				float deltaX = myCoordinates[0] - coordsMap.get(translatedId)[0];
-				float deltaY = myCoordinates[1] - coordsMap.get(translatedId)[1];
+				float deltaX = coordsMap.get(translatedId)[0] - myCoordinates[0];
+				float deltaY = coordsMap.get(translatedId)[1] - myCoordinates[1];
 
 				log.info("path towards " + currentPath.getReferencedSun() +
 						" at position " + currentPath.getPositionInpath() + " on a total of " + allNeighbors.getPathLengthForNeighbor(currentPath.getReferencedSun()));
@@ -144,7 +153,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 
 			}
 			log.info("Total deset size "  + deSet.size());
-			bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), new float[]{avgX/deSet.size(), avgY/deSet.size()});
+			bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), new float[]{(avgX/deSet.size()), avgY/deSet.size()});
 			log.info("computed position: " + avgX/deSet.size() + " " + avgY/deSet.size());
 		}		
 	}

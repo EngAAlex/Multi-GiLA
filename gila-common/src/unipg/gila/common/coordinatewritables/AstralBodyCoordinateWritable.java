@@ -290,8 +290,9 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	}
 	
 	public void addToProxies(LayeredPartitionedLongWritable proxy){
-		if(sunProxies == null)
+		if(sunProxies == null){
 			sunProxies = new LayeredPartitionedLongWritableSet();
+		}
 		sunProxies.addElement(proxy);
 	}
 	
@@ -383,9 +384,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	 * @return
 	 */
 	public int planetsNo() {
-		if(planets == null)
-			return 0;
-		return planets.size();
+		return (planets == null ? 0 : planets.size());
 	}
 
 
@@ -393,9 +392,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	 * @return
 	 */
 	public int moonsNo() {
-		if(moons == null)
-			return 0;
-		return moons.size();
+		return (moons == null ? 0 : moons.size());
 	}
 
 }

@@ -13,6 +13,7 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.log4j.Logger;
 
@@ -22,6 +23,7 @@ import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;
+import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo;
 import unipg.gila.layout.LayoutRoutine.DrawingScaler;
@@ -40,6 +42,8 @@ public class MultiScaleLayout {
 	
 	public static class Seeder extends AbstractSeeder<AstralBodyCoordinateWritable, IntWritable>{
 
+		private float k;
+		
 		/* (non-Javadoc)
 		 * @see unipg.gila.layout.AbstractSeeder#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
 		 */
@@ -53,6 +57,7 @@ public class MultiScaleLayout {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
 			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+			k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 		}
 
 		/* (non-Javadoc)
@@ -83,6 +88,7 @@ public class MultiScaleLayout {
 			while(edges.hasNext()){
 				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
 				if(current.getLayer() == currentLayer){
+					aggregate(LayoutRoutine.max_K_agg, new FloatWritable(((IntWritable)vertex.getEdgeValue(current)).get()*k));
 					LayoutMessage msgCopy = ((LayoutMessage)message).copy();
 					log.info("Sending " + msgCopy.toString() + " to " + current);
 					sendMessage(current, msgCopy);
@@ -95,15 +101,9 @@ public class MultiScaleLayout {
 
 	public static class Propagator extends AbstractPropagator<AstralBodyCoordinateWritable, IntWritable>{
 
+		float modifier;
+		float maxK = Float.MIN_VALUE;
 		
-
-		/**
-		 * 
-		 */
-		public Propagator() {
-			// TODO Auto-generated constructor stub
-		};
-
 		/* (non-Javadoc)
 		 * @see unipg.gila.layout.AbstractPropagator#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
 		 */
@@ -117,7 +117,8 @@ public class MultiScaleLayout {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
 			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-
+			modifier = getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault);
+			maxK = ((FloatWritable)getAggregatedValue(LayoutRoutine.max_K_agg)).get();
 		}
 
 		/* (non-Javadoc)
@@ -144,10 +145,20 @@ public class MultiScaleLayout {
 		protected float requestOptimalSpringLength(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				LayeredPartitionedLongWritable currentPayload) {
-			if(currentLayer > 0)
-				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get();
-			else
+			log.info("Suggesting a spring length of " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k + " based on " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get() + " and " + k);
+//			if(currentLayer > 0)
+//				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k;
+//			else
 				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k;
+		}
+		
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.AbstractPropagator#requestWalshawConstant()
+		 */
+		@Override
+		protected float requestWalshawConstant() {
+			log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
+			return (float) (Math.pow(maxK,2)*modifier);
 		}
 
 		/* (non-Javadoc)
@@ -177,7 +188,7 @@ public class MultiScaleLayout {
 		public void compute(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() == currentLayer)
+			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			super.compute(vertex, msgs);
 		}
@@ -206,7 +217,7 @@ public class MultiScaleLayout {
 		public void compute(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() == currentLayer)
+			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			super.compute(vertex, msgs);
 		}
@@ -253,7 +264,7 @@ public class MultiScaleLayout {
 		public void compute(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() == currentLayer)
+			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			super.compute(vertex, msgs);
 		}
@@ -269,7 +280,7 @@ public class MultiScaleLayout {
 		public void compute(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() == currentLayer)
+			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			super.compute(vertex, msgs);
 		}

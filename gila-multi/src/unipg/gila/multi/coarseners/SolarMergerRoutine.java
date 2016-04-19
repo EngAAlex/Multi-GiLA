@@ -58,7 +58,7 @@ public class SolarMergerRoutine {
 	public static final String sunChanceAggregatorString = "AGG_SUNCHANCE";
 	
 	//MERGER COUNTERS
-	private static final String COUNTER_GROUP = "Merging Counters";
+	public static final String COUNTER_GROUP = "Merging Counters";
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
 
 	//INSTANCE ATTRIBUTES

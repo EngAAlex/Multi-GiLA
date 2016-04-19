@@ -128,26 +128,36 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 ////				log.info(current.getKey() + " - " + current.getValue());
 ////			}
 
-			setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(
-					adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
-							noOfVertices, 
-							noOfEdges)));
+			int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
+					noOfVertices, 
+					noOfEdges);
+			setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
+			
+			getContext().getCounter("K Counters", "Layer " + currentLayer).increment(selectedK);
 
+			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
+			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
 		}
 		if(currentLayer >= 0 && !reintegrating){
 			int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
 			float optimalEdgeLength;
+			log.info("Suggested currentEdgeWeight " + currentEdgeWeight/(float)noOfEdges + " " + currentEdgeWeight + " " + noOfEdges);
 			if(noOfEdges > 0)
 				optimalEdgeLength = currentEdgeWeight/(float)noOfEdges;
 			else
 				optimalEdgeLength = 1;
+			optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 			
-			log.info("Edge data computed: weight " + currentEdgeWeight + " noOfEdges " + " " + noOfEdges + " optimalEdgeLength " + optimalEdgeLength);
+			log.info("Edge data computed: weight " + currentEdgeWeight + " " +" noOfEdges " + " " + noOfEdges + " optimalEdgeLength " + optimalEdgeLength*((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get());
 			setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
 					new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
 			if(layout){
-						
+//				if(currentLayer == 0){
+//					log.info("Bottom layer; aborting");
+//					haltComputation();
+//					return;
+//				}
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{
@@ -167,11 +177,14 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 					log.info("deactivated placer");
 					resetLayoutAggregators();
 					
-					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
-					setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(
-							adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
-									noOfVertices, 
-									noOfEdges)));
+//					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
+
+					int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
+							noOfVertices, 
+							noOfEdges);
+					setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
+					
+					getContext().getCounter("K Counters", "Layer " + currentLayer).increment(selectedK);
 					return;
 				}
 

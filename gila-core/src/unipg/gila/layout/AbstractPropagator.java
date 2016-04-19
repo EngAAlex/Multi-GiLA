@@ -117,7 +117,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalSpringLength(vertex, currentPayload), v1Deg, v2Deg);				
 				finalForce[0] += tempForce[0];
 				finalForce[1] += tempForce[1];
-				log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
+				log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance + " " + requestOptimalSpringLength(vertex, currentPayload));
 //				finalForce[0] += (computedForce*cos);
 //				finalForce[1] += (computedForce*sin);
 			}
@@ -145,8 +145,8 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		log.info("Going to moderate on " + walshawConstant + " from " + repulsiveForce[0] + " " + repulsiveForce[1]);
 		
 		//REPULSIVE FORCE MODERATION
-		repulsiveForce[0] *= walshawConstant;
-		repulsiveForce[1] *= walshawConstant;
+		repulsiveForce[0] *= requestWalshawConstant();
+		repulsiveForce[1] *= requestWalshawConstant();
 
 		finalForce[0] -= repulsiveForce[0];
 		finalForce[1] -= repulsiveForce[1];
@@ -178,6 +178,10 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 	 */
 	protected float requestOptimalSpringLength(Vertex<LayeredPartitionedLongWritable,V,E> vertex, LayeredPartitionedLongWritable currentPayload) {
 		return k;
+	}
+	
+	protected float requestWalshawConstant(){
+		return walshawConstant;
 	}
 
 	/* (non-Javadoc)
