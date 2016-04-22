@@ -100,8 +100,8 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Int
 			
 		}else
 			correctedDispModule = 0;
-
-		log.info("Seeder here, displacement for vertex :" + vertex.getId() + " " + correctedDispModule );
+		if(LayoutRoutine.logLayout)
+			log.info("Seeder here, displacement for vertex :" + vertex.getId() + " " + correctedDispModule );
 		if(correctedDispModule < accuracy)// || LayoutRoutine.relativeSupersteps > LayoutRoutine.maxSuperstep)
 			aggregate(LayoutRoutine.convergenceAggregatorString, new LongWritable(1));
 
@@ -117,8 +117,6 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Int
 		toSend.setValue(coords);
 		toSend.setWeight(vertex.getValue().getWeight());
 		log.info(toSend);
-//		if(sendDegToo)
-//			toSend.setDeg(vertex.getNumEdges()+vertex.getValue().getOneDegreeVerticesQuantity());
 		sendMessageToAllEdges(vertex, toSend);	
 	}
 	

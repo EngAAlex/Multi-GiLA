@@ -17,14 +17,18 @@ import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.InterLayerDataTr
 public class SolarPlacerRoutine {
 	
 	//PLACER OPTIONS
-	public static final String placerDefaultLengthString = "coarsener.defaultLength";
-	public static final float placerDefaultLength = 15.0f;
+	public static final String logPlacerString = "placer.showLog";
 	
+	//INSTANCE VARIABLES
 	MasterCompute master;
 	int counter;
 	
+	//GLOBAL STATIC VARIABLES
+	public static boolean logPlacer;
+	
 	public void initialize(MasterCompute myMaster){
 		master = myMaster;
+		logPlacer = master.getConf().getBoolean(logPlacerString, false);
 		reset();
 	}
 	

@@ -15,6 +15,9 @@ import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.multi.SolarMessage;
+import unipg.gila.multi.MultiScaleComputation;
 import unipg.gila.multi.coarseners.SolarMerger.MoonSweep;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse;
 import unipg.gila.multi.coarseners.SolarMerger.AsteroidCaller;
@@ -60,6 +63,7 @@ public class SolarMergerRoutine {
 	//MERGER COUNTERS
 	public static final String COUNTER_GROUP = "Merging Counters";
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
+	public static final String logMergerString = "merger.showLog";
 
 	//INSTANCE ATTRIBUTES
 	boolean checkForNewLayer = false;
@@ -70,6 +74,9 @@ public class SolarMergerRoutine {
 	float baseSunChance;
 	
 	MasterCompute master;
+	
+	//GLOBAL STATIC ATTRIBUTES
+	public static boolean logMerger;
 
 	public boolean compute() {
 //		if(terminate){
@@ -164,7 +171,8 @@ public class SolarMergerRoutine {
 			master.setAggregatedValue(layerNumberAggregator, new IntWritable(1));
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
-				log.info("layer " + (cLayer + 1) + " hassize " + layerSize);
+				if(logMerger)
+					log.info("layer " + (cLayer + 1) + " hassize " + layerSize);
 				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
 					master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() +1);
 					//haltComputation();
@@ -207,6 +215,8 @@ public class SolarMergerRoutine {
 		master.setAggregatedValue(layerNumberAggregator, new IntWritable(0));
 		master.setAggregatedValue(mergerAttempts, new IntWritable(1));
 		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
+		
+		logMerger = master.getConf().getBoolean(logMergerString, false);
 	}
 
 }

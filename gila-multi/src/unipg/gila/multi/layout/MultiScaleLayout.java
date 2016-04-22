@@ -131,7 +131,8 @@ public class MultiScaleLayout {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
-				log.info(vertex.getId() + " computing hiuar");
+				if(LayoutRoutine.logLayout)
+					log.info(vertex.getId() + " computing hiuar");
 				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
 					throw new IOException("NAN detected");
 				super.compute(vertex, messages);
@@ -145,7 +146,8 @@ public class MultiScaleLayout {
 		protected float requestOptimalSpringLength(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				LayeredPartitionedLongWritable currentPayload) {
-			log.info("Suggesting a spring length of " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k + " based on " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get() + " and " + k);
+			if(LayoutRoutine.logLayout)
+				log.info("Suggesting a spring length of " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k + " based on " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get() + " and " + k);
 //			if(currentLayer > 0)
 //				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k;
 //			else
@@ -157,7 +159,8 @@ public class MultiScaleLayout {
 		 */
 		@Override
 		protected float requestWalshawConstant() {
-			log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
+			if(LayoutRoutine.logLayout)
+				log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
 			return (float) (Math.pow(maxK,2)*modifier);
 		}
 

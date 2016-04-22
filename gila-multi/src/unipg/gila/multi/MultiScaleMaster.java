@@ -10,8 +10,11 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.layout.AngularResolutionMaximizer;
 import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
+import unipg.gila.layout.AngularResolutionMaximizer.AverageCoordinateUpdater;
+import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.CoordinatesBroadcast;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.layout.AdaptationStrategy;
@@ -33,6 +36,8 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	Logger log = Logger.getLogger(getClass());
 
 	public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
+	public static final String angularMaximizationIterationsString = "multi.layout.angularMaximizationMaxIterations";
+	public static final int angularMaximizationMaxIterationsDefault = 30;
 
 	LayoutRoutine layoutRoutine;
 	SolarMergerRoutine mergerRoutine;
@@ -45,8 +50,11 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	boolean layout;
 	boolean reintegrating;
 	boolean preparePlacer;
+	boolean angularMaximization;
+	int angularMaximizationIterations;
+	int angularMaximizationIterationsMax;
 	boolean terminate;
-
+	
 	@SuppressWarnings("unchecked")
 	public void initialize() throws InstantiationException ,IllegalAccessException {
 		layoutRoutine = new LayoutRoutine();
@@ -70,7 +78,10 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		preparePlacer = false;
 		placing=false;
 		terminate = false;
-
+		angularMaximization = false;
+		angularMaximizationIterations = 0;
+		angularMaximizationIterationsMax = getConf().getInt(angularMaximizationIterationsString, angularMaximizationMaxIterationsDefault);
+		
 		try {
 			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
 			adaptationStrategy = tClass.getConstructor().newInstance();
@@ -138,6 +149,28 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
 			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
 		}
+		if(angularMaximization){
+			if(getComputation().equals(CoordinatesBroadcast.class)){
+				setComputation(AngularResolutionMaximizer.class);
+				return;
+			}
+			if(getComputation().equals(AngularResolutionMaximizer.class)){
+				setComputation(AverageCoordinateUpdater.class);
+				return;
+			}
+			if(angularMaximizationIterations < angularMaximizationIterationsMax){
+				setComputation(CoordinatesBroadcast.class);
+				angularMaximizationIterations++;
+				return;
+			}
+			angularMaximizationIterations = 0;
+			if(currentLayer > 0){
+				layout = false;
+				angularMaximization = false;
+				placing = true;
+			}else
+				reintegrating = true;
+		}
 		if(currentLayer >= 0 && !reintegrating){
 			int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
 			float optimalEdgeLength;
@@ -161,11 +194,10 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{
-					if(currentLayer > 0){
-						layout = false;
-						placing = true;
-					}else
-						reintegrating = true;
+					angularMaximization = true;
+					layout = false;
+					setComputation(CoordinatesBroadcast.class);
+					return;
 				}
 			}
 			if(placing)

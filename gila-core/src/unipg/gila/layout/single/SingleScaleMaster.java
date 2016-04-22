@@ -31,7 +31,9 @@ public class SingleScaleMaster extends DefaultMasterCompute{
 	public void initialize() throws InstantiationException,
 			IllegalAccessException {
 		layoutRoutine = new LayoutRoutine();
-		layoutRoutine.initialize(this, SingleScaleLayout.Seeder.class, SingleScaleLayout.Propagator.class);
+		layoutRoutine.initialize(this, SingleScaleLayout.SingleSeeder.class, SingleScaleLayout.SinglePropagator.class,
+								SingleScaleLayout.SingleDrawingExplorer.class, SingleScaleLayout.SingleDrawingExplorerWithComponentsNo.class, 
+								SingleScaleLayout.SingleDrawingScaler.class, SingleScaleLayout.SingleLayoutCCs.class);
 		
 		reintegrationRoutine = new GraphReintegrationRoutine();
 		reintegrationRoutine.initialize(this);

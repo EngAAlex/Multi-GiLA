@@ -52,6 +52,8 @@ import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.coolingstrategies.CoolingStrategy;
 import unipg.gila.coolingstrategies.LinearCoolingStrategy;
+import unipg.gila.layout.single.SingleScaleLayout.SinglePropagator;
+import unipg.gila.layout.single.SingleScaleLayout.SingleSeeder;
 import unipg.gila.utils.Toolbox;
 
 /**
@@ -69,6 +71,9 @@ public class LayoutRoutine {
 	Logger log = Logger.getLogger(this.getClass());
 
 	//#############CLINT OPTIONS
+	
+	//LOGGING OPTIONS
+	public static final String logLayoutString = "layout.logLayout";
 
 	//COMPUTATION OPTIONS
 	public static final String ttlMaxString = "layout.flooding.ttlMax";
@@ -147,8 +152,10 @@ public class LayoutRoutine {
 	protected static final String minRationThresholdString = "layout.minRatioThreshold";
 	protected static final float defaultMinRatioThreshold = 0.2f;
 
+	//GLOBAL STATIC VARIABLES
+	public static boolean logLayout;
 
-	//VARIABLES
+	//INSTANCE VARIABLES
 	protected long propagationSteps;
 	//	protected long allVertices;
 	protected float threshold;
@@ -171,9 +178,6 @@ public class LayoutRoutine {
 	//	protected Class<? extends Computation> dummyComputation;
 
 	public void initialize(MasterCompute myMaster
-			, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator){}
-
-	public void initialize(MasterCompute myMaster
 			, Class<? extends AbstractSeeder> seeder, Class<? extends AbstractPropagator> propagator,
 			Class<? extends DrawingBoundariesExplorer> explorer, Class<? extends DrawingBoundariesExplorerWithComponentsNo> explorerWithCCs,
 			Class<? extends DrawingScaler> drawingScaler,
@@ -186,11 +190,12 @@ public class LayoutRoutine {
 		drawingExplorer = explorer;
 		drawingExplorerWithCCs = explorerWithCCs;
 		this.layoutCC = layoutCC;
-		//		this.dummyComputation = dummyComputation;
 		this.drawingScaler = drawingScaler;
 
 		ignition = true;
 		firstCall = false;
+		
+		logLayout = master.getConf().getBoolean(logLayoutString, false);
 
 		maxSuperstep = master.getConf().getInt(computationLimit, maxSstepsDefault);
 
@@ -280,7 +285,6 @@ public class LayoutRoutine {
 				continue;
 			}
 			
-			log.info("Suggested optimal edge length");;
 			float w = Toolbox.floatFuzzyMath((maxCurrent[0] - minCurrent[0])) + optimalEdgeLength;
 			float h = Toolbox.floatFuzzyMath((maxCurrent[1] - minCurrent[1])) + optimalEdgeLength;
 
@@ -334,7 +338,8 @@ public class LayoutRoutine {
 			return false;
 		}
 		long relativeSuperstep = master.getSuperstep() - egira;
-		log.info("Relative superstep " + relativeSuperstep);
+		if(logLayout)
+			log.info("Relative superstep " + relativeSuperstep);
 		if(relativeSuperstep > 5 && (checkForConvergence(noOfVertices) || relativeSuperstep > LayoutRoutine.maxSuperstep)){
 			ignition = true;
 			return true; //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS
@@ -385,11 +390,8 @@ public class LayoutRoutine {
 	 * threshold.
 	 */
 	protected boolean checkForConvergence(long subsetOfVertices){
-		//		if(allVertices <= 0){
-		//			allVertices = master.getTotalNumVertices();
-		//			return false;
-		//		}
-		log.info("The convergence is " + ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/subsetOfVertices + " and da thres " + threshold);
+		if(logLayout)
+			log.info("The convergence is " + ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/subsetOfVertices + " and da thres " + threshold);
 		return ((LongWritable)master.getAggregatedValue(convergenceAggregatorString)).get()/subsetOfVertices > threshold;
 	}
 

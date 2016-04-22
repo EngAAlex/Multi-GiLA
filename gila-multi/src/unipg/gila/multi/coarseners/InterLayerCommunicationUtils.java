@@ -96,7 +96,6 @@ public class InterLayerCommunicationUtils{
 				Iterable<SolarMessage> msgs) throws IOException {
 				float selectedX = rnd.nextFloat()*bBoxX;
 				float selectedY = rnd.nextFloat()*bBoxY;
-				log.info("Randomizing coordintwes " + selectedX + " " + selectedY);
 				vertex.getValue().setCoordinates(selectedX, selectedY);
 			return;
 		}

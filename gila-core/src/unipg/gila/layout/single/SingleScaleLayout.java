@@ -36,12 +36,13 @@ import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
+import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo;
 import unipg.gila.layout.LayoutRoutine.DrawingScaler;
 import unipg.gila.layout.LayoutRoutine.LayoutCCs;
 
 public class SingleScaleLayout {
-	
-	public static class Seeder extends AbstractSeeder<CoordinateWritable, IntWritable>{
+
+	public static class SingleSeeder extends AbstractSeeder<CoordinateWritable, IntWritable>{
 		
 		/* (non-Javadoc)
 		 * @see unipg.gila.layout.AbstractSeeder#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
@@ -84,7 +85,7 @@ public class SingleScaleLayout {
 	 * @author Alessio Arleo
 	 *
 	 */
-	public static class Propagator extends AbstractPropagator<CoordinateWritable, IntWritable>{
+	public static class SinglePropagator extends AbstractPropagator<CoordinateWritable, IntWritable>{
 
 
 		/* (non-Javadoc)
@@ -111,5 +112,131 @@ public class SingleScaleLayout {
 			super.compute(vertex, messages);
 		}
 	}
+	
+	/**
+	 * @author Alessio Arleo
+	 *
+	 */
+	public class SingleLayoutCCs extends LayoutCCs<CoordinateWritable, IntWritable> {
+		
+		@Override
+		public void initialize(
+				GraphState graphState,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
+				WorkerGlobalCommUsage workerGlobalCommUsage,
+				WorkerContext workerContext) {
+			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+					workerGlobalCommUsage, workerContext);
+		}
+		
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+		 */
+		@Override
+		public void compute(
+				Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
+				Iterable<LayoutMessage> msgs) throws IOException {
+			super.compute(vertex, msgs);
+		}
+	}
+
+
+	/**
+	 * @author Alessio Arleo
+	 *
+	 */
+	public class SingleDrawingScaler extends DrawingScaler<CoordinateWritable, IntWritable> {
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+		 */
+		@Override
+		public void initialize(
+				GraphState graphState,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
+				WorkerGlobalCommUsage workerGlobalCommUsage,
+				WorkerContext workerContext) {
+			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+					workerGlobalCommUsage, workerContext);
+		}
+		
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+		 */
+		@Override
+		public void compute(
+				Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
+				Iterable<LayoutMessage> msgs) throws IOException {
+			super.compute(vertex, msgs);
+		}
+
+	}
+
+
+	/**
+	 * @author Alessio Arleo
+	 *
+	 */
+	public class SingleDrawingExplorerWithComponentsNo extends
+			DrawingBoundariesExplorerWithComponentsNo<CoordinateWritable, IntWritable> {
+
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+		 */
+		@Override
+		public void initialize(
+				GraphState graphState,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
+				WorkerGlobalCommUsage workerGlobalCommUsage,
+				WorkerContext workerContext) {
+			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+					workerGlobalCommUsage, workerContext);
+		}
+		
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+		 */
+		@Override
+		public void compute(
+				Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
+				Iterable<LayoutMessage> msgs) throws IOException {
+			super.compute(vertex, msgs);
+		}
+	}
+
+
+	/**
+	 * @author Alessio Arleo
+	 *
+	 */
+	public class SingleDrawingExplorer extends DrawingBoundariesExplorer<CoordinateWritable, IntWritable> {
+
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+		 */
+		@Override
+		public void initialize(
+				GraphState graphState,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> graphTaskManager,
+				WorkerGlobalCommUsage workerGlobalCommUsage,
+				WorkerContext workerContext) {
+			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+					workerGlobalCommUsage, workerContext);
+		}
+		
+		/* (non-Javadoc)
+		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+		 */
+		@Override
+		public void compute(
+				Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex,
+				Iterable<LayoutMessage> msgs) throws IOException {
+			super.compute(vertex, msgs);
+		}
+	}
+
 	
 }

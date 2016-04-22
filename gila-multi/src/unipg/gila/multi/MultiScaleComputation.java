@@ -72,7 +72,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 						LayeredPartitionedLongWritable id, T msg){
 //		MessageWritable w = (MessageWritable) msg;
 		msg.addToWeight(((IntWritable)vertex.getEdgeValue(id)).get());
-		log.info("sendind " + msg);
+//		log.info("sendind " + msg);
 		sendMessage(id, msg);
 	}
 

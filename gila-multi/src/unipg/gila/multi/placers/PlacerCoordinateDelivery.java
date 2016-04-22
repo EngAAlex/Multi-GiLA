@@ -49,11 +49,13 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 			LayoutMessage current = (LayoutMessage) ms.next();
 			if(current.getPayloadVertex().equals(vertex.getId())){
 				vertex.getValue().setCoordinates(current.getValue()[0], current.getValue()[1]);
-				log.info("Received my new coordinates! " + current.toString());
+				if(SolarPlacerRoutine.logPlacer)
+					log.info("Received my new coordinates! " + current.toString());
 			}else
 				if(!current.isAZombie())
 					if(vertex.getEdgeValue(current.getPayloadVertex()) != null){
-						log.info("I'm propagating to my neighbor " + current.getPayloadVertex() + " the message" + current);
+						if(SolarPlacerRoutine.logPlacer)						
+							log.info("I'm propagating to my neighbor " + current.getPayloadVertex() + " the message" + current);
 						sendMessage(current.getPayloadVertex(), (LayoutMessage)current.propagateAndDie());
 					}
 		}

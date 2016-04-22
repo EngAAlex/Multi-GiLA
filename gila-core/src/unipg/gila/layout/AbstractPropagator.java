@@ -88,14 +88,15 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 			LayoutMessage currentMessage = it.next();
 
 			LayeredPartitionedLongWritable currentPayload = currentMessage.getPayloadVertex();
-			log.info("Message payload" + currentPayload);
 
 			if(currentPayload.equals(vertex.getId()) || vValue.isAnalyzed(currentPayload))
 				continue;
 
 			foreigncoords = currentMessage.getValue();
-			
-			log.info("Received coordinates " + foreigncoords[0] + " " + foreigncoords[1] + " from " + currentMessage.getPayloadVertex());
+			if(LayoutRoutine.logLayout){
+				log.info("Message payload" + currentPayload);
+				log.info("Received coordinates " + foreigncoords[0] + " " + foreigncoords[1] + " from " + currentMessage.getPayloadVertex());
+			}
 
 			float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
 			distance = (float) Math.sqrt(squareDistance);
@@ -117,15 +118,16 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalSpringLength(vertex, currentPayload), v1Deg, v2Deg);				
 				finalForce[0] += tempForce[0];
 				finalForce[1] += tempForce[1];
-				log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance + " " + requestOptimalSpringLength(vertex, currentPayload));
+				if(LayoutRoutine.logLayout)
+					log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance + " " + requestOptimalSpringLength(vertex, currentPayload));
 //				finalForce[0] += (computedForce*cos);
 //				finalForce[1] += (computedForce*sin);
 			}
 
 			//REPULSIVE FORCES
 			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
-
-			log.info("computed repulsive " + tempForce[0] + " " + tempForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
+			if(LayoutRoutine.logLayout)
+				log.info("computed repulsive " + tempForce[0] + " " + tempForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
 
 			repulsiveForce[0] += tempForce[0];
 			repulsiveForce[1] += tempForce[1];
@@ -141,8 +143,9 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 			}
 
 		}
-
-		log.info("Going to moderate on " + walshawConstant + " from " + repulsiveForce[0] + " " + repulsiveForce[1]);
+		
+		if(LayoutRoutine.logLayout)
+			log.info("Going to moderate on " + walshawConstant + " from " + repulsiveForce[0] + " " + repulsiveForce[1]);
 		
 		//REPULSIVE FORCE MODERATION
 		repulsiveForce[0] *= requestWalshawConstant();
@@ -150,8 +153,9 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 
 		finalForce[0] -= repulsiveForce[0];
 		finalForce[1] -= repulsiveForce[1];
-
-		log.info("computed repuslive " + repulsiveForce[0] + " " + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
+		
+		if(LayoutRoutine.logLayout)
+			log.info("computed repuslive " + repulsiveForce[0] + " " + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
 		
 		vValue.setAsMoving();
 		vValue.addToForceVector(finalForce);
