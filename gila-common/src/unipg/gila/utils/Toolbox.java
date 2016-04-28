@@ -113,8 +113,9 @@ public class Toolbox {
 		while(its.hasNext()){
 			LayoutMessage currentNeighbour = its.next();
 			float[] coordinates = currentNeighbour.getValue();
-			vertex.getValue().setShortestEdge(Toolbox.computeModule(myCoordinates, coordinates));
+//			vertex.getValue().setShortestEdge(Toolbox.computeModule(myCoordinates, coordinates));
 			double computedAtan = Math.atan2(coordinates[1] - myCoordinates[1], coordinates[0] - myCoordinates[0]);
+			computedAtan = computedAtan < 0 ? (Math.PI*2 + computedAtan) : computedAtan;
 			tempList.put(currentNeighbour.getPayloadVertex(), new Float(computedAtan));
 		}
 		return tempList;

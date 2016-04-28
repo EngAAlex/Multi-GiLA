@@ -24,7 +24,7 @@ public class LayoutAdaptationStrategy{
 				return 3;
 			if(density > 2.5)
 				return 2;
-			if(density > 3.5)
+			if(density > 4)
 				return 1;
 			return LayoutAdaptationStrategy.maxK;
 		}
@@ -67,10 +67,11 @@ public class LayoutAdaptationStrategy{
 		 */
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(currentLayer == 0)
-				return 1;
-			return Math.max(ddas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer), 
+			int proposedK = Math.max(ddas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer), 
 					ssas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer));
+			if(currentLayer == 0)
+				proposedK = (proposedK > 2 ? 2 : proposedK);
+			return proposedK;
 		}
 		
 	}

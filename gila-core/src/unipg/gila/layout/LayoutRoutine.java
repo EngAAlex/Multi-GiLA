@@ -46,14 +46,10 @@ import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentMapOverwriteA
 import unipg.gila.aggregators.IntSetAggregator;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.coolingstrategies.CoolingStrategy;
 import unipg.gila.coolingstrategies.LinearCoolingStrategy;
-import unipg.gila.layout.single.SingleScaleLayout.SinglePropagator;
-import unipg.gila.layout.single.SingleScaleLayout.SingleSeeder;
 import unipg.gila.utils.Toolbox;
 
 /**

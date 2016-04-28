@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.graph.GraphState;
@@ -15,7 +14,6 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
@@ -25,7 +23,6 @@ import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.common.multi.PathWritable;
 import unipg.gila.common.multi.PathWritableSet;
-import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
 
 /**

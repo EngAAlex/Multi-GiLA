@@ -62,28 +62,35 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		
 	public SolarMessage(){
 		super();
+		extraPayload = new ReferrersList();
 	}
 	
 	public SolarMessage(LayeredPartitionedLongWritable payloadVertex, LayeredPartitionedLongWritable value, CODE code) {
 		super(payloadVertex, value);
 		this.code = code;
+		extraPayload = new ReferrersList();
+
 	}
 	
 	public SolarMessage(LayeredPartitionedLongWritable payloadVertex, int ttl, LayeredPartitionedLongWritable value, CODE code) {
 		super(payloadVertex, ttl, value);
 		this.code = code;
+		extraPayload = new ReferrersList();
+
 	}
 	
 	public SolarMessage(LayeredPartitionedLongWritable payload, int ttl, LayeredPartitionedLongWritable valueSun, ReferrersList extraPayload){
 		super(payload, ttl, valueSun);
 		this.code = CODE.REFUSEOFFER;
 		this.extraPayload = extraPayload;
+		extraPayload = new ReferrersList();
+
 	}
 	
 	public SolarMessage copy() {
 		SolarMessage tmp = new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
 		tmp.setWeight(weight);
-		if(extraPayload != null)
+//		if(extraPayload != null)
 			tmp.copyExtraPayload(extraPayload);
 		return tmp;
 	}
@@ -130,10 +137,13 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		payloadVertex.readFields(in);
 		value.readFields(in);
 		code = CODE.readFields(in.readInt());
-		if(code.equals(CODE.REFUSEOFFER) && in.readInt() > 0){
-			extraPayload = new ReferrersList();
-			extraPayload.readFields(in);
-		}
+//		int extraPayloadSize = in.readInt();
+//		extraPayload = new ReferrersList();
+		extraPayload.readFields(in);
+//		if(code.equals(CODE.REFUSEOFFER) && in.readInt() > 0){
+//			extraPayload = new ReferrersList();
+//			extraPayload.readFields(in);
+//		}
 	}
 
 	@Override
@@ -141,12 +151,12 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 		payloadVertex.write(out);
 		value.write(out);
 		out.writeInt(CODE.write(getCode()));
-		if(getCode().equals(CODE.REFUSEOFFER)){
-			int size = (extraPayload == null ? 0 : extraPayload.size());
-			out.writeInt(size);
-			if(size > 0)
+//		if(getCode().equals(CODE.REFUSEOFFER)){
+//			int size = (extraPayload == null ? 0 : extraPayload.size());
+//			out.writeInt(size);
+//			if(size > 0)
 				extraPayload.write(out);
-		}
+//		}
 	}
 
 	/* (non-Javadoc)

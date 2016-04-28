@@ -109,14 +109,12 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Int
 		vValue.resetAnalyzed();
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void gatherAndSend(Vertex<LayeredPartitionedLongWritable, V, E> vertex, float[] coords){
 		LayoutMessage toSend = new LayoutMessage();
 		toSend.setPayloadVertex(vertex.getId());
 		toSend.setTTL(ttlmax - 1);
 		toSend.setValue(coords);
 		toSend.setWeight(vertex.getValue().getWeight());
-		log.info(toSend);
 		sendMessageToAllEdges(vertex, toSend);	
 	}
 	
