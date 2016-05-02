@@ -39,7 +39,6 @@ public class SolarMergerRoutine {
 	/*
 	 * LOGGER 
 	 * */
-
 	protected static Logger log = Logger.getLogger(SolarMergerRoutine.class);
 
 	public static final String currentLayer = "AGG_CURRENTLAYER";
@@ -74,9 +73,6 @@ public class SolarMergerRoutine {
 	float baseSunChance;
 	
 	MasterCompute master;
-	
-	//GLOBAL STATIC ATTRIBUTES
-	public static boolean logMerger;
 
 	public boolean compute() {
 //		if(terminate){
@@ -171,7 +167,7 @@ public class SolarMergerRoutine {
 			master.setAggregatedValue(layerNumberAggregator, new IntWritable(1));
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
-				if(logMerger)
+				if(SolarMerger.logMerger)
 					log.info("layer " + (cLayer + 1) + " hassize " + layerSize);
 				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
 					master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() +1);
@@ -216,7 +212,7 @@ public class SolarMergerRoutine {
 		master.setAggregatedValue(mergerAttempts, new IntWritable(1));
 		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
 		
-		logMerger = master.getConf().getBoolean(logMergerString, false);
+		SolarMerger.logMerger = master.getConf().getBoolean(logMergerString, false);
 	}
 
 }

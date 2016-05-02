@@ -206,10 +206,9 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 						return;
 					}
 //					setComputation(CoordinatesBroadcast.class);
-//					angularMaximization = true;
-					placing = true;
+//					angularMaximization = true;'
 					layout = false;
-
+					placing = true;
 				}
 			}
 			if(placing)

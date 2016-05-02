@@ -178,14 +178,14 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if(planets == null)
 			planets	=	new MapWritable();
 		planets.put(id.copy(), new PathWritableSet());
-		log.info("Me, sun accept as a planet the vertex " + id);
+//		log.info("Me, sun accept as a planet the vertex " + id);
 	}
 
 	public void addMoon(LayeredPartitionedLongWritable id){
 		if(moons == null)
 			moons =	new MapWritable();
 		moons.put(id.copy(), new PathWritableSet());
-		log.info("Me, sun accept as a moon the vertex " + id);
+//		log.info("Me, sun accept as a moon the vertex " + id);
 	}
 
 	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, ReferrersList referrers, int weight){
@@ -203,9 +203,9 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		Iterator<Referrer> it = (Iterator<Referrer>) referrers.iterator();
 		while(it.hasNext()){
 			Referrer currentReferrer = it.next();
-			log.info("currentReferrer " + currentReferrer.getEventGenerator());
+//			log.info("currentReferrer " + currentReferrer.getEventGenerator());
 			if(planets.containsKey(currentReferrer.getEventGenerator())){
-				log.info("Registering for planet neighbor " + sun + " total " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
+//				log.info("Registering for planet neighbor " + sun + " total " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
 //				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
 //						1, Integer.MAX_VALUE - (ttl - 1), sun));
 				((PathWritableSet)planets.get(currentReferrer.getEventGenerator())).addElement(new PathWritable(
@@ -219,7 +219,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 				if(moons != null){
 					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer.getEventGenerator()); 
 					if(pSet != null){
-						log.info("Registering for moon neighbor " + sun + " weight " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
+//						log.info("Registering for moon neighbor " + sun + " weight " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
 						pSet.addElement(new PathWritable((weight - currentReferrer.getDistanceAccumulator()), sun));
 					}
 				}

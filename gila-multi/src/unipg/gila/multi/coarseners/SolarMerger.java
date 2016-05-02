@@ -40,11 +40,15 @@ import unipg.gila.multi.MultiScaleComputation;
  */
 public class SolarMerger{
 
+	
+	//GLOBAL STATIC ATTRIBUTES
+	public static boolean logMerger;
+	
 	/*
 	 * LOGGER 
 	 * */
 	protected static Logger log = Logger.getLogger(SolarMerger.class);
-
+	
 	
 	public static enum AstralBody{
 		SUN, MOON, PLANET, ASTEROID;
@@ -116,7 +120,7 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(vertex.getValue().isSun() && !vertex.getValue().isAssigned()){
 				sendMessageToAllEdgesWithWeight(vertex, new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER));
-			if(SolarMergerRoutine.logMerger)
+			if(logMerger)
 				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
 			}
 		}
@@ -133,7 +137,6 @@ public class SolarMerger{
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 					workerGlobalCommUsage, workerContext);
-			SolarMergerRoutine.logMerger = getConf().getBoolean(SolarMergerRoutine.logMergerString, false);
 		}
 
 	}
@@ -209,17 +212,17 @@ public class SolarMerger{
 			SetWritable<SolarMessage> refused = (SetWritable<SolarMessage>) shuffled[1];
 
 			if(chosenOne != null){
-				if(SolarMergerRoutine.logMerger)
+				if(logMerger)
 					log.info("Chosen message " + chosenOne);
 				value.setSun(chosenOne.getValue().copy(), chosenOne.getPayloadVertex().copy());
 				ackAndPropagateSunOffer(vertex, value, chosenOne);
 				//SET THE SUN
 				if(chosenOne.getTTL() == 1){
 					value.setAsPlanet(chosenOne.getWeight());
-					if(SolarMergerRoutine.logMerger)
+					if(logMerger)
 						log.info("Me, vertex " + vertex.getId().getId() + " becoming a planet of sun " + chosenOne.getValue().getId() + " weight " + chosenOne.getWeight());
 				}else{
-					if(SolarMergerRoutine.logMerger){
+					if(logMerger){
 						log.info("Me, vertex " + vertex.getId().getId() + " becoming a moon of sun " + chosenOne.getValue().getId() + " weight " + chosenOne.getWeight());
 						log.info("I'm a moon and adding to proxy " + chosenOne.getPayloadVertex());
 					}
@@ -235,7 +238,7 @@ public class SolarMerger{
 					while(offersToRefuse.hasNext()){ //build proxies
 						SolarMessage current = offersToRefuse.next();
 						if(current.getValue().equals(value.getSun())){
-							if(SolarMergerRoutine.logMerger)
+							if(logMerger)
 								log.info("I'm a moon and adding to proxy " + current.getPayloadVertex());
 							value.addToProxies(current.getPayloadVertex().copy());
 						}
@@ -253,7 +256,7 @@ public class SolarMerger{
 			//		SetWritable<LayeredPartitionedLongWritable> incomingInterfaces = null;
 			while(theMessages.hasNext()){
 				SolarMessage current = theMessages.next();
-				if(SolarMergerRoutine.logMerger)
+				if(logMerger)
 					log.info("Received " + current);
 				if(!current.getCode().equals(CODE.SUNOFFER)) // || sunsToIgnore.contains(current.getPayloadVertex().getId()))
 					continue;
@@ -363,7 +366,7 @@ public class SolarMerger{
 				msgIterator = msgs.iterator();					
 				while(msgIterator.hasNext()){
 					SolarMessage currentMessage =  msgIterator.next();
-					if(SolarMergerRoutine.logMerger)
+					if(logMerger)
 						log.info("Received " + currentMessage);
 					if(currentMessage.getCode().equals(CODE.ACCEPTOFFER) && currentMessage.getValue().equals(value.getSun())){
 						sendMessage(value.getProxy(), (SolarMessage)currentMessage.propagate());
@@ -383,7 +386,7 @@ public class SolarMerger{
 						//							else
 						//								log.info("Message contains no extra Payload");
 						SolarMessage messageToSend = (SolarMessage)currentMessage.propagate();
-						if(SolarMergerRoutine.logMerger)
+						if(logMerger)
 							log.info("Propagating " + currentMessage + " with " + messageToSend);
 						messageToSend.addToExtraPayload(vertex.getId(), messageToSend.getWeight());
 						if(vertex.getValue().isPlanet()){
@@ -437,11 +440,11 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) {
 			Iterator<SolarMessage> messages = msgs.iterator();
 			AstralBodyCoordinateWritable value = vertex.getValue();
-			if(SolarMergerRoutine.logMerger)
+			if(logMerger)
 				log.info("Sun Discovery");
 			while(messages.hasNext()){
 				SolarMessage xu = messages.next();
-				if(SolarMergerRoutine.logMerger)
+				if(logMerger)
 					log.info(xu);
 				if(xu.getCode().equals(CODE.SUNDISCOVERY)){
 					if((value.isSun() && xu.getValue().equals(vertex.getId()) || xu.getValue().equals(value.getSun())))
@@ -449,14 +452,14 @@ public class SolarMerger{
 					aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 					SolarMessage messageForReferrer = new SolarMessage(xu.getPayloadVertex().copy(), Integer.MAX_VALUE - value.getDistanceFromSun(), (value.isSun() ? vertex.getId() : value.getSun()), CODE.REFUSEOFFER);
 					messageForReferrer.setWeight(value.getWeightFromSun());
-					if(SolarMergerRoutine.logMerger)
+					if(logMerger)
 						log.info("Informing the referrer about me " + messageForReferrer);
 					sendMessageWithWeight(vertex, xu.getPayloadVertex().copy(), messageForReferrer);
 					if(!value.isSun()){
 						SolarMessage messageForSun = new SolarMessage(vertex.getId(), xu.getTTL() - 1, xu.getValue().copy(), CODE.REFUSEOFFER);
 						messageForSun.setWeight(xu.getWeight());
 						messageForSun.addToExtraPayload(vertex.getId(), xu.getWeight());
-						if(SolarMergerRoutine.logMerger)
+						if(logMerger)
 							log.info("informing my sun " + messageForSun);
 						if(vertex.getValue().isPlanet())
 							sendMessageWithWeight(vertex, vertex.getValue().getSun(), messageForSun);
@@ -556,7 +559,7 @@ public class SolarMerger{
 					LayeredPartitionedLongWritable neighborSun = (LayeredPartitionedLongWritable) current.getKey();
 //					if(neighborSun.equals(homologousId))
 //						continue;
-					if(SolarMergerRoutine.logMerger)
+					if(logMerger)
 						log.info("connecting vertex " + neighborSun);
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
 							(IntWritable)current.getValue()));
