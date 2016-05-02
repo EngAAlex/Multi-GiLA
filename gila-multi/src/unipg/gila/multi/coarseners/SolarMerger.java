@@ -209,7 +209,8 @@ public class SolarMerger{
 			SetWritable<SolarMessage> refused = (SetWritable<SolarMessage>) shuffled[1];
 
 			if(chosenOne != null){
-				log.info("Chosen message " + chosenOne);
+				if(SolarMergerRoutine.logMerger)
+					log.info("Chosen message " + chosenOne);
 				value.setSun(chosenOne.getValue().copy(), chosenOne.getPayloadVertex().copy());
 				ackAndPropagateSunOffer(vertex, value, chosenOne);
 				//SET THE SUN

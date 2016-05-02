@@ -29,9 +29,12 @@ import unipg.gila.partitioning.Spinner;
 
 public class InterLayerCommunicationUtils{
 
+	public static final String destroyLevelsString = "placer.destroyLevels";
+	
 	//LOGGER
 	protected static Logger log = Logger.getLogger(InterLayerCommunicationUtils.class);
 
+	
 	/**
 	 * This computation broadcasts the vertex coordinates before transferring them to the underlying layer at the next superstep.
 	 * 
@@ -61,6 +64,8 @@ public class InterLayerCommunicationUtils{
 	public static class InterLayerDataTransferComputation extends
 	MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage> {
 
+		private boolean destroyLevels;
+		
 		/* (non-Javadoc)
 		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 		 */
@@ -77,9 +82,24 @@ public class InterLayerCommunicationUtils{
 				while(it.hasNext())
 					sendMessage(lowerID, (LayoutMessage) it.next().propagateAndDie());
 			}
-			//REACTIVATE TO PURGE UPPER LAYERS
+			if(destroyLevels)
+				removeVertexRequest(vertex.getId());
 			//			vertex.getValue().clearAstralInfo();
-			//			removeVertexRequest(vertex.getId());
+		}
+		
+		/* (non-Javadoc)
+		 * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+		 */
+		@Override
+		public void initialize(
+				GraphState graphState,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
+				WorkerGlobalCommUsage workerGlobalCommUsage,
+				WorkerContext workerContext) {
+			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+					workerGlobalCommUsage, workerContext);
+			destroyLevels = getConf().getBoolean(destroyLevelsString, true);
 		}
 	}
 

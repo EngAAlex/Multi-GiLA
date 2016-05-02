@@ -141,6 +141,7 @@ public class LayoutRoutine {
 	public static final String tempAggregator = "AGG_TEMP";
 	protected static final String offsetsAggregator = "AGG_CC_BOXES";
 	public static final String ttlMaxAggregator = "AGG_MAX_TTL";
+	public static final String angleMaximizationClockwiseAggregator = "AGG_CLCKROTATION";
 
 	//COUNTERS
 	protected static final String COUNTER_GROUP = "Drawing Counters";
@@ -230,6 +231,8 @@ public class LayoutRoutine {
 		master.registerPersistentAggregator(componentNumber, IntSetAggregator.class);
 		master.registerPersistentAggregator(componentNoOfNodes, ComponentIntSumAggregator.class);
 		master.registerAggregator(offsetsAggregator, ComponentMapOverwriteAggregator.class);
+		
+		master.registerAggregator(angleMaximizationClockwiseAggregator, BooleanAndAggregator.class);
 
 		//		float walshawModifier = master.getConf().getFloat(walshawModifierString, walshawModifierDefault);
 

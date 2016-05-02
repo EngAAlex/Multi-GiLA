@@ -3,8 +3,10 @@
  */
 package unipg.gila.multi;
 
+import org.apache.giraph.aggregators.BooleanAndAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -37,7 +39,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 
 	public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
 	public static final String angularMaximizationIterationsString = "multi.layout.angularMaximizationMaxIterations";
-	public static final int angularMaximizationMaxIterationsDefault = 30;
+	public static final int angularMaximizationMaxIterationsDefault = 30;	
 
 	LayoutRoutine layoutRoutine;
 	SolarMergerRoutine mergerRoutine;
@@ -51,6 +53,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	boolean reintegrating;
 	boolean preparePlacer;
 	boolean angularMaximization;
+	boolean forceMaximization;
 	int angularMaximizationIterations;
 	int angularMaximizationIterationsMax;
 	boolean terminate;
@@ -151,6 +154,8 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		}
 		if(angularMaximization){
 			if(getComputation().equals(CoordinatesBroadcast.class)){
+				setAggregatedValue(LayoutRoutine.angleMaximizationClockwiseAggregator, new BooleanWritable(
+																		Math.random() > 0.5));
 				setComputation(AngularResolutionMaximizer.class);
 				return;
 			}
@@ -164,9 +169,10 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				return;
 			}
 			angularMaximizationIterations = 0;
+			angularMaximization = false;
+
 			if(currentLayer > 0){
 				layout = false;
-				angularMaximization = false;
 				placing = true;
 			}else
 				reintegrating = true;
@@ -194,10 +200,16 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{
-					angularMaximization = true;
+					if(currentLayer == 0){
+						angularMaximization = true;
+						setComputation(CoordinatesBroadcast.class);
+						return;
+					}
+//					setComputation(CoordinatesBroadcast.class);
+//					angularMaximization = true;
+					placing = true;
 					layout = false;
-					setComputation(CoordinatesBroadcast.class);
-					return;
+
 				}
 			}
 			if(placing)

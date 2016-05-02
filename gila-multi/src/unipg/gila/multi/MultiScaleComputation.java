@@ -28,9 +28,12 @@ public abstract class MultiScaleComputation<Z extends Writable, P extends Messag
 AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 
 	//LOGGER
+	public static final String multiscaleLogString = "multi.showLog";
+	
 	Logger log = Logger.getLogger(MultiScaleComputation.class);
 
 	protected int currentLayer;
+	private boolean showLog;
 
 	@Override	
 	public void compute(
@@ -39,7 +42,8 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 		if(vertex.getId().getLayer() != currentLayer)
 			return;
 		else{
-			log.info("I'm " + vertex.getId());
+			if(showLog)
+				log.info("I'm " + vertex.getId());
 			vertexInLayerComputation(vertex, msgs);
 		}
 	}
@@ -54,6 +58,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+		showLog = getConf().getBoolean(multiscaleLogString, false);
 	}
 
 	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
