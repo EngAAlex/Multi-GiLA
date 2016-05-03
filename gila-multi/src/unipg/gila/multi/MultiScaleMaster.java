@@ -3,7 +3,6 @@
  */
 package unipg.gila.multi;
 
-import org.apache.giraph.aggregators.BooleanAndAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.hadoop.io.BooleanWritable;
@@ -13,17 +12,17 @@ import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.layout.AngularResolutionMaximizer;
+import unipg.gila.layout.AngularResolutionMaximizer.AverageCoordinateUpdater;
 import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
-import unipg.gila.layout.AngularResolutionMaximizer.AverageCoordinateUpdater;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.CoordinatesBroadcast;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.layout.AdaptationStrategy;
 import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeAndDensityDrivenAdaptationStrategy;
 import unipg.gila.multi.layout.MultiScaleLayout;
-import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorer;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleDrawingScaler;
+import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorer;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorerWithComponentsNo;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleLayoutCC;
 import unipg.gila.multi.placers.SolarPlacerRoutine;
@@ -171,11 +170,15 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			angularMaximizationIterations = 0;
 			angularMaximization = false;
 
+			layout = false;
+
 			if(currentLayer > 0){
-				layout = false;
 				placing = true;
-			}else
+			}else{
+				placing = false;
 				reintegrating = true;
+				return;
+			}
 		}
 		if(currentLayer >= 0 && !reintegrating){
 			int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();

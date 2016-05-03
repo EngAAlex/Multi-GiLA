@@ -22,6 +22,7 @@ import unipg.gila.common.datastructures.FloatWritableArray;
 import unipg.gila.layout.GraphReintegration.FairShareReintegrateOneEdges;
 import unipg.gila.layout.GraphReintegration.PlainDummyComputation;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
+import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo;
 import unipg.gila.layout.LayoutRoutine.LayoutCCs;
 
 /**
@@ -55,7 +56,7 @@ public class GraphReintegrationRoutine {
 		case 2: //SECOND STEP: TO COMPUTE THE FINAL GRID LAYOUT OF THE CONNECTED COMPONENTS, THEIR DRAWING
 			master.setAggregatedValue(LayoutRoutine.maxCoords, new MapWritable()); //PROPORTIONS ARE SCANNED.
 			master.setAggregatedValue(LayoutRoutine.minCoords, new MapWritable());
-			master.setComputation(DrawingBoundariesExplorer.class);
+			master.setComputation(DrawingBoundariesExplorerWithComponentsNo.class);
 			readyToSleep++;
 			return false;
 		case 3: //THIRD STEP: ONCE THE DATA NEEDED TO LAYOUT THE CONNECTED COMPONENTS GRID ARE COMPUTED

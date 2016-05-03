@@ -93,11 +93,11 @@ extends AbstractComputation<LayeredPartitionedLongWritable, AstralBodyCoordinate
 		float firstSlope = 0.0f;
 		LayeredPartitionedLongWritable lastVertex = null;
 		float lastSlope = 0.0f;
-		log.info("I'm " + vertex.getId());
+//		log.info("I'm " + vertex.getId());
 		while(slopesIterator.hasNext()){
 			LayeredPartitionedLongWritable currentVertex = slopesIterator.next();
 			float currentSlope = orderedSlopesMap.get(currentVertex);
-			log.info("Current slope " + currentSlope + " for vertex " + currentVertex);
+			//			log.info("Current slope " + currentSlope + " for vertex " + currentVertex);
 			if(first){
 				firstSlope = currentSlope;
 				lastSlope = currentSlope;
@@ -114,27 +114,27 @@ extends AbstractComputation<LayeredPartitionedLongWritable, AstralBodyCoordinate
 			lastVertex = currentVertex.copy();
 		}
 		float threshold = new Float(Math.PI*2)/(float)vertex.getNumEdges();
-		log.info("Current threshold " + threshold);
+		//		log.info("Current threshold " + threshold);
 		Iterator<Entry<LayeredPartitionedLongWritable, Float>> revisedSlopesIterator = orderedSlopesMap.entrySet().iterator();
 		while(revisedSlopesIterator.hasNext()){
 			Entry<LayeredPartitionedLongWritable, Float> currentSlope = revisedSlopesIterator.next();
-			log.info("suggested correction from " + currentSlope.getValue() + " " + (threshold - currentSlope.getValue()));
+			//			log.info("suggested correction from " + currentSlope.getValue() + " " + (threshold - currentSlope.getValue()));
 			//			if(currentSlope.getValue() > threshold){
 			//				float currentDistance = (((IntWritable)vertex.getEdgeValue(currentSlope.getKey())).get()*(float)k) - distancesMap.get(currentSlope.getKey());
 			float[] foreignCoordinates = coordinatesMap.get(currentSlope.getKey());
-//			float currentDistance = Toolbox.computeModule(myCoordinates, foreignCoordinates);
-//			float deltaX = foreignCoordinates[0] - myCoordinates[0];
-//			float deltaY = foreignCoordinates[1] - myCoordinates[1];
+			//			float currentDistance = Toolbox.computeModule(myCoordinates, foreignCoordinates);
+			//			float deltaX = foreignCoordinates[0] - myCoordinates[0];
+			//			float deltaY = foreignCoordinates[1] - myCoordinates[1];
 			float idealDistance = ((IntWritable)vertex.getEdgeValue(currentSlope.getKey())).get()*(float)k;
-//			float completeModeration = translationModerator*(idealDistance - currentDistance);
-//			float[] proposedCorrection = new float[]{completeModeration*(deltaX/currentDistance),
-//					completeModeration*(deltaY/currentDistance)};
+			//			float completeModeration = translationModerator*(idealDistance - currentDistance);
+			//			float[] proposedCorrection = new float[]{completeModeration*(deltaX/currentDistance),
+			//					completeModeration*(deltaY/currentDistance)};
 			float desiredRotation = clockwiseRotation ? threshold - currentSlope.getValue() : -1*(threshold - currentSlope.getValue());
 			sendMessage(currentSlope.getKey(), new LayoutMessage(currentSlope.getKey(), new float[]{
 				translationModerator*((myCoordinates[0] + idealDistance*new Float(Math.cos(angleModerator*(desiredRotation)))) - foreignCoordinates[0]),
 				translationModerator*((myCoordinates[1] + idealDistance*new Float(Math.sin(angleModerator*(desiredRotation)))) - foreignCoordinates[1])}));
 			//			}
-	}
+		}
 	}
 
 	public static class AverageCoordinateUpdater
@@ -177,7 +177,7 @@ extends AbstractComputation<LayeredPartitionedLongWritable, AstralBodyCoordinate
 				xAccumulator += current[0];
 				yAccumulator += current[1];
 			}
-						float[] myCoordinates = vertex.getValue().getCoordinates();
+			float[] myCoordinates = vertex.getValue().getCoordinates();
 
 			if(msgsCounter > 0)
 				vertex.getValue().setCoordinates(myCoordinates[0] + xAccumulator/(float)msgsCounter, myCoordinates[1] + yAccumulator/(float)msgsCounter);

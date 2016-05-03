@@ -81,10 +81,12 @@ public class InterLayerCommunicationUtils{
 				Iterator<LayoutMessage> it = msgs.iterator();
 				while(it.hasNext())
 					sendMessage(lowerID, (LayoutMessage) it.next().propagateAndDie());
+				removeEdgesRequest(lowerID, vertex.getId());
 			}
-			if(destroyLevels)
+			if(destroyLevels){
+				//			vertex.getValue().clearAstralInfo();
 				removeVertexRequest(vertex.getId());
-			//			vertex.getValue().clearAstralInfo();
+			}
 		}
 		
 		/* (non-Javadoc)
