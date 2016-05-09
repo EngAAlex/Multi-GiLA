@@ -563,7 +563,8 @@ public class SolarMerger{
 						log.info("connecting vertex " + neighborSun);
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
 							(IntWritable)current.getValue()));
-					weightCounter += ((IntWritable)current.getValue()).get();
+//					weightCounter += ((IntWritable)current.getValue()).get();
+					weightCounter = Math.max(weightCounter, ((IntWritable)current.getValue()).get());
 					counter++;
 				}
 			}

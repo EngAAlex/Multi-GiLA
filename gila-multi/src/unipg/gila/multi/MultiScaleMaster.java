@@ -17,6 +17,7 @@ import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.CoordinatesBroadcast;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
+import unipg.gila.multi.coarseners.SolarMerger;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.layout.AdaptationStrategy;
 import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeAndDensityDrivenAdaptationStrategy;
@@ -40,6 +41,8 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	public static final String angularMaximizationIterationsString = "multi.layout.angularMaximizationMaxIterations";
 	public static final int angularMaximizationMaxIterationsDefault = 30;	
 
+	public static final String multiCounterString = "Global Counters";
+
 	LayoutRoutine layoutRoutine;
 	SolarMergerRoutine mergerRoutine;
 	SolarPlacerRoutine placerRoutine;
@@ -56,14 +59,14 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	int angularMaximizationIterations;
 	int angularMaximizationIterationsMax;
 	boolean terminate;
-	
+
 	@SuppressWarnings("unchecked")
 	public void initialize() throws InstantiationException ,IllegalAccessException {
 		layoutRoutine = new LayoutRoutine();
 		layoutRoutine.initialize(this, MultiScaleLayout.Seeder.class, MultiScaleLayout.Propagator.class,
-								MultiScaleGraphExplorer.class, MultiScaleGraphExplorerWithComponentsNo.class,
-								MultiScaleDrawingScaler.class,
-								MultiScaleLayoutCC.class);
+				MultiScaleGraphExplorer.class, MultiScaleGraphExplorerWithComponentsNo.class,
+				MultiScaleDrawingScaler.class,
+				MultiScaleLayoutCC.class);
 
 		mergerRoutine = new SolarMergerRoutine();
 		mergerRoutine.initialize(this);
@@ -83,12 +86,12 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		angularMaximization = false;
 		angularMaximizationIterations = 0;
 		angularMaximizationIterationsMax = getConf().getInt(angularMaximizationIterationsString, angularMaximizationMaxIterationsDefault);
-		
+
 		try {
 			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
 			adaptationStrategy = tClass.getConstructor().newInstance();
 		} catch (Exception e) {
-			log.info("Caught exceptione");
+			log.info("Caught exceptione, sweithcin to default");
 			adaptationStrategy = new SizeAndDensityDrivenAdaptationStrategy();
 		} 
 
@@ -101,6 +104,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			merging = true;
 		}
 		if(terminate){
+			getContext().getCounter(multiCounterString, "Supersteps").increment(getSuperstep());
 			haltComputation();
 			return;
 		}
@@ -123,49 +127,53 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		if(preparePlacer){
 			preparePlacer = false;
 			layout = true;
-//			MapWritable mpV = ((MapWritable)getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator));
-//			MapWritable mpE = ((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator));
-//
-////			log.info("Current layer " + currentLayer);
-////
-////			log.info("Vertices map ");
-////			Iterator<Entry<Writable, Writable>> itV = mpV.entrySet().iterator();
-////			while(itV.hasNext()){
-////				Entry<Writable, Writable> current = itV.next();
-////				log.info(current.getKey() + " - " + current.getValue());
-////			}
-////			log.info("Edges map ");
-////			Iterator<Entry<Writable, Writable>> itE = mpE.entrySet().iterator();
-////			while(itE.hasNext()){
-////				Entry<Writable, Writable> current = itE.next();
-////				log.info(current.getKey() + " - " + current.getValue());
-////			}
+			//			MapWritable mpV = ((MapWritable)getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator));
+			//			MapWritable mpE = ((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator));
+			//
+			////			log.info("Current layer " + currentLayer);
+			////
+			////			log.info("Vertices map ");
+			////			Iterator<Entry<Writable, Writable>> itV = mpV.entrySet().iterator();
+			////			while(itV.hasNext()){
+			////				Entry<Writable, Writable> current = itV.next();
+			////				log.info(current.getKey() + " - " + current.getValue());
+			////			}
+			////			log.info("Edges map ");
+			////			Iterator<Entry<Writable, Writable>> itE = mpE.entrySet().iterator();
+			////			while(itE.hasNext()){
+			////				Entry<Writable, Writable> current = itE.next();
+			////				log.info(current.getKey() + " - " + current.getValue());
+			////			}
 
 			int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
 					noOfVertices, 
 					noOfEdges);
+			if(currentLayer == 0)
+				selectedK = (selectedK > 2 ? 2 : selectedK);
 			setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
-			
+
 			getContext().getCounter("K Counters", "Layer " + currentLayer).increment(selectedK);
 
 			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
 			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
 		}
 		if(angularMaximization){
-			if(getComputation().equals(CoordinatesBroadcast.class)){
-				setAggregatedValue(LayoutRoutine.angleMaximizationClockwiseAggregator, new BooleanWritable(
-																		Math.random() > 0.5));
-				setComputation(AngularResolutionMaximizer.class);
-				return;
-			}
-			if(getComputation().equals(AngularResolutionMaximizer.class)){
-				setComputation(AverageCoordinateUpdater.class);
-				return;
-			}
-			if(angularMaximizationIterations < angularMaximizationIterationsMax){
-				setComputation(CoordinatesBroadcast.class);
-				angularMaximizationIterations++;
-				return;
+			if(angularMaximizationIterationsMax > 0){
+				if(getComputation().equals(CoordinatesBroadcast.class)){
+					setAggregatedValue(LayoutRoutine.angleMaximizationClockwiseAggregator, new BooleanWritable(
+							Math.random() > 0.5));
+					setComputation(AngularResolutionMaximizer.class);
+					return;
+				}
+				if(getComputation().equals(AngularResolutionMaximizer.class)){
+					setComputation(AverageCoordinateUpdater.class);
+					return;
+				}
+				if(angularMaximizationIterations < angularMaximizationIterationsMax){
+					setComputation(CoordinatesBroadcast.class);
+					angularMaximizationIterations++;
+					return;
+				}
 			}
 			angularMaximizationIterations = 0;
 			angularMaximization = false;
@@ -182,36 +190,37 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		}
 		if(currentLayer >= 0 && !reintegrating){
 			int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
-			float optimalEdgeLength;
-			log.info("Suggested currentEdgeWeight " + currentEdgeWeight/(float)noOfEdges + " " + currentEdgeWeight + " " + noOfEdges);
-			if(noOfEdges > 0)
-				optimalEdgeLength = currentEdgeWeight/(float)noOfEdges;
-			else
-				optimalEdgeLength = 1;
+			float optimalEdgeLength = (float)currentEdgeWeight;
+			log.info("Suggested currentEdgeWeight " + currentEdgeWeight);
+			//			if(noOfEdges > 0)
+			//				optimalEdgeLength = currentEdgeWeight/(float)noOfEdges;
+			//			else
+			//				optimalEdgeLength = 1;
 			optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-			
-			log.info("Edge data computed: weight " + currentEdgeWeight + " " +" noOfEdges " + " " + noOfEdges + " optimalEdgeLength " + optimalEdgeLength*((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get());
+
+			log.info("Edge data computed: weight " + currentEdgeWeight + " " + optimalEdgeLength*((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get());
 			setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
 					new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
 			if(layout){
-//				if(currentLayer == 0){
-//					log.info("Bottom layer; aborting");
-//					haltComputation();
-//					return;
-//				}
+				//				if(currentLayer == 0){
+				//					log.info("Bottom layer; aborting");
+				//					haltComputation();
+				//					return;
+				//				}
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{
-					if(currentLayer == 0){
-						angularMaximization = true;
-						setComputation(CoordinatesBroadcast.class);
-						return;
-					}
-//					setComputation(CoordinatesBroadcast.class);
-//					angularMaximization = true;'
 					layout = false;
-					placing = true;
+					//					if(currentLayer == 0){
+					////						angularMaximization = true;
+					////						setComputation(CoordinatesBroadcast.class);
+					////						return;
+					//						reintegrating = true;
+					//					}else
+					setComputation(CoordinatesBroadcast.class);
+					angularMaximization = true;
+					//					placing = true;
 				}
 			}
 			if(placing)
@@ -222,15 +231,20 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 					layout = true;
 					log.info("deactivated placer");
 					resetLayoutAggregators();
-					
-//					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
+
+					//					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
 
 					int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
 							noOfVertices, 
 							noOfEdges);
+					if(currentLayer == 0)
+						selectedK = (selectedK > 2 ? 2 : selectedK);
 					setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
-					
+
 					getContext().getCounter("K Counters", "Layer " + currentLayer).increment(selectedK);
+					getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
+					getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
+
 					return;
 				}
 
@@ -241,7 +255,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				haltComputation();
 			}
 	}
-	
+
 	/**
 	 * 
 	 */

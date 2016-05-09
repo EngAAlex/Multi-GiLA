@@ -90,6 +90,22 @@ public abstract class ComponentAggregatorAbstract implements Aggregator<MapWrita
 	}
 
 	/**
+	 * This aggregator stores the integer with the highest value with the same key.
+	 * 
+	 * @author Alessio Arleo
+	 *
+	 */
+	public static class ComponentIntMaxAggregator extends ComponentAggregatorAbstract{
+
+		@Override
+		protected void specificAggregate(Entry<Writable, Writable> current) {
+			Integer newValue = ((IntWritable)current.getValue()).get();
+			Integer currentValue = ((IntWritable)internalState.get(current.getKey())).get();
+			internalState.put(current.getKey(), new IntWritable(Math.max(currentValue, newValue)));
+		}
+	}
+	
+	/**
 	 * This aggregator sums up integer values with the same key.
 	 * 
 	 * @author Alessio Arleo

@@ -38,11 +38,13 @@ public class LayoutAdaptationStrategy{
 		 */
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer > 100000)
+			if(nOfEdgesOfLayer < 200)
+				return 5;
+			if(nOfEdgesOfLayer > 50000)
 				return 3;
-			if(nOfEdgesOfLayer > 1000000)
+			if(nOfEdgesOfLayer > 100000)
 				return 2;
-			if(nOfEdgesOfLayer > 1500000)
+			if(nOfEdgesOfLayer > 1000000)
 				return 1;
 			return LayoutAdaptationStrategy.maxK;
 		}
@@ -69,8 +71,6 @@ public class LayoutAdaptationStrategy{
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
 			int proposedK = Math.max(ddas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer), 
 					ssas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer));
-			if(currentLayer == 0)
-				proposedK = (proposedK > 2 ? 2 : proposedK);
 			return proposedK;
 		}
 		

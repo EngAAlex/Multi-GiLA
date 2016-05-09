@@ -21,6 +21,7 @@ import java.util.Iterator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.io.formats.TextVertexOutputFormat;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -43,10 +44,10 @@ import unipg.gila.layout.LayoutRoutine;
  *
  */
 public class MultiScaleLayoutOutputFormat extends
-TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, NullWritable> {
+TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> {
 	
 	@Override
-	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, NullWritable>.TextVertexWriter createVertexWriter(
+	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable>.TextVertexWriter createVertexWriter(
 			TaskAttemptContext arg0) throws IOException,
 			InterruptedException {
 		return new LayerFilteredJSONWithPartitioningAndComponentVertexWriter();
@@ -67,7 +68,7 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
 		
 		@Override
 		protected Text convertVertexToLine(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, NullWritable> vertex)
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex)
 						throws IOException {
 			if(vertex.getId().getLayer() != 0)
 				return new Text("");
@@ -88,11 +89,11 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
 		}
 	}
 
-	private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, NullWritable>> edges){
+	private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, IntWritable>> edges){
 		String result = "";
-		Iterator<Edge<LayeredPartitionedLongWritable, NullWritable>> it = edges.iterator();
+		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> it = edges.iterator();
 		while(it.hasNext()){
-			Edge<LayeredPartitionedLongWritable, NullWritable> edge = it.next();
+			Edge<LayeredPartitionedLongWritable, IntWritable> edge = it.next();
 			result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
 			if(it.hasNext())
 				result += ",";

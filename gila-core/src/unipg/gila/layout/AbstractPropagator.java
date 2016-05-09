@@ -136,10 +136,10 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 
 			if(!currentMessage.isAZombie()){
 				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
-				if(!useQueues)
+//				if(!useQueues)
 					sendMessageToAllEdges(vertex, (LayoutMessage) currentMessage.propagate());					
-				else
-					vertex.getValue().enqueueMessage(currentMessage.propagate());	
+//				else
+//					vertex.getValue().enqueueMessage(currentMessage.propagate());	
 			}
 
 		}
@@ -160,20 +160,20 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		vValue.setAsMoving();
 		vValue.addToForceVector(finalForce);
 
-		if(!useQueues)
-			return;
-
-		Writable[] toDequeue = vValue.dequeueMessages(new Double(Math.ceil(queueFlushRatio*vertex.getNumEdges())).intValue());
-
-		for(int i=0; i<toDequeue.length; i++){
-			LayoutMessage current = (LayoutMessage) toDequeue[i];
-			if(current != null){
-				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
-				sendMessageToAllEdges(vertex, (LayoutMessage) current);
-			}
-			else
-				break;
-		}
+//		if(!useQueues)
+//			return;
+//
+//		Writable[] toDequeue = vValue.dequeueMessages(new Double(Math.ceil(queueFlushRatio*vertex.getNumEdges())).intValue());
+//
+//		for(int i=0; i<toDequeue.length; i++){
+//			LayoutMessage current = (LayoutMessage) toDequeue[i];
+//			if(current != null){
+//				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
+//				sendMessageToAllEdges(vertex, (LayoutMessage) current);
+//			}
+//			else
+//				break;
+//		}
 
 	}
 

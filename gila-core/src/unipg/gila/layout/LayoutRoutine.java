@@ -164,6 +164,7 @@ public class LayoutRoutine {
 	private boolean ignition;
 	private long egira;
 	private boolean firstCall;
+	private int totalCalls;
 
 	protected MasterCompute master;
 	protected Class<? extends AbstractSeeder> seeder;
@@ -191,6 +192,7 @@ public class LayoutRoutine {
 
 		ignition = true;
 		firstCall = false;
+		totalCalls = 0;
 		
 		logLayout = master.getConf().getBoolean(logLayoutString, false);
 
@@ -331,9 +333,10 @@ public class LayoutRoutine {
 	 */
 	public boolean compute(long noOfVertices, float optimalEdgeLength){
 		if(ignition){
-			master.setComputation(drawingExplorerWithCCs);
+			totalCalls++;
 			egira = master.getSuperstep();
 			ignition = false;
+			master.setComputation(drawingExplorerWithCCs);
 			return false;
 		}
 		long relativeSuperstep = master.getSuperstep() - egira;
@@ -341,10 +344,12 @@ public class LayoutRoutine {
 			log.info("Relative superstep " + relativeSuperstep);
 		if(relativeSuperstep > 5 && (checkForConvergence(noOfVertices) || relativeSuperstep > LayoutRoutine.maxSuperstep)){
 			ignition = true;
+			master.getContext().getCounter(COUNTER_GROUP, "Call " + totalCalls + "Drawing supersteps ").increment(master.getSuperstep() - egira);
 			return true; //CHECK IF THE HALTING SEQUENCE IS IN PROGRESS
 		}
 		if(relativeSuperstep == 1){
 			try {
+//				log.info("iopti " + optimalEdgeLength);
 				superstepOneSpecials(optimalEdgeLength); //COMPUTE THE FACTORS TO PREPARE THE GRAPH FOR THE LAYOUT.
 				if(!firstCall){
 					firstCall = true;
@@ -404,7 +409,7 @@ public class LayoutRoutine {
 	 */
 	public static class DrawingBoundariesExplorer<V extends CoordinateWritable, E extends IntWritable>//, M1 extends LayoutMessageMatrix<I>, M2 extends LayoutMessageMatrix<I>> 
 	extends AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
-
+		
 		protected float[] coords;
 		protected V vValue;
 		

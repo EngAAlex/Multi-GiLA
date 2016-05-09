@@ -30,6 +30,8 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
+import com.google.common.collect.Lists;
+
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
@@ -106,23 +108,23 @@ public class Toolbox {
 		return tempList;
 	}
 
-	public static <V extends CoordinateWritable, E extends Writable> HashMap<LayeredPartitionedLongWritable, Float> buildSlopesMap(Iterator<LayoutMessage> its,
-			Vertex<LayeredPartitionedLongWritable, V, E> vertex) throws IOException {
-		HashMap<LayeredPartitionedLongWritable, Float> tempList = new HashMap<LayeredPartitionedLongWritable, Float>();
-		float[] myCoordinates = vertex.getValue().getCoordinates();
-		while(its.hasNext()){
-			LayoutMessage currentNeighbour = its.next();
-			float[] coordinates = currentNeighbour.getValue();
-//			vertex.getValue().setShortestEdge(Toolbox.computeModule(myCoordinates, coordinates));
-			double computedAtan = Math.atan2(coordinates[1] - myCoordinates[1], coordinates[0] - myCoordinates[0]);
-			computedAtan = computedAtan < 0 ? (Math.PI*2 + computedAtan) : computedAtan;
-			tempList.put(currentNeighbour.getPayloadVertex(), new Float(computedAtan));
-		}
-		return tempList;
-	}
+//	public static <V extends CoordinateWritable, E extends Writable> HashMap<LayeredPartitionedLongWritable, Float> buildSlopesMap(Iterator<LayoutMessage> its,
+//			Vertex<LayeredPartitionedLongWritable, V, E> vertex) throws IOException {
+//		HashMap<LayeredPartitionedLongWritable, Float> tempList = new HashMap<LayeredPartitionedLongWritable, Float>();
+//		float[] myCoordinates = vertex.getValue().getCoordinates();
+//		while(its.hasNext()){
+//			LayoutMessage currentNeighbour = its.next();
+//			float[] coordinates = currentNeighbour.getValue();
+////			vertex.getValue().setShortestEdge(Toolbox.computeModule(myCoordinates, coordinates));
+//			double computedAtan = Math.atan2(coordinates[1] - myCoordinates[1], coordinates[0] - myCoordinates[0]);
+//			computedAtan = computedAtan < 0 ? (Math.PI*2 + computedAtan) : computedAtan;
+//			tempList.put(currentNeighbour.getPayloadVertex(), new Float(computedAtan));
+//		}
+//		return tempList;
+//	}
 
 	public static <K, V extends Comparable<? super V>> Map<K, V> 
-	sortByValue( Map<K, V> map )
+	sortByValue( Map<K, V> map, boolean ascending )
 	{
 		List<Map.Entry<K, V>> list =
 				new LinkedList<Map.Entry<K, V>>( map.entrySet() );
@@ -133,7 +135,8 @@ public class Toolbox {
 				return (o1.getValue()).compareTo( o2.getValue() );
 			}
 				} );
-
+		if(!ascending)
+			Lists.reverse(list);
 		Map<K, V> result = new LinkedHashMap<K, V>();
 		for (Map.Entry<K, V> entry : list)
 		{

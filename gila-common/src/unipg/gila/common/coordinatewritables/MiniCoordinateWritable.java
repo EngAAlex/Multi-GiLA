@@ -58,12 +58,15 @@ public class MiniCoordinateWritable implements Writable, WritableFactory{
 		x = 0.0f;
 		y = 0.0f;
 		component = -1;
+		oneEdges = new LongWritableSet();
 	}
 	
 	public MiniCoordinateWritable(float x, float y, int component){
 		this.x = x;
 		this.y = y;
 		this.component = component;
+		oneEdges = new LongWritableSet();
+
 	}
 
 	public MiniCoordinateWritable(float x, float y, JSONArray oEs, int component) throws JSONException{
@@ -113,22 +116,21 @@ public class MiniCoordinateWritable implements Writable, WritableFactory{
 	public void readFields(DataInput in) throws IOException {
 		x = in.readFloat();
 		y = in.readFloat();
-		if(in.readBoolean()){
-			oneEdges = new LongWritableSet();
+//		if(in.readBoolean()){
 			oneEdges.readFields(in);
-		}
+//		}
 		component = in.readInt();
 	}
 
 	public void write(DataOutput out) throws IOException {
 		out.writeFloat(x);
 		out.writeFloat(y);
-		if(getOneDegreeVerticesQuantity() == 0)
-			out.writeBoolean(false);
-		else{
-			out.writeBoolean(true);
+//		if(getOneDegreeVerticesQuantity() == 0)
+//			out.writeBoolean(false);
+//		else{
+//			out.writeBoolean(true);
 			oneEdges.write(out);
-		}
+//		}
 		out.writeInt(component);
 	}
 

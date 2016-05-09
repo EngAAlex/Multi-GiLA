@@ -12,6 +12,7 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -116,6 +117,7 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Int
 		toSend.setValue(coords);
 		toSend.setWeight(vertex.getValue().getWeight());
 		sendMessageToAllEdges(vertex, toSend);	
+		aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
 	}
 	
 	/* (non-Javadoc)

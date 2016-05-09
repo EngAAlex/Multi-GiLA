@@ -44,7 +44,6 @@ public class SolarPlacerRoutine {
 			counter++; return false;
 		case 3 : master.setComputation(PlacerCoordinateDelivery.class); counter++; return false;
 		default : reset(); return true;
-//		default: reset(); if(currentLayer == 0) return true; else return false;
 		}
 	}
 	

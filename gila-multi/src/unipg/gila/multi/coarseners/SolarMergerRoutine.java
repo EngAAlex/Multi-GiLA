@@ -14,6 +14,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntMaxAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.multi.SolarMessage;
@@ -100,7 +101,9 @@ public class SolarMergerRoutine {
 			master.setAggregatedValue(layerVertexSizeAggregator, setupInfoV);
 			setupInfoE.put(new IntWritable(0), new IntWritable((int)master.getTotalNumEdges()));
 			master.setAggregatedValue(layerEdgeSizeAggregator, setupInfoE);
-			setupInfoW.put(new IntWritable(0), new IntWritable((int)master.getTotalNumEdges()));
+//			setupInfoW.put(new IntWritable(0), new IntWritable((int)master.getTotalNumEdges()));
+			setupInfoW.put(new IntWritable(0), new IntWritable(1));
+			
 			master.setAggregatedValue(layerEdgeWeightsAggregator, setupInfoW);
 		}
 		
@@ -201,7 +204,7 @@ public class SolarMergerRoutine {
 		master.registerPersistentAggregator(layerNumberAggregator, IntSumAggregator.class);
 		master.registerPersistentAggregator(layerVertexSizeAggregator, ComponentIntSumAggregator.class);
 		master.registerPersistentAggregator(layerEdgeSizeAggregator, ComponentIntSumAggregator.class);		
-		master.registerPersistentAggregator(layerEdgeWeightsAggregator, ComponentIntSumAggregator.class);		
+		master.registerPersistentAggregator(layerEdgeWeightsAggregator, ComponentIntMaxAggregator.class);		
 		master.registerPersistentAggregator(mergerAttempts, IntMaxAggregator.class);
 		master.registerAggregator(asteroidsRemoved, BooleanAndAggregator.class);
 		master.registerAggregator(messagesDepleted, BooleanAndAggregator.class);
