@@ -142,6 +142,9 @@ public class LayoutRoutine {
 	protected static final String offsetsAggregator = "AGG_CC_BOXES";
 	public static final String ttlMaxAggregator = "AGG_MAX_TTL";
 	public static final String angleMaximizationClockwiseAggregator = "AGG_CLCKROTATION";
+	public static final String initialTempFactorAggregator = "TEMP_FACT_AGG";
+	public static final String coolingSpeedAggregator = "COOLING_SPEED_AGG";
+	public static final String currentAccuracyAggregator = "CURRENT_ACCURACY_AGGREGATOR";
 
 	//COUNTERS
 	protected static final String COUNTER_GROUP = "Drawing Counters";
@@ -226,8 +229,11 @@ public class LayoutRoutine {
 
 		master.registerPersistentAggregator(max_K_agg, FloatMaxAggregator.class);
 		master.registerPersistentAggregator(k_agg, FloatMaxAggregator.class);		
-		master.registerPersistentAggregator(walshawConstant_agg, FloatMaxAggregator.class);	
-
+		master.registerPersistentAggregator(walshawConstant_agg, FloatMaxAggregator.class);
+		master.registerPersistentAggregator(initialTempFactorAggregator, FloatMaxAggregator.class);
+		master.registerPersistentAggregator(coolingSpeedAggregator, FloatMaxAggregator.class);
+		master.registerPersistentAggregator(currentAccuracyAggregator, FloatMaxAggregator.class);
+		
 		//COMPONENT DATA AGGREGATORS
 
 		master.registerPersistentAggregator(componentNumber, IntSetAggregator.class);
@@ -244,7 +250,7 @@ public class LayoutRoutine {
 		float k = new Double(ns + Toolbox.computeModule(new float[]{nl, nw})).floatValue();
 		master.setAggregatedValue(LayoutRoutine.k_agg, new FloatWritable(k));
 		
-		coolingStrategy = new LinearCoolingStrategy(new String[]{master.getConf().get(LayoutRoutine.coolingSpeed, defaultCoolingSpeed )});
+//		coolingStrategy = new LinearCoolingStrategy(new String[]{master.getConf().get(LayoutRoutine.coolingSpeed, defaultCoolingSpeed )});
 	}
 
 	/**
@@ -260,8 +266,12 @@ public class LayoutRoutine {
 
 		Iterator<Entry<Writable, Writable>> iteratorOverComponents = aggregatedMaxComponentData.entrySet().iterator();
 
-		float tempConstant = master.getConf().getFloat(initialTempFactorString, defaultInitialTempFactor);
-
+//		float tempConstant = master.getConf().getFloat(initialTempFactorString, defaultInitialTempFactor);
+		
+		coolingStrategy = new LinearCoolingStrategy(new String[]{String.valueOf(((FloatWritable)master.getAggregatedValue(coolingSpeedAggregator)).get())});
+		
+		float tempConstant = ((FloatWritable)master.getAggregatedValue(initialTempFactorAggregator)).get();
+		
 		MapWritable correctedSizeMap = new MapWritable();
 		MapWritable tempMap = new MapWritable();
 		MapWritable scaleFactorMap = new MapWritable();

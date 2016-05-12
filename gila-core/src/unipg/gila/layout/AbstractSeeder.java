@@ -131,7 +131,8 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Int
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
-		accuracy = getConf().getFloat(LayoutRoutine.accuracyString, LayoutRoutine.accuracyDefault);
+//		accuracy = getConf().getFloat(LayoutRoutine.accuracyString, LayoutRoutine.accuracyDefault);
+		accuracy = ((FloatWritable)getAggregatedValue(LayoutRoutine.currentAccuracyAggregator)).get();
 		ttlmax = ((IntWritable)getAggregatedValue(LayoutRoutine.ttlMaxAggregator)).get();		
 
 		tempsMap = getAggregatedValue(LayoutRoutine.tempAGG);
