@@ -94,12 +94,12 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			while(finalIteratorOnPlanets.hasNext()){
 				Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnPlanets.next();
 				float[] chosenPosition = currentRecipient.getValue();
-				if(chosenPosition[0] > 0 && chosenPosition[1] > 0)
-					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), new float[]{myCoords[0] + chosenPosition[0],
+				if(chosenPosition[0] >= 0 && chosenPosition[1] >= 0)
+					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey().copy(), new float[]{myCoords[0] + chosenPosition[0],
 						myCoords[1] + chosenPosition[1]}));
 				else{
 					float angle = new Float(Math.random()*Math.PI*2);
-					float desiredDistance = ((IntWritable)vertex.getEdgeValue(currentRecipient.getKey())).get()*k;
+					float desiredDistance = (float) (Math.random()*(((IntWritable)vertex.getEdgeValue(currentRecipient.getKey())).get()*k));
 					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), 
 							new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
 						myCoords[1] + new Float(Math.sin(angle)*desiredDistance)}));
@@ -119,12 +119,13 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				while(finalIteratorOnMoons.hasNext()){
 					Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnMoons.next();
 					float[] chosenPosition = currentRecipient.getValue();
-					if(chosenPosition[0] > 0 && chosenPosition[1] > 0)
-						sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), 1, new float[]{myCoords[0] + chosenPosition[0],
+					if(chosenPosition[0] >= 0 && chosenPosition[1] >= 0)
+						sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey().copy(), 1, new float[]{myCoords[0] + chosenPosition[0],
 							myCoords[1] + chosenPosition[1]}));
-					else
-						sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), 1,
+					else{
+						sendMessageToAllEdges(vertex, new LayoutMessage(currentRecipient.getKey().copy(), 1,
 								new float[]{-1.0f,-1.0f}));
+					}
 				}
 			}
 

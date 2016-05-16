@@ -98,8 +98,12 @@ public class LayoutAdaptationStrategy{
 		 */
 		public float returnCurrentInitialTempFactor(int currentLayer,
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 10000)
+			if(nOfEdgesOfLayer < 250)
 				return 0.1f;
+			if(nOfEdgesOfLayer < 500)
+				return 0.2f;
+			if(nOfEdgesOfLayer < 10000)
+				return 0.4f;
 			return LayoutAdaptationStrategy.minInitialTempFactor;
 
 //			if(nOfEdgesOfLayer > 50000)
@@ -116,10 +120,14 @@ public class LayoutAdaptationStrategy{
 		 */
 		public float returnCurrentCoolingSpeed(int currentLayer,
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 10000)
+			if(nOfEdgesOfLayer < 500)
 				return LayoutAdaptationStrategy.minCoolingSpeed;
-			if(nOfEdgesOfLayer < 1000000)
+			if(nOfEdgesOfLayer < 1500)
+				return 0.96f;
+			if(nOfEdgesOfLayer < 10000)
 				return 0.94f;
+			if(nOfEdgesOfLayer < 1000000)
+				return 0.92f;
 //			if(nOfEdgesOfLayer > 100000)
 //				return 2;
 //			if(nOfEdgesOfLayer > 1000000)

@@ -5,19 +5,14 @@ package unipg.gila.multi;
 
 import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
-import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.log4j.Logger;
 
-import unipg.gila.layout.AngularResolutionMaximizer;
-import unipg.gila.layout.AngularResolutionMaximizer.AverageCoordinateUpdater;
 import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
-import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.CoordinatesBroadcast;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
-import unipg.gila.multi.coarseners.SolarMerger;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.layout.AdaptationStrategy;
 import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeAndDensityDrivenAdaptationStrategy;
@@ -215,11 +210,11 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 					new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
 			if(layout){
-				//				if(currentLayer == 0){
-				//					log.info("Bottom layer; aborting");
-				//					haltComputation();
-				//					return;
-				//				}
+								if(currentLayer == 0){
+									log.info("Bottom layer; aborting");
+									haltComputation();
+									return;
+								}
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{

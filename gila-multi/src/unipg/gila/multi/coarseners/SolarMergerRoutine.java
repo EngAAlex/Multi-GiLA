@@ -76,11 +76,6 @@ public class SolarMergerRoutine {
 	MasterCompute master;
 
 	public boolean compute() {
-//		if(terminate){
-//			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get());
-//			//haltComputation();
-//			return true;
-//		}
 		if(waitForDummy){
 			waitForDummy = false;
 			checkForNewLayer = true;
@@ -167,27 +162,17 @@ public class SolarMergerRoutine {
 			checkForNewLayer = false;
 			waitForDummy = false;
 			int layerSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerVertexSizeAggregator)).get(new IntWritable(cLayer+1))).get();
-			master.setAggregatedValue(layerNumberAggregator, new IntWritable(1));
+			int currentLayerNo = ((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get();
+			master.setAggregatedValue(layerNumberAggregator, new IntWritable(currentLayerNo++));
+			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
-				if(SolarMerger.logMerger)
-					log.info("layer " + (cLayer + 1) + " hassize " + layerSize);
 				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
-					master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get() +1);
 					//haltComputation();
 					return true;
 				}else{
-//					if(layerSize != null)
-//						if(layerSize.get() == ((IntWritable)mp.get(new IntWritable(cLayer))).get()){ ###THERE IS STILL THE RISK OF SAME-SIZE LAYERS
-//							MapWritable mpV = master.getAggregatedValue(layerVertexSizeAggregator);
-//							MapWritable mpE = master.getAggregatedValue(layerEdgeSizeAggregator);
-//							mpV.put(new IntWritable(cLayer+1), new IntWritable(0));
-//							mpE.put(new IntWritable(cLayer+1), new IntWritable(0));							
-//							master.setAggregatedValue(layerVertexSizeAggregator, mpV);
-//							master.setAggregatedValue(layerEdgeSizeAggregator, mpE);							
-//						}else
-							master.setComputation(SunGeneration.class);
-							master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
+					master.setComputation(SunGeneration.class);
+					master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
 				}
 			}
 //			setComputation(EdgeDuplicatesRemover.class);

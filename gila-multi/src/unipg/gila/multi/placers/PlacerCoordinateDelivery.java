@@ -45,6 +45,7 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 	protected void vertexInLayerComputation(
 			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 			Iterable<LayoutMessage> msgs) throws IOException {
+		boolean found = false;
 		Iterator<LayoutMessage> ms = msgs.iterator();
 		if(!ms.hasNext() || vertex.getValue().isSun())
 			return;
@@ -54,10 +55,11 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		//			Edge<LayeredPartitionedLongWritable, IntWritable> currentEdge = edges.next();
 		////			myNeighbors.put(currentEdge.getTargetVertexId().getId(), currentEdge.getTargetVertexId());
 		//		}
-		while(ms.hasNext()){
+		while(ms.hasNext() && !found){
 			LayoutMessage current = (LayoutMessage) ms.next();
 			if(current.getPayloadVertex().equals(vertex.getId())){
 				vertex.getValue().setCoordinates(current.getValue()[0], current.getValue()[1]);
+				found = true;
 				if(SolarPlacerRoutine.logPlacer)
 					log.info("Received my new coordinates! " + current.toString());
 			}
@@ -65,27 +67,25 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		ms = msgs.iterator();
 		while(ms.hasNext()){
 			LayoutMessage current = (LayoutMessage) ms.next();
-			if(current.getPayloadVertex().equals(vertex.getId())){
-				if(!current.isAZombie())
-					if(vertex.getEdgeValue(current.getPayloadVertex()) != null){
-						if(SolarPlacerRoutine.logPlacer)						
-							log.info("I'm propagating to my neighbor " + current.getPayloadVertex() + " the message" + current);
-						float[] valueToTransmit = current.getValue();
-						if(valueToTransmit[0] > 0 && valueToTransmit[1] > 0)
-							sendMessage(current.getPayloadVertex(), (LayoutMessage)current.propagateAndDie());
-						else{
-							float angle = new Float(Math.random()*Math.PI*2);
-							float desiredDistance = ((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k;
-							sendMessage(current.getPayloadVertex(), new LayoutMessage(current.getPayloadVertex(), 
-									new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
-								myCoords[1] + new Float(Math.sin(angle)*desiredDistance)}));
-
-						}
+			if(!current.isAZombie() && !current.getPayloadVertex().equals(vertex.getId())){
+				if(vertex.getEdgeValue(current.getPayloadVertex()) != null){
+					if(SolarPlacerRoutine.logPlacer)						
+						log.info("I'm propagating to my neighbor " + current.getPayloadVertex() + " the message" + current);
+					float[] valueToTransmit = current.getValue();
+					if(valueToTransmit[0] > 0 && valueToTransmit[1] > 0)
+						sendMessage(current.getPayloadVertex().copy(), (LayoutMessage)current.propagateAndDie());
+					else{
+						float angle = new Float(Math.random()*Math.PI*2);
+						float desiredDistance = (float) (Math.random()*(((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k));
+						sendMessage(current.getPayloadVertex().copy(), new LayoutMessage(current.getPayloadVertex().copy(), 
+								new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
+							myCoords[1] + new Float(Math.sin(angle)*desiredDistance)}));
 					}
+				}
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
 	 */
@@ -96,7 +96,6 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
-		// TODO Auto-generated method stub
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
