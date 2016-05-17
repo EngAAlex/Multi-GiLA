@@ -210,11 +210,6 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 					new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
 			if(layout){
-								if(currentLayer == 0){
-									log.info("Bottom layer; aborting");
-									haltComputation();
-									return;
-								}
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{

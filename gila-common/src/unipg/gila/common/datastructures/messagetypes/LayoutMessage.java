@@ -71,7 +71,7 @@ public class LayoutMessage extends LayoutMessageMatrix<LayeredPartitionedLongWri
 	@Override
 	protected void specificRead(DataInput in) throws IOException {
 		payloadVertex = new LayeredPartitionedLongWritable();
-		payloadVertex.readFields(in);;
+		payloadVertex.readFields(in);		
 		value = new float[2];
 		value[0] = in.readFloat();
 		value[1] = in.readFloat();

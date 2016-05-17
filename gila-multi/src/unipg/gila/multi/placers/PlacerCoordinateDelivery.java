@@ -49,7 +49,6 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		Iterator<LayoutMessage> ms = msgs.iterator();
 		if(!ms.hasNext() || vertex.getValue().isSun())
 			return;
-		float[] myCoords = vertex.getValue().getCoordinates();
 		//		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 		//		while(edges.hasNext()){
 		//			Edge<LayeredPartitionedLongWritable, IntWritable> currentEdge = edges.next();
@@ -64,6 +63,7 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 					log.info("Received my new coordinates! " + current.toString());
 			}
 		}
+		float[] myCoords = vertex.getValue().getCoordinates();
 		ms = msgs.iterator();
 		while(ms.hasNext()){
 			LayoutMessage current = (LayoutMessage) ms.next();
@@ -71,15 +71,18 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 				if(vertex.getEdgeValue(current.getPayloadVertex()) != null){
 					if(SolarPlacerRoutine.logPlacer)						
 						log.info("I'm propagating to my neighbor " + current.getPayloadVertex() + " the message" + current);
-					float[] valueToTransmit = current.getValue();
-					if(valueToTransmit[0] > 0 && valueToTransmit[1] > 0)
+					if(current.getWeight() >= 0){
+						if(SolarPlacerRoutine.logPlacer)
+							log.info("Retransmitting to " + current.getPayloadVertex());
 						sendMessage(current.getPayloadVertex().copy(), (LayoutMessage)current.propagateAndDie());
-					else{
+					}else{
 						float angle = new Float(Math.random()*Math.PI*2);
-						float desiredDistance = (float) (Math.random()*(((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k));
-						sendMessage(current.getPayloadVertex().copy(), new LayoutMessage(current.getPayloadVertex().copy(), 
-								new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
-							myCoords[1] + new Float(Math.sin(angle)*desiredDistance)}));
+						float desiredDistance = (float) ((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k;
+						float[] blanks = new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
+								myCoords[1] + new Float(Math.sin(angle)*desiredDistance)};
+						if(SolarPlacerRoutine.logPlacer)
+							log.info("Blanks received; generating random coordinates with coordinates" + blanks[0] + " " + blanks[1] + " starting from " + myCoords[0] + " " + myCoords[1]);
+						sendMessage(current.getPayloadVertex().copy(), new LayoutMessage(current.getPayloadVertex().copy(), blanks));
 					}
 				}
 			}

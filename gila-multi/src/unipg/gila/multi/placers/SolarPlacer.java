@@ -94,7 +94,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			while(finalIteratorOnPlanets.hasNext()){
 				Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnPlanets.next();
 				float[] chosenPosition = currentRecipient.getValue();
-				if(chosenPosition[0] >= 0 && chosenPosition[1] >= 0)
+				if(chosenPosition != null)
 					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey().copy(), new float[]{myCoords[0] + chosenPosition[0],
 						myCoords[1] + chosenPosition[1]}));
 				else{
@@ -119,12 +119,14 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				while(finalIteratorOnMoons.hasNext()){
 					Entry<LayeredPartitionedLongWritable, float[]> currentRecipient = finalIteratorOnMoons.next();
 					float[] chosenPosition = currentRecipient.getValue();
-					if(chosenPosition[0] >= 0 && chosenPosition[1] >= 0)
+					if(chosenPosition != null)
 						sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey().copy(), 1, new float[]{myCoords[0] + chosenPosition[0],
 							myCoords[1] + chosenPosition[1]}));
 					else{
-						sendMessageToAllEdges(vertex, new LayoutMessage(currentRecipient.getKey().copy(), 1,
-								new float[]{-1.0f,-1.0f}));
+						LayoutMessage messageToSend = new LayoutMessage(currentRecipient.getKey().copy(), 1,
+								new float[]{-1.0f, -1.0f});
+						messageToSend.setWeight(-1);
+						sendMessageToAllEdges(vertex, messageToSend);
 					}
 				}
 			}
@@ -151,7 +153,9 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 			if(SolarPlacerRoutine.logPlacer)
 				log.info("My planet/moon " + ((LayeredPartitionedLongWritable)current.getKey()).getId());
 			if(deSet.size() == 0){
-				bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), new float[]{-1.0f, -1.0f});
+				bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), null);
+				if(SolarPlacerRoutine.logPlacer)
+					log.info("vertex was not found on any path ");
 				continue;
 			}
 			Iterator<PathWritable> deSetIterator = (Iterator<PathWritable>) deSet.iterator();

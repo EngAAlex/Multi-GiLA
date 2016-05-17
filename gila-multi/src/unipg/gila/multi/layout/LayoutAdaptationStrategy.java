@@ -83,14 +83,14 @@ public class LayoutAdaptationStrategy{
 			if(nOfEdgesOfLayer < 500)
 				return LayoutAdaptationStrategy.maxK;
 			if(nOfEdgesOfLayer < 5000)
-				return 5;
-			if(nOfEdgesOfLayer > 50000)
-				return 3;
+				return 4;
+//			if(nOfEdgesOfLayer > 50000)
+//				return 3;
 			if(nOfEdgesOfLayer > 100000)
 				return 2;
 			if(nOfEdgesOfLayer > 1000000)
 				return 1;
-			return 4;
+			return 3;
 		}
 
 		/* (non-Javadoc)
@@ -105,14 +105,6 @@ public class LayoutAdaptationStrategy{
 			if(nOfEdgesOfLayer < 10000)
 				return 0.4f;
 			return LayoutAdaptationStrategy.minInitialTempFactor;
-
-//			if(nOfEdgesOfLayer > 50000)
-//				return 3;
-//			if(nOfEdgesOfLayer > 100000)
-//				return 2;
-//			if(nOfEdgesOfLayer > 1000000)
-//				return 1;
-//			return 0.4f;
 		}
 
 		/* (non-Javadoc)
@@ -128,10 +120,6 @@ public class LayoutAdaptationStrategy{
 				return 0.94f;
 			if(nOfEdgesOfLayer < 1000000)
 				return 0.92f;
-//			if(nOfEdgesOfLayer > 100000)
-//				return 2;
-//			if(nOfEdgesOfLayer > 1000000)
-//				return 1;
 			return 0.9f;
 		}
 
@@ -146,10 +134,6 @@ public class LayoutAdaptationStrategy{
 				return 0.001f;
 			if(nOfEdgesOfLayer < 1000000)
 				return 0.01f;
-//			if(nOfEdgesOfLayer > 100000)
-//				return 2;
-//			if(nOfEdgesOfLayer > 1000000)
-//				return 1;
 			return 0.1f;
 		}
 		
