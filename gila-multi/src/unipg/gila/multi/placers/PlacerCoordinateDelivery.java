@@ -26,6 +26,7 @@ import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
+import unipg.gila.multi.coarseners.InterLayerCommunicationUtils;
 
 /**
  * @author Alessio Arleo
@@ -37,6 +38,7 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 	Logger log = Logger.getLogger(PlacerCoordinateDelivery.class);
 
 	protected float k;
+	protected boolean clearInfo;
 
 	/* (non-Javadoc)
 	 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -77,7 +79,7 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 						sendMessage(current.getPayloadVertex().copy(), (LayoutMessage)current.propagateAndDie());
 					}else{
 						float angle = new Float(Math.random()*Math.PI*2);
-						float desiredDistance = (float) ((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k;
+						float desiredDistance = ((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k;
 						float[] blanks = new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
 								myCoords[1] + new Float(Math.sin(angle)*desiredDistance)};
 						if(SolarPlacerRoutine.logPlacer)
@@ -87,6 +89,8 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 				}
 			}
 		}
+		if(clearInfo)
+			vertex.getValue().clearAstralInfo();
 	}
 
 	/* (non-Javadoc)
@@ -102,6 +106,6 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-
+		clearInfo = getConf().getBoolean(InterLayerCommunicationUtils.destroyLevelsString, true);
 	}
 }

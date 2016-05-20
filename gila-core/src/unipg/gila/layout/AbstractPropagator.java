@@ -63,7 +63,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
 			throws IOException {
@@ -83,7 +82,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		int v2Deg;		
 
 		v1Deg = vertex.getNumEdges() + vValue.getWeight();
-
+//		log.info("Me, vertex " + vertex.getId() + "with deg " + vertex.getNumEdges() + " begignning to examine msgs");
 		while(it.hasNext()){	
 			LayoutMessage currentMessage = it.next();
 
@@ -120,8 +119,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 				finalForce[1] += tempForce[1];
 				if(LayoutRoutine.logLayout)
 					log.info("computed attractive " + finalForce[0] + " " + finalForce[1] + " with data " + deltaX + " " + deltaY + " " + distance + " " + requestOptimalSpringLength(vertex, currentPayload));
-//				finalForce[0] += (computedForce*cos);
-//				finalForce[1] += (computedForce*sin);
 			}
 
 			//REPULSIVE FORCES
@@ -136,14 +133,11 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 
 			if(!currentMessage.isAZombie()){
 				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
-//				if(!useQueues)
-					sendMessageToAllEdges(vertex, (LayoutMessage) currentMessage.propagate());					
-//				else
-//					vertex.getValue().enqueueMessage(currentMessage.propagate());	
+				sendMessageToAllEdges(vertex, (LayoutMessage) currentMessage.propagate());					
 			}
 
 		}
-		
+//		log.info(vertex.getId() + "vertecompletato");
 		if(LayoutRoutine.logLayout)
 			log.info("Going to moderate on " + walshawConstant + " from " + repulsiveForce[0] + " " + repulsiveForce[1]);
 		
@@ -159,21 +153,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		
 		vValue.setAsMoving();
 		vValue.addToForceVector(finalForce);
-
-//		if(!useQueues)
-//			return;
-//
-//		Writable[] toDequeue = vValue.dequeueMessages(new Double(Math.ceil(queueFlushRatio*vertex.getNumEdges())).intValue());
-//
-//		for(int i=0; i<toDequeue.length; i++){
-//			LayoutMessage current = (LayoutMessage) toDequeue[i];
-//			if(current != null){
-//				aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(false));
-//				sendMessageToAllEdges(vertex, (LayoutMessage) current);
-//			}
-//			else
-//				break;
-//		}
 
 	}
 

@@ -42,7 +42,7 @@ import unipg.gila.common.multi.ReferrersList;
 public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	//LOGGER
-	Logger log = Logger.getLogger(AstralBodyCoordinateWritable.class);
+//	Logger log = Logger.getLogger(AstralBodyCoordinateWritable.class);
 	
 	protected LayeredPartitionedLongWritable favProxy;
 	protected LayeredPartitionedLongWritableSet sunProxies;
@@ -203,7 +203,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		Iterator<Referrer> it = (Iterator<Referrer>) referrers.iterator();
 		while(it.hasNext()){
 			Referrer currentReferrer = it.next();
-			log.info("currentReferrer " + currentReferrer.getEventGenerator());
+//			log.info("currentReferrer " + currentReferrer.getEventGenerator());
 			if(planets.containsKey(currentReferrer.getEventGenerator())){
 //				log.info("Registering for planet neighbor " + sun + " total " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
 //				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
@@ -306,6 +306,12 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public void clearAstralInfo(){
 		cleared = true;
+		planets = null;
+		moons = null;
+		neighborSystems = null;
+		sun = null;
+		sunProxies = null;
+		favProxy = null;
 	}
 	
 	/* (non-Javadoc)
@@ -319,9 +325,9 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		super.readFields(in);
-//		cleared = in.readBoolean();
-//		if(cleared)
-//			return;
+		cleared = in.readBoolean();
+		if(cleared)
+			return;
 		distanceFromSun = in.readInt();
 		weightFromSun = in.readInt();
 		assigned = in.readBoolean();
@@ -350,9 +356,9 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	@Override
 	public void write(DataOutput out) throws IOException {
 		super.write(out);
-//		out.writeBoolean(cleared);
-//		if(cleared)
-//			return;
+		out.writeBoolean(cleared);
+		if(cleared)
+			return;
 		out.writeInt(distanceFromSun);
 		out.writeInt(weightFromSun);
 		out.writeBoolean(assigned);

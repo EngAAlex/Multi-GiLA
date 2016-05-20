@@ -89,7 +89,7 @@ public class Toolbox {
 	 * @return The value itself or a very small positive value otherwise.
 	 */
 	public static float floatFuzzyMath(float value){
-		if(value == 0)
+		if(value == 0.0f)
 			return new Float(0.00001);
 		return value;
 	}

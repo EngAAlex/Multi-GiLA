@@ -32,6 +32,7 @@ import unipg.gila.layout.LayoutRoutine.LayoutCCs;
 public class GraphReintegrationRoutine {
 
 	MasterCompute master;
+	public static final String executeReintegrationString = "multi.layout.reintegrateOneDegrees";
 	int readyToSleep;
 	
 	public void initialize(MasterCompute myMaster){
@@ -40,6 +41,8 @@ public class GraphReintegrationRoutine {
 	}
 	
 	public boolean compute(){
+		if(!master.getConf().getBoolean(executeReintegrationString, true) && readyToSleep == 0)
+			readyToSleep = 2;
 		switch(readyToSleep){
 		case 0: 	//FIRST STEP: ONE DEGREE VERTICES REINTEGRATION		
 			try {

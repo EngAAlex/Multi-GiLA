@@ -26,6 +26,7 @@ import unipg.gila.common.multi.PathWritable;
 import unipg.gila.common.multi.PathWritableSet;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
+import unipg.gila.multi.coarseners.InterLayerCommunicationUtils;
 
 /**
  * @author Alessio Arleo
@@ -37,6 +38,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	protected Logger log = Logger.getLogger(SolarPlacer.class);
 
 	protected float k;
+	protected boolean clearInfo;
 
 	/* (non-Javadoc)
 	 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -99,7 +101,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 						myCoords[1] + chosenPosition[1]}));
 				else{
 					float angle = new Float(Math.random()*Math.PI*2);
-					float desiredDistance = (float) (Math.random()*(((IntWritable)vertex.getEdgeValue(currentRecipient.getKey())).get()*k));
+					float desiredDistance = ((IntWritable)vertex.getEdgeValue(currentRecipient.getKey())).get()*k;
 					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), 
 							new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
 						myCoords[1] + new Float(Math.sin(angle)*desiredDistance)}));
@@ -130,8 +132,9 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 					}
 				}
 			}
-
 		}
+		if(clearInfo)
+			value.clearAstralInfo();
 	}
 
 	//	}
@@ -182,7 +185,8 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 				log.info("Total deset size "  + deSet.size());
 				log.info("computed position: " + avgX/deSet.size() + " " + avgY/deSet.size());
 			}
-			bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), new float[]{(avgX/deSet.size()), avgY/deSet.size()});
+			float randomness = Math.random() > 0.5 ? new Float(Math.random()) : new Float(-Math.random());
+			bodiesMap.put((LayeredPartitionedLongWritable) current.getKey(), new float[]{(avgX/deSet.size()) + randomness, avgY/deSet.size() + randomness});
 		}		
 	}
 
@@ -199,7 +203,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-
+		clearInfo = getConf().getBoolean(InterLayerCommunicationUtils.destroyLevelsString, true);
 	}
 
 }

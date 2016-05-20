@@ -31,7 +31,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 
 	//LOGGER
 	Logger log = Logger.getLogger(getClass());
-
+	
 	public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
 	public static final String angularMaximizationIterationsString = "multi.layout.angularMaximizationMaxIterations";
 	public static final int angularMaximizationMaxIterationsDefault = 30;	
@@ -198,14 +198,15 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		if(currentLayer >= 0 && !reintegrating){
 			int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
 			float optimalEdgeLength = (float)currentEdgeWeight;
-			log.info("Suggested currentEdgeWeight " + currentEdgeWeight);
+//			log.info("Suggested currentEdgeWeight " + currentEdgeWeight);
 			//			if(noOfEdges > 0)
 			//				optimalEdgeLength = currentEdgeWeight/(float)noOfEdges;
 			//			else
 			//				optimalEdgeLength = 1;
 			optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 
-			log.info("Edge data computed: weight " + currentEdgeWeight + " " + optimalEdgeLength*((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get());
+
+
 			setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
 					new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
@@ -217,7 +218,6 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 					if(currentLayer > 0){
 						placing = true;
 					}else{
-						placing = false;
 						reintegrating = true;
 					}
 					//					if(currentLayer == 0){
@@ -238,7 +238,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				else{
 					placing = false;
 					layout = true;
-					log.info("deactivated placer");
+//					log.info("deactivated placer");
 					resetLayoutAggregators();
 
 					//					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
