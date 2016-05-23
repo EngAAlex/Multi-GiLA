@@ -82,6 +82,8 @@ public class LayoutAdaptationStrategy{
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
 			if(nOfEdgesOfLayer < 500)
 				return LayoutAdaptationStrategy.maxK;
+			if(nOfEdgesOfLayer < 1000)
+				return 5;
 			if(nOfEdgesOfLayer < 5000)
 				return 4;
 //			if(nOfEdgesOfLayer > 50000)
