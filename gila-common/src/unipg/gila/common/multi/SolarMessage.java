@@ -34,6 +34,7 @@ import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable, LayeredPartitionedLongWritable>{
 	
 	private CODE code;
+	private int solarWeight = 0;
 	private ReferrersList extraPayload;
 	
 	public static enum CODE{
@@ -90,6 +91,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public SolarMessage copy() {
 		SolarMessage tmp = new SolarMessage(this.payloadVertex.copy(), ttl , this.getValue().copy(), this.code);
 		tmp.setWeight(weight);
+		tmp.setSolarWeight(solarWeight);
 //		if(extraPayload != null)
 			tmp.copyExtraPayload(extraPayload);
 		return tmp;
@@ -140,6 +142,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 //		int extraPayloadSize = in.readInt();
 //		extraPayload = new ReferrersList();
 		extraPayload.readFields(in);
+		solarWeight = in.readInt();
 //		if(code.equals(CODE.REFUSEOFFER) && in.readInt() > 0){
 //			extraPayload = new ReferrersList();
 //			extraPayload.readFields(in);
@@ -156,6 +159,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 //			out.writeInt(size);
 //			if(size > 0)
 				extraPayload.write(out);
+				out.writeInt(solarWeight);
 //		}
 	}
 
@@ -166,6 +170,7 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public MessageWritable<LayeredPartitionedLongWritable, LayeredPartitionedLongWritable> propagate() {
 		SolarMessage toReturn = new SolarMessage(getPayloadVertex().copy(), getTTL() - 1, getValue().copy(), getCode());
 		toReturn.setWeight(weight);
+		toReturn.setSolarWeight(solarWeight);
 		if(code.equals(CODE.REFUSEOFFER))
 			toReturn.copyExtraPayload(extraPayload);
 		return toReturn;
@@ -178,9 +183,24 @@ public class SolarMessage extends MessageWritable<LayeredPartitionedLongWritable
 	public MessageWritable<LayeredPartitionedLongWritable, LayeredPartitionedLongWritable> propagateAndDie() {
 		SolarMessage toReturn = new SolarMessage(getPayloadVertex().copy(), getValue().copy(), getCode());
 		toReturn.setWeight(weight);
+		toReturn.setSolarWeight(solarWeight);
 		if(code.equals(CODE.REFUSEOFFER))
 			toReturn.copyExtraPayload(extraPayload);
 		return toReturn;
+	}
+
+	/**
+	 * @return the solarWeight
+	 */
+	public int getSolarWeight() {
+		return solarWeight;
+	}
+
+	/**
+	 * @param solarWeight the solarWeight to set
+	 */
+	public void setSolarWeight(int solarWeight) {
+		this.solarWeight = solarWeight;
 	}
 
 	/* (non-Javadoc)

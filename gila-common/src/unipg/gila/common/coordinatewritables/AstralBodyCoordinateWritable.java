@@ -53,6 +53,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	protected MapWritable moons; //USED WHEN A BODY IS A SUN
 	protected MapWritable neighborSystems;
 	protected int lowerLevelWeight = 1;
+	protected int astralWeight = 1;
 	protected boolean cleared = false;
 	protected boolean assigned = false;
 
@@ -84,13 +85,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	}
 
 	public int astralWeight(){
-		int planetsSize = 0;
-		int moonsSize = 0;
-		if(planets != null)
-			planetsSize = planets.size();
-		if(moons != null)
-			moonsSize = moons.size();
-		return planetsSize + moonsSize;
+		return lowerLevelWeight + astralWeight;
 	}
 
 	public int getLowerLevelWeight(){
@@ -174,17 +169,19 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		distanceFromSun = -1;
 	}
 
-	public void addPlanet(LayeredPartitionedLongWritable id){
+	public void addPlanet(LayeredPartitionedLongWritable id, int weight){
 		if(planets == null)
 			planets	=	new MapWritable();
 		planets.put(id.copy(), new PathWritableSet());
+		astralWeight += weight;
 //		log.info("Me, sun accept as a planet the vertex " + id);
 	}
 
-	public void addMoon(LayeredPartitionedLongWritable id){
+	public void addMoon(LayeredPartitionedLongWritable id, int weight){
 		if(moons == null)
 			moons =	new MapWritable();
 		moons.put(id.copy(), new PathWritableSet());
+		astralWeight += weight;
 //		log.info("Me, sun accept as a moon the vertex " + id);
 	}
 
@@ -332,6 +329,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		weightFromSun = in.readInt();
 		assigned = in.readBoolean();
 		lowerLevelWeight = in.readInt();
+		astralWeight = in.readInt();
 		if(isSun()){
 			planets = new MapWritable();
 			moons = new MapWritable();
@@ -362,7 +360,8 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		out.writeInt(distanceFromSun);
 		out.writeInt(weightFromSun);
 		out.writeBoolean(assigned);
-		out.writeInt(lowerLevelWeight);		
+		out.writeInt(lowerLevelWeight);
+		out.writeInt(astralWeight);
 		if(isSun()){
 			planets.write(out);
 			moons.write(out);
