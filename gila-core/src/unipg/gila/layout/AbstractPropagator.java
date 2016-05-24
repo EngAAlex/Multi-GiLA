@@ -82,13 +82,13 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		int v2Deg;		
 
 		v1Deg = vertex.getNumEdges() + vValue.getWeight();
-//		log.info("Me, vertex " + vertex.getId() + "with deg " + vertex.getNumEdges() + " begignning to examine msgs");
+
 		while(it.hasNext()){	
 			LayoutMessage currentMessage = it.next();
 
 			LayeredPartitionedLongWritable currentPayload = currentMessage.getPayloadVertex();
 
-			if(currentPayload.equals(vertex.getId()) || vValue.isAnalyzed(currentPayload))
+			if(currentPayload.equals(vertex.getId()) || vValue.isAnalyzed(new LongWritable(currentPayload.getId())))
 				continue;
 
 			foreigncoords = currentMessage.getValue();

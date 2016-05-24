@@ -174,6 +174,8 @@ public class MultiScaleLayout {
 			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 			while(edges.hasNext()){
 				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+				if(currentLayer != current.getLayer())
+					continue;
 				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
 				sendMessage(current, msgCopy);;
 			}

@@ -80,9 +80,9 @@ public class LayoutAdaptationStrategy{
 		 */
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 500)
+			if(nOfEdgesOfLayer < 100) //500
 				return LayoutAdaptationStrategy.maxK;
-			if(nOfEdgesOfLayer < 1000)
+			if(nOfEdgesOfLayer < 500) //1000
 				return 5;
 			if(nOfEdgesOfLayer < 5000)
 				return 4;
@@ -114,7 +114,9 @@ public class LayoutAdaptationStrategy{
 		 */
 		public float returnCurrentCoolingSpeed(int currentLayer,
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 500)
+			if(nOfVerticesOfLayer < 20)
+				return 0.92f; 
+			if(nOfEdgesOfLayer < 50)
 				return LayoutAdaptationStrategy.minCoolingSpeed;
 			if(nOfEdgesOfLayer < 1500)
 				return 0.96f;
@@ -159,6 +161,8 @@ public class LayoutAdaptationStrategy{
 		 */
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
+			if(nOfEdgesOfLayer/nOfVerticesOfLayer >= 10 && nOfVerticesOfLayer >= 1000) //density control
+				return 2;
 			int proposedK = Math.max(ddas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer), 
 					ssas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer));
 			return proposedK;

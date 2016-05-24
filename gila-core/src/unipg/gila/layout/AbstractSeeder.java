@@ -105,8 +105,8 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Int
 			log.info("Seeder here, displacement for vertex :" + vertex.getId() + " " + correctedDispModule );
 		if(correctedDispModule < accuracy)// || LayoutRoutine.relativeSupersteps > LayoutRoutine.maxSuperstep)
 			aggregate(LayoutRoutine.convergenceAggregatorString, new LongWritable(1));
-
-		gatherAndSend(vertex, coords);
+		if(vertex.getNumEdges() > 0)
+			gatherAndSend(vertex, coords);
 		vValue.resetAnalyzed();
 	}
 
