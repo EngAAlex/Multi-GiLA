@@ -3,6 +3,9 @@
  */
 package unipg.gila.multi.coarseners;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import org.apache.giraph.aggregators.BooleanAndAggregator;
 import org.apache.giraph.aggregators.FloatMaxAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
@@ -12,12 +15,16 @@ import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.aggregators.LongWritableSetAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntMaxAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.datastructures.LongWritableSet;
 import unipg.gila.common.multi.SolarMessage;
+import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
 import unipg.gila.multi.coarseners.SolarMerger.MoonSweep;
 import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse;
@@ -29,6 +36,7 @@ import unipg.gila.multi.coarseners.SolarMerger.SunDiscovery;
 import unipg.gila.multi.coarseners.SolarMerger.SolarSweep;
 import unipg.gila.multi.coarseners.SolarMerger.SunBroadcast;
 import unipg.gila.multi.coarseners.SolarMerger.SunGeneration;
+import unipg.gila.multi.layout.MultiScaleLayout;
 
 
 /**
@@ -65,7 +73,10 @@ public class SolarMergerRoutine {
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
 	public static final String logMergerString = "merger.showLog";
 
+	public static final String sunsPerComponent = "AGG_SUNS_PER_COMPONENT";
+
 	//INSTANCE ATTRIBUTES
+	int layerThreshold;
 	boolean checkForNewLayer = false;
 	boolean waitForDummy = false;
 	boolean timeForTheMoons = false;
@@ -86,6 +97,11 @@ public class SolarMergerRoutine {
 		if(master.getSuperstep() == 0){
 			return false;
 		}
+		
+//		if(master.getComputation().equals(MultiScaleLayout.MultiScaleGraphExplorerWithComponentsNo.class)){
+//			master.setComputation(SunGeneration.class);
+//			return false;
+//		}
 		
 		if(master.getSuperstep() == 1){
 			MapWritable setupInfoV = new MapWritable();
@@ -167,11 +183,15 @@ public class SolarMergerRoutine {
 			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
-				if(layerSize <= master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault)){
+				int avgNoOfSuns = computeAverageOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
+				log.info("GIGI avh" + layerSize + " " + avgNoOfSuns);
+				if(avgNoOfSuns <= layerThreshold){
 					//haltComputation();
 					return true;
 				}else{
 					master.setComputation(SunGeneration.class);
+//					master.setComputation(MultiScaleLayout.MultiScaleGraphExplorerWithComponentsNo.class);
+					master.setAggregatedValue(sunsPerComponent, new MapWritable());
 					master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
 				}
 			}
@@ -180,6 +200,21 @@ public class SolarMergerRoutine {
 		}
 		return false;
 	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private int computeAverageOfValueSet(Collection<Writable> values) {
+		Iterator<Writable> it = values.iterator();
+		int sum = 0;
+		while(it.hasNext()){
+			sum += ((IntWritable)it.next()).get();
+		}
+		return sum/values.size();
+	}
+
+
 
 
 	public void initialize(MasterCompute myMaster) throws InstantiationException,
@@ -199,6 +234,10 @@ public class SolarMergerRoutine {
 		master.setAggregatedValue(layerNumberAggregator, new IntWritable(0));
 		master.setAggregatedValue(mergerAttempts, new IntWritable(1));
 		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
+		
+		master.registerPersistentAggregator(sunsPerComponent, ComponentIntSumAggregator.class);
+		
+		layerThreshold = master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault);
 		
 		SolarMerger.logMerger = master.getConf().getBoolean(logMergerString, false);
 	}

@@ -48,7 +48,11 @@ public abstract class SetWritable<P extends Writable> implements Writable {
 		this();
 		addAll(cll);
 	}
-		
+	
+	public void addAll(SetWritable<P> in){
+		internalState.addAll(in.get());
+	}
+	
 	public void addAll(Collection<P> it){
 		internalState.addAll(it);
 	}

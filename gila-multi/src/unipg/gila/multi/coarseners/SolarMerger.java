@@ -19,11 +19,13 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.datastructures.LongWritableSet;
 import unipg.gila.common.datastructures.SetWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritableSet;
@@ -32,6 +34,7 @@ import unipg.gila.common.multi.PathWritableSet;
 import unipg.gila.common.multi.SolarMessage;
 import unipg.gila.common.multi.SolarMessageSet;
 import unipg.gila.common.multi.SolarMessage.CODE;
+import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
 
 /**
@@ -89,6 +92,16 @@ public class SolarMerger{
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
+//			if(getSuperstep() == 0){
+////				LongWritableSet set = new LongWritableSet();
+////				set.addElement(new LongWritable(vertex.getValue().getComponent()));
+////				aggregate(LayoutRoutine.componentNumber, set);
+//				MapWritable information = new MapWritable();
+//				
+//				information.put(new IntWritable(vValue.getComponent()), 
+//						new IntWritable((int)1 + vertex.getValue().getOneDegreeVerticesQuantity()));
+//				aggregate(LayoutRoutine.componentNoOfNodes, information)
+//			}
 			if(vertex.getValue().isAsteroid() && Math.random() < sunChance){
 				vertex.getValue().setAsSun();
 				aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
@@ -504,7 +517,15 @@ public class SolarMerger{
 			if(!vertex.getValue().isSun())
 				return;
 			
+			//####REGISTERING DATA TO AGGREGATORS
+			//SUNS PER COMPONENT
+			MapWritable information = new MapWritable();
+			information.put(new IntWritable(vertex.getValue().getComponent()), 
+					new IntWritable((int)1));
+			aggregate(SolarMergerRoutine.sunsPerComponent, information);
+			//MERGER ATTEMPTS
 			aggregate(SolarMergerRoutine.mergerAttempts, new IntWritable(((IntWritable)getAggregatedValue(SolarMergerRoutine.mergerAttempts)).get()+1));
+			//LAYER VERTEX SIZE
 			MapWritable infoToUpdate = new MapWritable();
 			infoToUpdate.put(new IntWritable(currentLayer+1), new IntWritable(1));
 			aggregate(SolarMergerRoutine.layerVertexSizeAggregator, infoToUpdate);

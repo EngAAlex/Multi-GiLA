@@ -43,7 +43,7 @@ import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMaxAgg
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMinAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentMapOverwriteAggregator;
-import unipg.gila.aggregators.IntSetAggregator;
+import unipg.gila.aggregators.LongWritableSetAggregator;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
@@ -236,7 +236,7 @@ public class LayoutRoutine {
 		
 		//COMPONENT DATA AGGREGATORS
 
-		master.registerPersistentAggregator(componentNumber, IntSetAggregator.class);
+//		master.registerPersistentAggregator(componentNumber, IntSetAggregator.class);
 		master.registerPersistentAggregator(componentNoOfNodes, ComponentIntSumAggregator.class);
 		master.registerAggregator(offsetsAggregator, ComponentMapOverwriteAggregator.class);
 		
@@ -477,7 +477,7 @@ public class LayoutRoutine {
 			information.put(new IntWritable(vValue.getComponent()), 
 					new IntWritable((int)1 + vertex.getValue().getOneDegreeVerticesQuantity()));
 			aggregate(componentNoOfNodes, information);
-			aggregate(componentNumber, new IntWritable(vValue.getComponent()));
+//			aggregate(componentNumber, new IntWritable(vValue.getComponent()));
 		}
 	}
 
