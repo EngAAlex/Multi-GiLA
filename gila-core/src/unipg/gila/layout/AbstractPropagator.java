@@ -17,15 +17,10 @@ import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
-import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.force.FR;
 import unipg.gila.layout.force.Force;
@@ -51,10 +46,8 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 	//LOGGER
 	Logger log = Logger.getLogger(this.getClass());
 	
-	protected boolean useQueues;
 	protected float minimumForceThreshold;
 	protected float walshawConstant;
-	private float queueFlushRatio;
 	
 	protected float k;
 
@@ -90,7 +83,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 
 			if(currentPayload.equals(vertex.getId()) || vValue.isAnalyzed(new LongWritable(currentPayload.getId())))
 				continue;
-
+			
 			foreigncoords = currentMessage.getValue();
 			if(LayoutRoutine.logLayout){
 				log.info("Message payload" + currentPayload);
@@ -181,9 +174,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 				workerGlobalCommUsage, workerContext);
 		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 		walshawConstant = ((FloatWritable)getAggregatedValue(LayoutRoutine.walshawConstant_agg)).get();
-
-		useQueues = getConf().getBoolean(LayoutRoutine.useQueuesString, false);
-		queueFlushRatio = getConf().getFloat(LayoutRoutine.queueUnloadFactor, 0.1f);
 
 		try {
 			force = ((Class<Force>)Class.forName(getConf().get(LayoutRoutine.forceMethodOptionString, FR.class.toString()))).newInstance();

@@ -80,11 +80,11 @@ public class LayoutAdaptationStrategy{
 		 */
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 100) //500
-				return LayoutAdaptationStrategy.maxK;
-			if(nOfEdgesOfLayer < 500) //1000
+//			if(nOfEdgesOfLayer < 500)
+//				return LayoutAdaptationStrategy.maxK;
+			if(nOfEdgesOfLayer < 10000)
 				return 5;
-			if(nOfEdgesOfLayer < 5000)
+			if(nOfEdgesOfLayer < 50000)
 				return 4;
 //			if(nOfEdgesOfLayer > 50000)
 //				return 3;
@@ -100,13 +100,13 @@ public class LayoutAdaptationStrategy{
 		 */
 		public float returnCurrentInitialTempFactor(int currentLayer,
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 250)
-				return 0.1f;
-			if(nOfEdgesOfLayer < 500)
-				return 0.2f;
-			if(nOfEdgesOfLayer < 10000)
+//			if(nOfEdgesOfLayer < 250)
+//				return 0.1f;
+//			if(nOfEdgesOfLayer < 500)
+//				return 0.2f;
+//			if(nOfEdgesOfLayer < 10000)
 				return 0.4f;
-			return LayoutAdaptationStrategy.minInitialTempFactor;
+//			return LayoutAdaptationStrategy.minInitialTempFactor;
 		}
 
 		/* (non-Javadoc)
@@ -114,17 +114,16 @@ public class LayoutAdaptationStrategy{
 		 */
 		public float returnCurrentCoolingSpeed(int currentLayer,
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfVerticesOfLayer < 20)
-				return 0.92f; 
-			if(nOfEdgesOfLayer < 50)
-				return LayoutAdaptationStrategy.minCoolingSpeed;
-			if(nOfEdgesOfLayer < 1500)
-				return 0.96f;
-			if(nOfEdgesOfLayer < 10000)
-				return 0.94f;
+//			if(nOfEdgesOfLayer < 500)
+//				return LayoutAdaptationStrategy.minCoolingSpeed;
+//			if(nOfEdgesOfLayer < 5000)
+//				return 0.96f;
+//			if(nOfEdgesOfLayer < 10000)
+//				return 0.94f;
 			if(nOfEdgesOfLayer < 1000000)
-				return 0.92f;
-			return 0.9f;
+				return LayoutAdaptationStrategy.minCoolingSpeed;
+//				return 0.92f;
+			return 0.94f;
 		}
 
 		/* (non-Javadoc)
@@ -134,7 +133,7 @@ public class LayoutAdaptationStrategy{
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
 			if(nOfEdgesOfLayer < 1000)
 				return LayoutAdaptationStrategy.maxAccuracy;
-			if(nOfEdgesOfLayer < 10000)
+			if(nOfEdgesOfLayer < 50000)
 				return 0.001f;
 			if(nOfEdgesOfLayer < 1000000)
 				return 0.01f;
@@ -161,8 +160,6 @@ public class LayoutAdaptationStrategy{
 		 */
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer/nOfVerticesOfLayer >= 10 && nOfVerticesOfLayer >= 1000) //density control
-				return 2;
 			int proposedK = Math.max(ddas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer), 
 					ssas.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer));
 			return proposedK;

@@ -131,8 +131,8 @@ public class MultiScaleLayout {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
-				if(LayoutRoutine.logLayout)
-					log.info(vertex.getId() + " computing hiuar");
+//				if(LayoutRoutine.logLayout)
+//					log.info(vertex.getId() + " computing hiuar");
 				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
 					throw new IOException("NAN detected");
 				super.compute(vertex, messages);
@@ -177,7 +177,7 @@ public class MultiScaleLayout {
 				if(currentLayer != current.getLayer())
 					continue;
 				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
-				sendMessage(current, msgCopy);;
+				sendMessage(current, msgCopy);
 			}
 		}
 	}

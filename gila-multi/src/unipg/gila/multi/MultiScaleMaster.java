@@ -98,6 +98,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		if(getSuperstep() == 0){
 			merging = true;
 		}
+				
 		if(terminate){
 			getContext().getCounter(multiCounterString, "Supersteps").increment(getSuperstep());
 			haltComputation();

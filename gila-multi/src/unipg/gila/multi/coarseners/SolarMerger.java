@@ -552,8 +552,10 @@ public class SolarMerger{
 				while(neighborSystems.hasNext()){
 					Entry<Writable, Writable> current = neighborSystems.next();
 					LayeredPartitionedLongWritable neighborSun = (LayeredPartitionedLongWritable) current.getKey();
-//					if(neighborSun.equals(homologousId))
-//						continue;
+					if(neighborSun.equals(homologousId) || neighborSun.equals(vertex.getId())){
+						log.info("selfaloop " + neighborSun + " " + homologousId + " " + vertex.getId());
+						continue;
+					}
 					if(logMerger)
 						log.info("connecting vertex " + neighborSun);
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
