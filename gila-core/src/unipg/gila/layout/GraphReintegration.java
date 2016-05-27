@@ -151,6 +151,8 @@ public class GraphReintegration {
 			maxSlope = Float.MIN_VALUE;
 			float[] myCoordinates = vertex.getValue().getCoordinates();
 			Iterator<LayoutMessage> its = itl.iterator();		
+			List<Float> tempSlopesList = Toolbox.buildSlopesList(its, vertex); 
+			its = itl.iterator();
 			if(vertex.getNumEdges() == 0){ 
 				float[][] verticesCollection = computeOneDegreeVerticesCoordinates(vertex, size, new Double(Math.PI*2).floatValue(), 0);
 				reconstructGraph(verticesCollection, vertex);
@@ -165,7 +167,6 @@ public class GraphReintegration {
 			}
 			boolean firstTime = true;
 			float lastSlope = 0.0f;
-			List<Float> tempSlopesList = Toolbox.buildSlopesList(its, vertex); 
 			Collections.sort(tempSlopesList);
 			Iterator<Float> it = tempSlopesList.iterator();
 			int counter = 0;
