@@ -46,6 +46,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 	//LOGGER
 	Logger log = Logger.getLogger(this.getClass());
 	
+	float repulsiveForceEnhancer;
 	protected float minimumForceThreshold;
 	protected float walshawConstant;
 	
@@ -119,8 +120,11 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 			if(LayoutRoutine.logLayout)
 				log.info("computed repulsive " + tempForce[0] + " " + tempForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
 
-			repulsiveForce[0] += tempForce[0];
-			repulsiveForce[1] += tempForce[1];
+//			if(vValue.isAnalyzed(new LongWritable(currentPayload.getId())))
+//				log.info("Im " + vertex.getId() + " recalculating for " + currentPayload.getId() + " forces " + tempForce[0] + " " + tempForce[1]);
+			
+			repulsiveForce[0] += (repulsiveForceEnhancer*tempForce[0]);
+			repulsiveForce[1] += (repulsiveForceEnhancer*tempForce[1]);
 
 			vValue.analyze(currentPayload.getId());
 
@@ -174,6 +178,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 				workerGlobalCommUsage, workerContext);
 		k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 		walshawConstant = ((FloatWritable)getAggregatedValue(LayoutRoutine.walshawConstant_agg)).get();
+		repulsiveForceEnhancer = getConf().getFloat(LayoutRoutine.repulsiveForceEnhancerString, LayoutRoutine.repulsiveForceEnhancementDefault);
 
 		try {
 			force = ((Class<Force>)Class.forName(getConf().get(LayoutRoutine.forceMethodOptionString, FR.class.toString()))).newInstance();

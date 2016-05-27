@@ -87,12 +87,11 @@ public class MultiScaleLayout {
 			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 			while(edges.hasNext()){
 				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-				if(current.getLayer() == currentLayer){
-					aggregate(LayoutRoutine.max_K_agg, new FloatWritable(((IntWritable)vertex.getEdgeValue(current)).get()*k));
-					LayoutMessage msgCopy = ((LayoutMessage)message).copy();
-//					log.info("Sending " + msgCopy.toString() + " to " + current);
-					sendMessage(current, msgCopy);
-				}
+				if(current.getLayer() != currentLayer)
+					continue;
+				aggregate(LayoutRoutine.max_K_agg, new FloatWritable(((IntWritable)vertex.getEdgeValue(current)).get()*k));
+				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
+				sendMessage(current, msgCopy);
 			}
 		}
 
@@ -148,9 +147,6 @@ public class MultiScaleLayout {
 				LayeredPartitionedLongWritable currentPayload) {
 			if(LayoutRoutine.logLayout)
 				log.info("Suggesting a spring length of " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k + " based on " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get() + " and " + k);
-//			if(currentLayer > 0)
-//				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k;
-//			else
 				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k;
 		}
 		
@@ -181,7 +177,6 @@ public class MultiScaleLayout {
 			}
 		}
 	}
-
 
 	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<AstralBodyCoordinateWritable, IntWritable>
 	{

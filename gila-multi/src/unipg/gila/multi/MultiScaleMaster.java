@@ -284,6 +284,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	 */
 	private void resetLayoutAggregators() {
 //		setAggregatedValue(LayoutRoutine.componentNumber, new IntWritable(0));
+		setAggregatedValue(LayoutRoutine.max_K_agg, new FloatWritable(Float.MIN_VALUE));
 		setAggregatedValue(LayoutRoutine.componentNoOfNodes, new MapWritable());
 		setAggregatedValue(LayoutRoutine.maxCoords, new MapWritable());
 		setAggregatedValue(LayoutRoutine.minCoords, new MapWritable());
