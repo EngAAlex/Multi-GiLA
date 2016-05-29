@@ -75,7 +75,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		int v1Deg;
 		int v2Deg;		
 
-		v1Deg = vertex.getNumEdges() + vValue.getWeight();
+		v1Deg = /*vertex.getNumEdges() +*/ vValue.getWeight();
 
 		while(it.hasNext()){	
 			LayoutMessage currentMessage = it.next();

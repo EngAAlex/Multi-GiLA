@@ -60,10 +60,11 @@ public class FR extends Force {
 	 */
 	@Override
 	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
-//		float degCorrection = v1Deg;
+//		float degCorrection = v2Deg/(float)v1Deg;
+		float degCorrection = 1.0f;
 		return new float[]{
-				deltaX/Toolbox.floatFuzzyMath(squareDistance),
-				deltaY/Toolbox.floatFuzzyMath(squareDistance)};
+				degCorrection*(deltaX/Toolbox.floatFuzzyMath(squareDistance)),
+				degCorrection*(deltaY/Toolbox.floatFuzzyMath(squareDistance))};
 //		return 1/distance;
 	}
 }

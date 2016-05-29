@@ -123,95 +123,26 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		if(preparePlacer){
 			preparePlacer = false;
 			layout = true;
-			//			MapWritable mpV = ((MapWritable)getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator));
-			//			MapWritable mpE = ((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator));
-			//
-			////			log.info("Current layer " + currentLayer);
-			////
-			////			log.info("Vertices map ");
-			////			Iterator<Entry<Writable, Writable>> itV = mpV.entrySet().iterator();
-			////			while(itV.hasNext()){
-			////				Entry<Writable, Writable> current = itV.next();
-			////				log.info(current.getKey() + " - " + current.getValue());
-			////			}
-			////			log.info("Edges map ");
-			////			Iterator<Entry<Writable, Writable>> itE = mpE.entrySet().iterator();
-			////			while(itE.hasNext()){
-			////				Entry<Writable, Writable> current = itE.next();
-			////				log.info(current.getKey() + " - " + current.getValue());
-			////			}
 
 			int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
 					noOfVertices, 
 					noOfEdges);
 			if(currentLayer == 0)
 				selectedK = (selectedK > 2 ? 2 : selectedK);
-			setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
-
-			setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(
-					adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-			setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(
-					adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-			setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(
-					adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-
-			getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k").increment(selectedK);
-			getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment(
-					(long) (adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-			getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment(
-					(long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-			getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
-					(long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
-			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
-			getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
+			updateCountersAndAggregators(selectedK, currentLayer, noOfLayers, noOfVertices, noOfEdges);
 		}
-		//		if(angularMaximization){
-		//			if(angularMaximizationIterationsMax > 0){
-		//				if(getComputation().equals(CoordinatesBroadcast.class)){
-		//					setAggregatedValue(LayoutRoutine.angleMaximizationClockwiseAggregator, new BooleanWritable(
-		//							Math.random() > 0.5));
-		//					setComputation(AngularResolutionMaximizer.class);
-		//					return;
-		//				}
-		//				if(getComputation().equals(AngularResolutionMaximizer.class)){
-		//					setComputation(AverageCoordinateUpdater.class);
-		//					return;
-		//				}
-		//				if(angularMaximizationIterations < angularMaximizationIterationsMax){
-		//					setComputation(CoordinatesBroadcast.class);
-		//					angularMaximizationIterations++;
-		//					return;
-		//				}
-		//			}
-		//			angularMaximizationIterations = 0;
-		//			angularMaximization = false;
-		//
-		//			layout = false;
-		//
-		//			if(currentLayer > 0){
-		//				placing = true;
-		//			}else{
-		//				placing = false;
-		//				reintegrating = true;
-		//				return;
-		//			}
-		//		}
+
 		if(currentLayer >= 0 && !reintegrating){
-			int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
-			float optimalEdgeLength = (float)currentEdgeWeight;
-//			log.info("Suggested currentEdgeWeight " + currentEdgeWeight);
-			//			if(noOfEdges > 0)
-			//				optimalEdgeLength = currentEdgeWeight/(float)noOfEdges;
-			//			else
-			//				optimalEdgeLength = 1;
-			optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-
-
-
-			setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
-					new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
 			if(layout){
+				int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
+				float optimalEdgeLength = (float)currentEdgeWeight;
+
+				optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+
+				setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
+						new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
+
 				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
 					return;
 				}else{
@@ -221,16 +152,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 					}else{
 						reintegrating = true;
 					}
-					//					if(currentLayer == 0){
-					////						angularMaximization = true;
-					////						setComputation(CoordinatesBroadcast.class);
-					////						return;
-					//						reintegrating = true;
-					//					}else
-					//					placing = true;
 
-					//					setComputation(CoordinatesBroadcast.class);
-					//					angularMaximization = true;
 				}
 			}
 			if(placing)
@@ -249,24 +171,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 							noOfEdges);
 					if(currentLayer == 0)
 						selectedK = (selectedK > 2 ? 2 : selectedK);
-					setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
-					setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(
-							adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-					setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(
-							adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-					setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(
-							adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-
-
-					getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k").increment(selectedK);
-					getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment(
-							(long) (adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-					getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment(
-							(long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-					getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
-							(long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
-					getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
-					getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
+					updateCountersAndAggregators(selectedK, currentLayer, noOfLayers, noOfVertices, noOfEdges);
 
 					return;
 				}
@@ -277,6 +182,28 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				terminate = true;
 				haltComputation();
 			}
+	}
+	
+	private void updateCountersAndAggregators(int selectedK, int currentLayer, int noOfLayers, int noOfVertices, int noOfEdges){
+		setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
+
+		setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(
+				adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+		setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(
+				adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+		setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(
+				adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k").increment(selectedK);
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment(
+				(long) (adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment(
+				(long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
+				(long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
+		getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
+		getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
+
 	}
 
 	/**
