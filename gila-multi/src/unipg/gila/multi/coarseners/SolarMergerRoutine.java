@@ -183,9 +183,11 @@ public class SolarMergerRoutine {
 			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
-				int avgNoOfSuns = computeAverageOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
-				log.info("GIGI avh" + layerSize + " " + avgNoOfSuns);
-				if(avgNoOfSuns <= layerThreshold){
+//				int avgNoOfSuns = computeAverageOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
+				int maxNoOfSuns = computeMaxOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
+//				log.info("GIGI avh" + layerSize + " " + avgNoOfSuns);
+//				log.info("GIGI avh" + layerSize + " " + maxNoOfSuns);
+				if(maxNoOfSuns <= layerThreshold){
 					//haltComputation();
 					return true;
 				}else{
@@ -212,6 +214,19 @@ public class SolarMergerRoutine {
 			sum += ((IntWritable)it.next()).get();
 		}
 		return sum/values.size();
+	}
+	
+	/**
+	 * @param values
+	 * @return
+	 */
+	private int computeMaxOfValueSet(Collection<Writable> values) {
+		Iterator<Writable> it = values.iterator();
+		int max = Integer.MIN_VALUE;
+		while(it.hasNext()){
+			max = Math.max(max, ((IntWritable)it.next()).get());
+		}
+		return max;
 	}
 
 

@@ -24,11 +24,11 @@ public class LayoutAdaptationStrategy{
 		public int returnCurrentK(int currentLayer, int nOfLayers,
 				int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
 			float density = nOfEdgesOfLayer/(float)nOfVerticesOfLayer;
-			if(density > 1.5)
+			if(density > 1.5f)
 				return 3;
-			if(density > 2.5)
+			if(density > 2.5f)
 				return 2;
-			if(density > 4)
+			if(density > 4f)
 				return 1;
 			return LayoutAdaptationStrategy.maxK;
 		}

@@ -145,6 +145,7 @@ public class Spinner {
 	public static final String bBoxStringY = "partitioning.input.bBox.Y";
 	
 	public static final String pruneOneDegreesString = "partitioning.pruneOneDegrees";
+	public static final String findComponentsString = "partitioning.computeComponents";
 
 	public static class ComputeNewPartition
 	extends
@@ -556,6 +557,7 @@ public class Spinner {
 		}
 	}
 
+
 	public static class PartitionerMasterCompute extends DefaultMasterCompute {
 		private LinkedList<Double> states;
 		private String[] loadAggregatorNames;
@@ -569,6 +571,8 @@ public class Spinner {
 		private double maxMinLoad;
 		private double maxNormLoad;
 		private double score;
+		
+		public boolean findComponents;
 
 		//LURKER VARIABLES
 		protected boolean componentsFound;
@@ -603,6 +607,8 @@ public class Spinner {
 
 			registerAggregator(ConnectedComponentsComputation.activityAggr, BooleanAndAggregator.class);
 
+			findComponents = getConf().getBoolean(Spinner.findComponentsString, true);
+			
 			componentsFound = false;
 						
 		}
@@ -711,7 +717,7 @@ public class Spinner {
 		public void compute() {
 			int superstep = (int) getSuperstep();
 
-			if(!componentsFound){
+			if(!componentsFound && findComponents){
 				findComponentsMasterCompute(superstep);
 				return;
 			}
