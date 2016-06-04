@@ -528,9 +528,10 @@ public class SolarMerger{
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
-			if(vertex.getValue().isAsteroid())
+			if(vertex.getValue().isAsteroid()){
 				aggregate(SolarMergerRoutine.asteroidsRemoved, new BooleanWritable(false));
-			else
+				getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).increment(1);
+			}else
 				vertex.getValue().setAssigned();
 		}
 

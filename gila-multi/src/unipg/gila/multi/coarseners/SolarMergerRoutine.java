@@ -71,6 +71,8 @@ public class SolarMergerRoutine {
 	//MERGER COUNTERS
 	public static final String COUNTER_GROUP = "Merging Counters";
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
+	public static final String NUMBER_OF_ASTEROIDS_COUNTER = "Number of asteroids left";
+	public static final String LAST_SUN_CHANCE_COUNTER = "Last sun chance";
 	public static final String logMergerString = "merger.showLog";
 
 	public static final String sunsPerComponent = "AGG_SUNS_PER_COMPONENT";
@@ -139,9 +141,10 @@ public class SolarMergerRoutine {
 			return false;
 		}
 		if(messagesNegotiationDone && master.getComputation().equals(RegimeMerger.class)){
-			if(!timeForTheMoons)
+			if(!timeForTheMoons){
+				master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).setValue(0);
 				master.setComputation(AsteroidCaller.class);
-			else{
+			}else{
 				master.setComputation(SolarMergeVertexCreation.class);
 				//				creatingNewLayerVertices = false;
 				waitForDummy = true;
@@ -156,7 +159,8 @@ public class SolarMergerRoutine {
 			}else{
 				master.setComputation(SunGeneration.class);
 				float currentSunChance = ((FloatWritable)master.getAggregatedValue(sunChanceAggregatorString)).get();
-				currentSunChance += currentSunChance*0.5;
+				currentSunChance += currentSunChance*0.75;
+				master.getContext().getCounter(COUNTER_GROUP, LAST_SUN_CHANCE_COUNTER).setValue(new Float(currentSunChance*100).longValue());
 				master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(currentSunChance));
 			}
 			return false;
@@ -248,7 +252,9 @@ public class SolarMergerRoutine {
 		
 		master.setAggregatedValue(layerNumberAggregator, new IntWritable(0));
 		master.setAggregatedValue(mergerAttempts, new IntWritable(1));
-		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
+		baseSunChance = master.getConf().getFloat(sunChance, sunChanceDefault);
+		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(baseSunChance));
+		master.getContext().getCounter(COUNTER_GROUP, LAST_SUN_CHANCE_COUNTER).setValue(new Float(baseSunChance*100).longValue());
 		
 		master.registerPersistentAggregator(sunsPerComponent, ComponentIntSumAggregator.class);
 		
