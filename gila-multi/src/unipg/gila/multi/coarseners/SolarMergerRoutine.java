@@ -159,7 +159,8 @@ public class SolarMergerRoutine {
 			}else{
 				master.setComputation(SunGeneration.class);
 				float currentSunChance = ((FloatWritable)master.getAggregatedValue(sunChanceAggregatorString)).get();
-				currentSunChance += currentSunChance*0.75;
+				currentSunChance += currentSunChance*0.05f;
+				currentSunChance = currentSunChance > 1.0f ? 1.0f : currentSunChance;
 				master.getContext().getCounter(COUNTER_GROUP, LAST_SUN_CHANCE_COUNTER).setValue(new Float(currentSunChance*100).longValue());
 				master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(currentSunChance));
 			}
