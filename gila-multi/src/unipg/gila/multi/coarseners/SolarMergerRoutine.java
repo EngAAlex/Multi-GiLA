@@ -142,7 +142,7 @@ public class SolarMergerRoutine {
 		}
 		if(messagesNegotiationDone && master.getComputation().equals(RegimeMerger.class)){
 			if(!timeForTheMoons){
-				master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).setValue(0);
+//				master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).setValue(0);
 				master.setComputation(AsteroidCaller.class);
 			}else{
 				master.setComputation(SolarMergeVertexCreation.class);
@@ -183,6 +183,9 @@ public class SolarMergerRoutine {
 			checkForNewLayer = false;
 			waitForDummy = false;
 			int layerSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerVertexSizeAggregator)).get(new IntWritable(cLayer+1))).get();
+			int edgeSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerEdgeSizeAggregator)).get(new IntWritable(cLayer+1))).get();
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "By Time Layer " + (cLayer+1) + " vertices").increment(layerSize);
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "By Time Layer " + (cLayer+1) + " edges").increment(edgeSize);
 			int currentLayerNo = ((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get();
 			master.setAggregatedValue(layerNumberAggregator, new IntWritable(currentLayerNo++));
 			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
