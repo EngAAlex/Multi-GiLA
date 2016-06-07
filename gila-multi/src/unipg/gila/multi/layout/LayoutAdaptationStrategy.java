@@ -88,10 +88,10 @@ public class LayoutAdaptationStrategy{
 				return 4;
 //			if(nOfEdgesOfLayer > 50000)
 //				return 3;
-			if(nOfEdgesOfLayer > 100000)
-				return 2;
 			if(nOfEdgesOfLayer > 1000000)
 				return 1;
+			if(nOfEdgesOfLayer > 100000)
+				return 2;
 			return 3;
 		}
 
