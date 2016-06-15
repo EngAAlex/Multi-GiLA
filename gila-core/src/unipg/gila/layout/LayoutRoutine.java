@@ -106,7 +106,7 @@ public class LayoutRoutine {
 	public static final String coolingSpeed = "layout.coolingSpeed";
 	public static final String walshawModifierString = "layout.walshawModifier";
 	public static final String accuracyString = "layout.accuracy";
-	public static final float walshawModifierDefault = 0.052f;
+	public static final float walshawModifierDefault = 1.0f;
 	public final static float defaultNodeValue = 20.0f;
 	public float defaultInitialTempFactor = 2.0f;
 	public final String defaultCoolingSpeed = "0.93";
@@ -153,7 +153,7 @@ public class LayoutRoutine {
 	protected static final float defaultMinRatioThreshold = 0.2f;
 
 	public static final String repulsiveForceEnhancerString = "layout.enhanceRepulsiveForcesBy";
-	public static final float repulsiveForceEnhancementDefault = 1.0f;
+	public static final float repulsiveForceEnhancementDefault = 2.0f;
 
 	//GLOBAL STATIC VARIABLES
 	public static boolean logLayout;

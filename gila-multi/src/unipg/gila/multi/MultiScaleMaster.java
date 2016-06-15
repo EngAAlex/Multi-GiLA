@@ -48,8 +48,6 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	Logger log = Logger.getLogger(getClass());
 	
 	public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
-	public static final String angularMaximizationIterationsString = "multi.layout.angularMaximizationMaxIterations";
-	public static final int angularMaximizationMaxIterationsDefault = 30;	
 
 	public static final String multiCounterString = "Global Counters";
 
@@ -93,9 +91,6 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		preparePlacer = false;
 		placing=false;
 		terminate = false;
-		angularMaximization = false;
-		angularMaximizationIterations = 0;
-		angularMaximizationIterationsMax = getConf().getInt(angularMaximizationIterationsString, angularMaximizationMaxIterationsDefault);
 
 		try {
 			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);

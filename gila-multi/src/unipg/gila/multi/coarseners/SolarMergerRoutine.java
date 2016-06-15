@@ -78,9 +78,9 @@ public class SolarMergerRoutine {
 
 	//MERGER OPTIONS
 	public static final String mergerConvergenceThreshold = "merger.convergenceThreshold";
-	public static final int mergerConvergenceThresholdDefault = 10;
+	public static final int mergerConvergenceThresholdDefault = 7;
 	public static final String sunChance = "merger.SunChance";
-	public static final float sunChanceDefault = 0.2f;
+	public static final float sunChanceDefault = 0.1f;
 	public static final String sunChanceAggregatorString = "AGG_SUNCHANCE";
 	
 	//MERGER COUNTERS
