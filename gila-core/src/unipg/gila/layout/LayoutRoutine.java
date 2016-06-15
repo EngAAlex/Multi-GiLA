@@ -76,7 +76,7 @@ public class LayoutRoutine {
 	public static final String computationLimit = "layout.limit";
 	public static final String convergenceThresholdString = "layout.convergence-threshold";
 	public static final int ttlMaxDefault = 3;
-	public static final int maxSstepsDefault = 1500;
+	public static final int maxSstepsDefault = 10000;
 	public static final float defaultConvergenceThreshold = 0.85f;
 
 	//MESSAGES OPTIONS
