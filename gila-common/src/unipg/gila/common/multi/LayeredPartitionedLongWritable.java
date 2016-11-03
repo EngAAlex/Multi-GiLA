@@ -26,93 +26,94 @@ import unipg.gila.common.datastructures.PartitionedLongWritable;
  *
  */
 public class LayeredPartitionedLongWritable extends PartitionedLongWritable {
-	
-	protected int layer = 0;
-	
-	public LayeredPartitionedLongWritable() {
-		super();
-	}
 
-	public LayeredPartitionedLongWritable(String id) {
-		super(id);
-	}
-	
-	public LayeredPartitionedLongWritable(short partition, long id){
-		super(partition, id);
-	}
-	
-	public LayeredPartitionedLongWritable(short partition, long id, int layer){
-		super(partition, id);
-		this.layer = layer;
-	}
-	
-	public LayeredPartitionedLongWritable(LayeredPartitionedLongWritable idToCopy) {
-		this(idToCopy.getPartition(), idToCopy.getId(), idToCopy.getLayer());
-	}
+  protected int layer = 0;
 
-	public LayeredPartitionedLongWritable copy(){
-		return new LayeredPartitionedLongWritable(partition, id, layer);
-	}
-	
-	public LayeredPartitionedLongWritable getAdjacentLayerID(int offset){
-		return new LayeredPartitionedLongWritable(getPartition(), getId(), getLayer()+offset);
-	}
-	
-	public int getLayer() {
-		return layer;
-	}
+  public LayeredPartitionedLongWritable() {
+    super();
+  }
 
-	public void setLayer(int layer) {
-		this.layer = layer;
-	}
+  public LayeredPartitionedLongWritable(String id) {
+    super(id);
+  }
 
-	@Override
-	public void readFields(DataInput in) throws IOException {
-		super.readFields(in);
-		layer = in.readInt();
-	}
+  public LayeredPartitionedLongWritable(short partition, long id) {
+    super(partition, id);
+  }
 
-	@Override
-	public void write(DataOutput out) throws IOException {
-		super.write(out);
-		out.writeInt(layer);
-	}
+  public LayeredPartitionedLongWritable(short partition, long id, int layer) {
+    super(partition, id);
+    this.layer = layer;
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || !o.getClass().equals(this.getClass())) {
-			return false;
-		}
-		LayeredPartitionedLongWritable other = (LayeredPartitionedLongWritable) o;
-		if (super.equals(other) && other.getLayer() == this.layer) {
-			return true;
-		}
-		return false;
-	}
+  public LayeredPartitionedLongWritable(LayeredPartitionedLongWritable idToCopy) {
+    this(idToCopy.getPartition(), idToCopy.getId(), idToCopy.getLayer());
+  }
 
-	@Override
-	public String toString() {
-		return partition + DELIMITER + id + DELIMITER + layer;
-	}
+  public LayeredPartitionedLongWritable copy() {
+    return new LayeredPartitionedLongWritable(partition, id, layer);
+  }
 
-	
-	@Override
-	public int hashCode() {
-		return toString().hashCode();
-	}
+  public LayeredPartitionedLongWritable getAdjacentLayerID(int offset) {
+    return new LayeredPartitionedLongWritable(getPartition(), getId(),
+            getLayer() + offset);
+  }
 
-	@Override
-	public int compareTo(Object o) {
-		if (o == this) {
-			return 0;
-		}
-		LayeredPartitionedLongWritable other = (LayeredPartitionedLongWritable) o;
-		if(layer != other.getLayer())
-			return this.layer > other.getLayer() ? +1 : this.layer < other.getLayer() ? -1 : 0;
+  public int getLayer() {
+    return layer;
+  }
 
-		return this.id > other.id ? +1 : this.id < other.id ? -1 : 0;
-	}
+  public void setLayer(int layer) {
+    this.layer = layer;
+  }
+
+  @Override
+  public void readFields(DataInput in) throws IOException {
+    super.readFields(in);
+    layer = in.readInt();
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    out.writeInt(layer);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || !o.getClass().equals(this.getClass())) {
+      return false;
+    }
+    LayeredPartitionedLongWritable other = (LayeredPartitionedLongWritable) o;
+    if (super.equals(other) && other.getLayer() == this.layer) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return partition + DELIMITER + id + DELIMITER + layer;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  @Override
+  public int compareTo(Object o) {
+    if (o == this) {
+      return 0;
+    }
+    LayeredPartitionedLongWritable other = (LayeredPartitionedLongWritable) o;
+    if (layer != other.getLayer())
+      return this.layer > other.getLayer() ? +1 : this.layer < other
+              .getLayer() ? -1 : 0;
+
+    return this.id > other.id ? +1 : this.id < other.id ? -1 : 0;
+  }
 }

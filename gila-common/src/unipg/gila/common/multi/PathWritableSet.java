@@ -25,38 +25,45 @@ import java.util.HashSet;
 import unipg.gila.common.datastructures.SetWritable;
 
 /**
- * In this class presents the implementation for a set of SolarMessages capable of being (de)serialized.
+ * In this class presents the implementation for a set of SolarMessages capable
+ * of being (de)serialized.
  * 
  * @author Alessio Arleo
  *
  */
 public class PathWritableSet extends SetWritable<PathWritable> {
 
-	/**
-	 * Parameter-less constructor.
-	 * 
-	 */
-	public PathWritableSet() {
-		internalState = new HashSet<PathWritable>();
-	}
-	
-	/**
-	 * This constructor will return a new LongWritableSet which is an exact copy of the given set.
-	 * 
-	 * @param toCopy the set to copy.
-	 */
-	public PathWritableSet(PathWritableSet toCopy){
-		internalState = new HashSet<PathWritable>(toCopy.get());
-	}
-	
-	/* (non-Javadoc)
-	 * @see unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput)
-	 */
-	@Override
-	protected PathWritable specificRead(DataInput in) throws IOException {
-		PathWritable pw = new PathWritable();
-		pw.readFields(in);
-		return pw;
-	}
+  /**
+   * Parameter-less constructor.
+   * 
+   */
+  public PathWritableSet() {
+    internalState = new HashSet<PathWritable>();
+  }
+
+  /**
+   * This constructor will return a new LongWritableSet which is an exact copy
+   * of the given set.
+   * 
+   * @param toCopy
+   *          the set to copy.
+   */
+  public PathWritableSet(PathWritableSet toCopy) {
+    internalState = new HashSet<PathWritable>(toCopy.get());
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput
+   * )
+   */
+  @Override
+  protected PathWritable specificRead(DataInput in) throws IOException {
+    PathWritable pw = new PathWritable();
+    pw.readFields(in);
+    return pw;
+  }
 
 }

@@ -43,396 +43,487 @@ import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
 
 /**
- * This class holds the computations and support methods needed to reintegrate the previously pruned one degree vertices into the graph.
+ * This class holds the computations and support methods needed to reintegrate
+ * the previously pruned one degree vertices into the graph.
  * 
  * @author Alessio Arleo
  *
  */
 public class GraphReintegration {
-		
-	/**
-	 * A plain dummy computation used to propagate the vertices reintegration.
-	 * 
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static class PlainDummyComputation<V extends CoordinateWritable, E extends Writable> extends
-	AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage>{
-		
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, V, E> vertex,
-				Iterable<LayoutMessage> messages) throws IOException {
-			return;
-		}
 
-	}
+  /**
+   * A plain dummy computation used to propagate the vertices reintegration.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class PlainDummyComputation<V extends CoordinateWritable, E extends Writable>
+          extends
+          AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
-	/**
-	 * This reintegration method simply arranges the one degree vertices around their neighbor.
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static class RadialReintegrateOneEdges<V extends CoordinateWritable, E extends Writable> extends PlainGraphReintegration<V, E>{
+    @Override
+    public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterable<LayoutMessage> messages) throws IOException {
+      return;
+    }
 
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
-				throws IOException {
-			int size = vertex.getValue().getOneDegreeVerticesQuantity();
-			if(size == 0)
-				return;
-			float[][] verticesCollection = computeOneDegreeVerticesCoordinates(vertex, size, new Double(Math.PI*2).floatValue(), 0.0f);
-			reconstructGraph(verticesCollection, vertex);			
-		}
+  }
 
-		@Override
-		public void preSuperstep() {
-			super.preSuperstep();
-		}
+  /**
+   * This reintegration method simply arranges the one degree vertices around
+   * their neighbor.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class RadialReintegrateOneEdges<V extends CoordinateWritable, E extends Writable>
+          extends PlainGraphReintegration<V, E> {
 
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph
+     * .graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterable<LayoutMessage> messages) throws IOException {
+      int size = vertex.getValue().getOneDegreeVerticesQuantity();
+      if (size == 0)
+        return;
+      float[][] verticesCollection = computeOneDegreeVerticesCoordinates(
+              vertex, size, new Double(Math.PI * 2).floatValue(), 0.0f);
+      reconstructGraph(verticesCollection, vertex);
+    }
 
-	/**
-	 * This class places the one degree vertices in a cone. The bisector is the direction of the resulting force vector acting on the 
-	 * neighbor and the angular width is given by "reintegration.coneWidth" option.
-	 * 
-	 * @author general
-	 *
-	 */
-	public static class ConeReintegrateOneEdges<V extends CoordinateWritable, E extends Writable> extends PlainGraphReintegration<V,E>{
+    @Override
+    public void preSuperstep() {
+      super.preSuperstep();
+    }
 
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
-				throws IOException {
-			int size = vertex.getValue().getOneDegreeVerticesQuantity();
-			if(size == 0)
-				return;
-			reconstructGraph(super.placeVerticesInCone(vertex, size, messages), vertex);			
-		}
+  }
 
-		@Override
-		public void preSuperstep() {
-			super.preSuperstep();
-			aperture = new Double(getConf().getFloat(LayoutRoutine.coneWidth, LayoutRoutine.coneWidthDefault) * DEGREE_TO_RADIANS_CONSTANT).floatValue();
-		}
+  /**
+   * This class places the one degree vertices in a cone. The bisector is the
+   * direction of the resulting force vector acting on the neighbor and the
+   * angular width is given by "reintegration.coneWidth" option.
+   * 
+   * @author general
+   *
+   */
+  public static class ConeReintegrateOneEdges<V extends CoordinateWritable, E extends Writable>
+          extends PlainGraphReintegration<V, E> {
 
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph
+     * .graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterable<LayoutMessage> messages) throws IOException {
+      int size = vertex.getValue().getOneDegreeVerticesQuantity();
+      if (size == 0)
+        return;
+      reconstructGraph(super.placeVerticesInCone(vertex, size, messages),
+              vertex);
+    }
 
-	/**
-	 * This class reintegrates all the one degree vertices of a vertex in the widest angle formed by its neighbors.
-	 * 
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static class MaxSlopeReintegrateOneDegrees<V extends CoordinateWritable, E extends Writable> extends PlainGraphReintegration<V, E>{
+    @Override
+    public void preSuperstep() {
+      super.preSuperstep();
+      aperture = new Double(getConf().getFloat(LayoutRoutine.coneWidth,
+              LayoutRoutine.coneWidthDefault)
+              * DEGREE_TO_RADIANS_CONSTANT).floatValue();
+    }
 
-		private float maxSlope;
-		float selectedStart = 0;
+  }
 
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
-				throws IOException {
-			int size = vertex.getValue().getOneDegreeVerticesQuantity();			
-			if(size == 0)
-				return;
-			computePositions(size, vertex, messages);			
-		}
+  /**
+   * This class reintegrates all the one degree vertices of a vertex in the
+   * widest angle formed by its neighbors.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class MaxSlopeReintegrateOneDegrees<V extends CoordinateWritable, E extends Writable>
+          extends PlainGraphReintegration<V, E> {
 
-		protected void computePositions(int size, Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> itl) throws IOException{
-			maxSlope = Float.MIN_VALUE;
-			float[] myCoordinates = vertex.getValue().getCoordinates();
-			Iterator<LayoutMessage> its = itl.iterator();		
-			List<Float> tempSlopesList = Toolbox.buildSlopesList(its, vertex); 
-			its = itl.iterator();
-			if(vertex.getNumEdges() == 0){ 
-				float[][] verticesCollection = computeOneDegreeVerticesCoordinates(vertex, size, new Double(Math.PI*2).floatValue(), 0);
-				reconstructGraph(verticesCollection, vertex);
-				return;
-			}else if(vertex.getNumEdges() == 1){
-				LayoutMessage currentNeighbour = its.next();
-				float[] coordinates = currentNeighbour.getValue();
-				float computedAtan = (float) Math.atan2(coordinates[1] - myCoordinates[1], coordinates[0] - myCoordinates[0]);
-				reconstructGraph(computeOneDegreeVerticesCoordinates(vertex, size, (float)Math.PI*2, 
-						computedAtan), vertex);
-				return;
-			}
-			boolean firstTime = true;
-			float lastSlope = 0.0f;
-			Collections.sort(tempSlopesList);
-			Iterator<Float> it = tempSlopesList.iterator();
-			int counter = 0;
-			float pie = 0.0f;
-			while(it.hasNext() || counter < tempSlopesList.size()){
-				float currentSlope = 0.0f;
-				try{
-					currentSlope = it.next();
-				}catch(NoSuchElementException nsfw){
-					storeInformation(new Double(Math.PI*2 - pie).floatValue(), new Double(lastSlope).floatValue());
-					counter++;				
-					continue;
-				}if(firstTime){
-					firstTime = false;
-					lastSlope = currentSlope;
-					continue;
-				}
-				float slope = new Double(Math.abs(currentSlope - lastSlope)).floatValue();
-				pie += slope;
-				storeInformation(slope, new Double(lastSlope).floatValue());
-				lastSlope = currentSlope;
-				counter++;
-			}
-			rebuild(size, vertex);
-		}
+    private float maxSlope;
+    float selectedStart = 0;
 
-		protected void rebuild(int size, Vertex<LayeredPartitionedLongWritable, V, E> vertex) throws IOException {
-			float[][] verticesToPlace = computeOneDegreeVerticesCoordinates(vertex, size, maxSlope, selectedStart);
-			reconstructGraph(verticesToPlace, vertex);			
-		}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.apache.giraph.graph.AbstractComputation#compute(org.apache.giraph
+     * .graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterable<LayoutMessage> messages) throws IOException {
+      int size = vertex.getValue().getOneDegreeVerticesQuantity();
+      if (size == 0)
+        return;
+      computePositions(size, vertex, messages);
+    }
 
+    protected void computePositions(int size,
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterable<LayoutMessage> itl) throws IOException {
+      maxSlope = Float.MIN_VALUE;
+      float[] myCoordinates = vertex.getValue().getCoordinates();
+      Iterator<LayoutMessage> its = itl.iterator();
+      List<Float> tempSlopesList = Toolbox.buildSlopesList(its, vertex);
+      its = itl.iterator();
+      if (vertex.getNumEdges() == 0) {
+        float[][] verticesCollection = computeOneDegreeVerticesCoordinates(
+                vertex, size, new Double(Math.PI * 2).floatValue(), 0);
+        reconstructGraph(verticesCollection, vertex);
+        return;
+      } else if (vertex.getNumEdges() == 1) {
+        LayoutMessage currentNeighbour = its.next();
+        float[] coordinates = currentNeighbour.getValue();
+        float computedAtan = (float) Math.atan2(coordinates[1]
+                - myCoordinates[1], coordinates[0] - myCoordinates[0]);
+        reconstructGraph(
+                computeOneDegreeVerticesCoordinates(vertex, size,
+                        (float) Math.PI * 2, computedAtan), vertex);
+        return;
+      }
+      boolean firstTime = true;
+      float lastSlope = 0.0f;
+      Collections.sort(tempSlopesList);
+      Iterator<Float> it = tempSlopesList.iterator();
+      int counter = 0;
+      float pie = 0.0f;
+      while (it.hasNext() || counter < tempSlopesList.size()) {
+        float currentSlope = 0.0f;
+        try {
+          currentSlope = it.next();
+        } catch (NoSuchElementException nsfw) {
+          storeInformation(new Double(Math.PI * 2 - pie).floatValue(),
+                  new Double(lastSlope).floatValue());
+          counter++;
+          continue;
+        }
+        if (firstTime) {
+          firstTime = false;
+          lastSlope = currentSlope;
+          continue;
+        }
+        float slope = new Double(Math.abs(currentSlope - lastSlope))
+                .floatValue();
+        pie += slope;
+        storeInformation(slope, new Double(lastSlope).floatValue());
+        lastSlope = currentSlope;
+        counter++;
+      }
+      rebuild(size, vertex);
+    }
 
-		protected void storeInformation(float slope,
-				float startSlope){
-			if(slope - padding*2 > maxSlope){
-				maxSlope = slope  - padding*2;
-				selectedStart = startSlope + padding;
-			}			
-		}
+    protected void rebuild(int size,
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex)
+            throws IOException {
+      float[][] verticesToPlace = computeOneDegreeVerticesCoordinates(vertex,
+              size, maxSlope, selectedStart);
+      reconstructGraph(verticesToPlace, vertex);
+    }
 
-		public void preSuperstep() {
-			super.preSuperstep();
-			padding = new Double(getConf().getFloat(LayoutRoutine.paddingString, paddingDefault)*DEGREE_TO_RADIANS_CONSTANT).floatValue();
-		}
-		
-	}
+    protected void storeInformation(float slope, float startSlope) {
+      if (slope - padding * 2 > maxSlope) {
+        maxSlope = slope - padding * 2;
+        selectedStart = startSlope + padding;
+      }
+    }
 
-	/**
-	 * This class fairly distributes the one degree vertices of each vertex arranging them in the angles formed by the
-	 * vertex neighbors. If the angle is below the value given by the "reintegration.fairLowThreshold" option (expressed in degrees)
-	 * that angle is skipped and the vertices arranged in the other gaps.
-	 * 
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static class FairShareReintegrateOneEdges<V extends CoordinateWritable, E extends Writable> extends MaxSlopeReintegrateOneDegrees<V, E>{
+    public void preSuperstep() {
+      super.preSuperstep();
+      padding = new Double(getConf().getFloat(LayoutRoutine.paddingString,
+              paddingDefault)
+              * DEGREE_TO_RADIANS_CONSTANT).floatValue();
+    }
 
-		protected HashMap<Float, Float> slopes; 	
-		protected float lowThreshold;
+  }
 
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.GraphReintegration.MaxSlopeReintegrateOneDegrees#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterable<LayoutMessage> messages)
-				throws IOException {
-			slopes = new HashMap<Float, Float>();
-			super.compute(vertex, messages);
-		}
+  /**
+   * This class fairly distributes the one degree vertices of each vertex
+   * arranging them in the angles formed by the vertex neighbors. If the angle
+   * is below the value given by the "reintegration.fairLowThreshold" option
+   * (expressed in degrees) that angle is skipped and the vertices arranged in
+   * the other gaps.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class FairShareReintegrateOneEdges<V extends CoordinateWritable, E extends Writable>
+          extends MaxSlopeReintegrateOneDegrees<V, E> {
 
+    protected HashMap<Float, Float> slopes;
+    protected float lowThreshold;
 
-		@Override
-		protected void storeInformation(float slope,
-				float startSlope){
-			if(slope >= lowThreshold + padding*2){
-				float modifiedSlope = slope;
-				while(slopes.containsKey(modifiedSlope)){
-					modifiedSlope = new Double(slope + Math.random()/2).floatValue();
-				}
-				slopes.put(modifiedSlope, startSlope + padding);
-			}
-		}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * unipg.gila.layout.GraphReintegration.MaxSlopeReintegrateOneDegrees#compute
+     * (org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterable<LayoutMessage> messages) throws IOException {
+      slopes = new HashMap<Float, Float>();
+      super.compute(vertex, messages);
+    }
 
-		@Override
-		protected void rebuild(
-				int size,
-				Vertex<LayeredPartitionedLongWritable, V, E> vertex) throws IOException {
-			if(slopes.size() == 0){
-				float[][] verticesToPlace = computeOneDegreeVerticesCoordinates(vertex, size, 0, 0);
-				reconstructGraph(verticesToPlace, vertex);
-				return;
-			}
-			Iterator<Entry<Float, Float>> it = slopes.entrySet().iterator();
-			Iterator<LongWritable> oneDegreesIterator = vertex.getValue().getOneDegreeVertices();
-			int remaining = size;
-						
-			while(it.hasNext() && remaining > 0){
-				Entry<Float, Float> current = it.next();
-				int quantity = 0;
-				if(!it.hasNext()){
-					quantity = remaining;
-				}else{
-					quantity = new Double(Math.round(remaining * ((current.getKey()/(Math.PI*2)) % 1.0))).intValue();
-				}			
-				reconstructGraphKeepingIterator(computeOneDegreeVerticesCoordinates(vertex, quantity, current.getKey(), current.getValue()), vertex, oneDegreesIterator);
-				remaining -= quantity;
-			}
-			if(oneDegreesIterator.hasNext())
-				throw new IOException("OneEdges iterator was not fully explored.");
-		}
+    @Override
+    protected void storeInformation(float slope, float startSlope) {
+      if (slope >= lowThreshold + padding * 2) {
+        float modifiedSlope = slope;
+        while (slopes.containsKey(modifiedSlope)) {
+          modifiedSlope = new Double(slope + Math.random() / 2).floatValue();
+        }
+        slopes.put(modifiedSlope, startSlope + padding);
+      }
+    }
 
+    @Override
+    protected void rebuild(int size,
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex)
+            throws IOException {
+      if (slopes.size() == 0) {
+        float[][] verticesToPlace = computeOneDegreeVerticesCoordinates(
+                vertex, size, 0, 0);
+        reconstructGraph(verticesToPlace, vertex);
+        return;
+      }
+      Iterator<Entry<Float, Float>> it = slopes.entrySet().iterator();
+      Iterator<LongWritable> oneDegreesIterator = vertex.getValue()
+              .getOneDegreeVertices();
+      int remaining = size;
 
-		public void preSuperstep() {
-			super.preSuperstep();	
-			lowThreshold = new Double(getConf().getFloat(LayoutRoutine.lowThresholdString, LayoutRoutine.lowThresholdDefault)*DEGREE_TO_RADIANS_CONSTANT).floatValue();
-		}
-	}
+      while (it.hasNext() && remaining > 0) {
+        Entry<Float, Float> current = it.next();
+        int quantity = 0;
+        if (!it.hasNext()) {
+          quantity = remaining;
+        } else {
+          quantity = new Double(Math.round(remaining
+                  * ((current.getKey() / (Math.PI * 2)) % 1.0))).intValue();
+        }
+        reconstructGraphKeepingIterator(
+                computeOneDegreeVerticesCoordinates(vertex, quantity,
+                        current.getKey(), current.getValue()), vertex,
+                oneDegreesIterator);
+        remaining -= quantity;
+      }
+      if (oneDegreesIterator.hasNext())
+        throw new IOException("OneEdges iterator was not fully explored.");
+    }
 
-	/**
-	 * Abstract class that holds base methods to reintegrate the vertices.
-	 * 
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static abstract class PlainGraphReintegration<V extends CoordinateWritable, E extends Writable> extends AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage>{
+    public void preSuperstep() {
+      super.preSuperstep();
+      lowThreshold = new Double(getConf().getFloat(
+              LayoutRoutine.lowThresholdString,
+              LayoutRoutine.lowThresholdDefault)
+              * DEGREE_TO_RADIANS_CONSTANT).floatValue();
+    }
+  }
 
-		protected static final double DEGREE_TO_RADIANS_CONSTANT = Math.PI/180;
-		protected static final double RADIANS_TO_DEGREE_CONSTANT = 180/Math.PI;		
+  /**
+   * Abstract class that holds base methods to reintegrate the vertices.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static abstract class PlainGraphReintegration<V extends CoordinateWritable, E extends Writable>
+          extends
+          AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
-		protected float paddingDefault = 2.0f;
-		protected float padding;
+    protected static final double DEGREE_TO_RADIANS_CONSTANT = Math.PI / 180;
+    protected static final double RADIANS_TO_DEGREE_CONSTANT = 180 / Math.PI;
 
-		protected long added;
+    protected float paddingDefault = 2.0f;
+    protected float padding;
 
-		protected boolean isRadiusDynamic;
+    protected long added;
 
-		protected float aperture; 
+    protected boolean isRadiusDynamic;
 
-		protected float radius;
-		protected float k;
+    protected float aperture;
 
-		protected float[][] vertexPlacer(long quantity, float sector, float start, float[] myCoords, float effectiveRadius) throws IOException{
-			if(Float.isNaN(sector) || Float.isNaN(start) || Float.isNaN(effectiveRadius) || Float.isNaN(myCoords[0]) || Float.isNaN(myCoords[1])){
-				throw new IOException("NaN alert OMEGA " + sector + " " + start + " " + effectiveRadius + " " + myCoords[0] + " " + myCoords[1]);
-			}
-			if(quantity < 0)
- 				return new float[0][0];
-			float[][] result = new float[new Long(quantity).intValue()][2];
-			double angularResolution = sector/(double)quantity;
-			double halfAngularResolution = angularResolution/2;
-			for(int i=0; i<quantity; i++){
-				double currentDeg = start + halfAngularResolution + i*angularResolution;
-				float x = myCoords[0] + new Double(Math.cos(currentDeg)).floatValue()*effectiveRadius;
-				float y = myCoords[1] + new Double(Math.sin(currentDeg)).floatValue()*effectiveRadius;
-				result[i][0] = x;
-				result[i][1] = y;
-			}
-			return result;
-		}
-		
-		private float[][] placeVerticesInGap(int quantity, float sector, float start, float[] myCoords) throws IOException{
-			return vertexPlacer(quantity, sector, start, myCoords, radius * k);
-		}
+    protected float radius;
+    protected float k;
 
-		private float[][] placeVerticesInGapWithShortestEdge(long quantity, float sector, float start, float[] myCoords, float shortestEdge) throws IOException{
-			return vertexPlacer(quantity, sector, start, myCoords, radius * shortestEdge);
-		}
+    protected float[][] vertexPlacer(long quantity, float sector, float start,
+            float[] myCoords, float effectiveRadius) throws IOException {
+      if (Float.isNaN(sector) || Float.isNaN(start)
+              || Float.isNaN(effectiveRadius) || Float.isNaN(myCoords[0])
+              || Float.isNaN(myCoords[1])) {
+        throw new IOException("NaN alert OMEGA " + sector + " " + start + " "
+                + effectiveRadius + " " + myCoords[0] + " " + myCoords[1]);
+      }
+      if (quantity < 0)
+        return new float[0][0];
+      float[][] result = new float[new Long(quantity).intValue()][2];
+      double angularResolution = sector / (double) quantity;
+      double halfAngularResolution = angularResolution / 2;
+      for (int i = 0; i < quantity; i++) {
+        double currentDeg = start + halfAngularResolution + i
+                * angularResolution;
+        float x = myCoords[0] + new Double(Math.cos(currentDeg)).floatValue()
+                * effectiveRadius;
+        float y = myCoords[1] + new Double(Math.sin(currentDeg)).floatValue()
+                * effectiveRadius;
+        result[i][0] = x;
+        result[i][1] = y;
+      }
+      return result;
+    }
 
-		protected float[][] computeOneDegreeVerticesCoordinates(Vertex<LayeredPartitionedLongWritable, V, E> vertex, int quantity, float slopeAngle, float slopeStart) throws IOException{
-			float[][] placedVertices;
-			float shortestEdge = vertex.getValue().getShortestEdge();
-			if(isRadiusDynamic){
-				if(shortestEdge == Float.MAX_VALUE){
-					placedVertices = placeVerticesInGap(quantity, slopeAngle, slopeStart, vertex.getValue().getCoordinates());
-				}else{
-					placedVertices = placeVerticesInGapWithShortestEdge(quantity, slopeAngle, slopeStart, vertex.getValue().getCoordinates(), shortestEdge);
-				}
-			}else{
-				placedVertices = placeVerticesInGap(quantity, slopeAngle, slopeStart, vertex.getValue().getCoordinates());
-			}
-			return placedVertices;
-		}
+    private float[][] placeVerticesInGap(int quantity, float sector,
+            float start, float[] myCoords) throws IOException {
+      return vertexPlacer(quantity, sector, start, myCoords, radius * k);
+    }
 
-		protected void reconstructGraph(float[][] verticesToPlace, Vertex<LayeredPartitionedLongWritable, V, E> vertex) throws IOException{
-			Iterator<LongWritable> oneDegreesIt = vertex.getValue().getOneDegreeVertices();
-			for(int i=0; i<verticesToPlace.length; i++){
-				addSingleOneDegreeVertex(oneDegreesIt.next().get(), verticesToPlace[i], vertex);
-			}
-			if(oneDegreesIt.hasNext())
-				throw new IOException("One Edges iterator was not completely explored");
-		}
-		
-		protected void reconstructGraphKeepingIterator(float[][] verticesToPlace, Vertex<LayeredPartitionedLongWritable, V, E> vertex, Iterator<LongWritable> woundIterator) throws IOException{
-			for(int i=0; i<verticesToPlace.length; i++){
-				addSingleOneDegreeVertex(woundIterator.next().get(), verticesToPlace[i], vertex);
-			}
-		}
-		
-		@SuppressWarnings("unchecked")
-		private void addSingleOneDegreeVertex(long idOfOneEdge, float[] coordinatesOfVertexToPlace, Vertex<LayeredPartitionedLongWritable, V, E> neighborVertex){
-			ArrayListEdges<LayeredPartitionedLongWritable, E> ale = new ArrayListEdges<LayeredPartitionedLongWritable, E>();
-			ale.initialize(1);
-			ale.add(((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(neighborVertex.getId(), WritableFactories.newInstance(getConf().getEdgeValueClass()))));
-			V value = (V) WritableFactories.newInstance(getConf().getVertexValueClass());
-			value.setCoordinates(coordinatesOfVertexToPlace[0], coordinatesOfVertexToPlace[1]);
-			value.setComponent(neighborVertex.getValue().getComponent());
-			LayeredPartitionedLongWritable oE = new LayeredPartitionedLongWritable(neighborVertex.getId().getPartition(), idOfOneEdge);
-//			oE.setId(idOfOneEdge);
-//			oE.setPartition(neighborVertex.getId().getPartition());
-			added++;
-			try {
-				addVertexRequest(oE, value, ale);
-				addEdgeRequest(neighborVertex.getId(), ((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(neighborVertex.getId(), WritableFactories.newInstance(getConf().getEdgeValueClass()))));					
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+    private float[][] placeVerticesInGapWithShortestEdge(long quantity,
+            float sector, float start, float[] myCoords, float shortestEdge)
+            throws IOException {
+      return vertexPlacer(quantity, sector, start, myCoords, radius
+              * shortestEdge);
+    }
 
-		protected float[][] placeVerticesInCone(Vertex<LayeredPartitionedLongWritable, V, E> vertex, int size, Iterable<LayoutMessage> itl) throws IOException{
-			float[] statusCopy = vertex.getValue().getCoordinates();			
-			float[] force = new float[]{0.0f, 0.0f};
+    protected float[][] computeOneDegreeVerticesCoordinates(
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex, int quantity,
+            float slopeAngle, float slopeStart) throws IOException {
+      float[][] placedVertices;
+      float shortestEdge = vertex.getValue().getShortestEdge();
+      if (isRadiusDynamic) {
+        if (shortestEdge == Float.MAX_VALUE) {
+          placedVertices = placeVerticesInGap(quantity, slopeAngle,
+                  slopeStart, vertex.getValue().getCoordinates());
+        } else {
+          placedVertices = placeVerticesInGapWithShortestEdge(quantity,
+                  slopeAngle, slopeStart, vertex.getValue().getCoordinates(),
+                  shortestEdge);
+        }
+      } else {
+        placedVertices = placeVerticesInGap(quantity, slopeAngle, slopeStart,
+                vertex.getValue().getCoordinates());
+      }
+      return placedVertices;
+    }
 
-			//			CoordinateWritable<Float> vValue = vertex.getValue();
-			Iterator<LayoutMessage> cohords = itl.iterator();
+    protected void reconstructGraph(float[][] verticesToPlace,
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex)
+            throws IOException {
+      Iterator<LongWritable> oneDegreesIt = vertex.getValue()
+              .getOneDegreeVertices();
+      for (int i = 0; i < verticesToPlace.length; i++) {
+        addSingleOneDegreeVertex(oneDegreesIt.next().get(),
+                verticesToPlace[i], vertex);
+      }
+      if (oneDegreesIt.hasNext())
+        throw new IOException("One Edges iterator was not completely explored");
+    }
 
-			while(cohords.hasNext()){
+    protected void reconstructGraphKeepingIterator(float[][] verticesToPlace,
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex,
+            Iterator<LongWritable> woundIterator) throws IOException {
+      for (int i = 0; i < verticesToPlace.length; i++) {
+        addSingleOneDegreeVertex(woundIterator.next().get(),
+                verticesToPlace[i], vertex);
+      }
+    }
 
-				LayoutMessage val = cohords.next();
+    @SuppressWarnings("unchecked")
+    private void addSingleOneDegreeVertex(long idOfOneEdge,
+            float[] coordinatesOfVertexToPlace,
+            Vertex<LayeredPartitionedLongWritable, V, E> neighborVertex) {
+      ArrayListEdges<LayeredPartitionedLongWritable, E> ale = new ArrayListEdges<LayeredPartitionedLongWritable, E>();
+      ale.initialize(1);
+      ale.add(((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(
+              neighborVertex.getId(),
+              WritableFactories.newInstance(getConf().getEdgeValueClass()))));
+      V value = (V) WritableFactories.newInstance(getConf()
+              .getVertexValueClass());
+      value.setCoordinates(coordinatesOfVertexToPlace[0],
+              coordinatesOfVertexToPlace[1]);
+      value.setComponent(neighborVertex.getValue().getComponent());
+      LayeredPartitionedLongWritable oE = new LayeredPartitionedLongWritable(
+              neighborVertex.getId().getPartition(), idOfOneEdge);
+      // oE.setId(idOfOneEdge);
+      // oE.setPartition(neighborVertex.getId().getPartition());
+      added++;
+      try {
+        addVertexRequest(oE, value, ale);
+        addEdgeRequest(neighborVertex.getId(),
+                ((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(
+                        neighborVertex.getId(), WritableFactories
+                                .newInstance(getConf().getEdgeValueClass()))));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
 
-				float[] foreignCoordinates = val.getValue();
+    protected float[][] placeVerticesInCone(
+            Vertex<LayeredPartitionedLongWritable, V, E> vertex, int size,
+            Iterable<LayoutMessage> itl) throws IOException {
+      float[] statusCopy = vertex.getValue().getCoordinates();
+      float[] force = new float[] { 0.0f, 0.0f };
 
-				float distanceFromVertex = Toolbox.computeModule(statusCopy, new float[]{foreignCoordinates[0], foreignCoordinates[1]});
+      // CoordinateWritable<Float> vValue = vertex.getValue();
+      Iterator<LayoutMessage> cohords = itl.iterator();
 
-				float inverseSquareDist = new Double(1/Math.pow(distanceFromVertex,2)).floatValue();
+      while (cohords.hasNext()) {
 
-				force[0] += (statusCopy[0] - foreignCoordinates[0])*inverseSquareDist;
-				force[1] += (statusCopy[1] - foreignCoordinates[1])*inverseSquareDist;
-			}
+        LayoutMessage val = cohords.next();
 
-			float theta = new Double(Math.atan2(force[1], force[0])).floatValue();
-			float start = theta-aperture/2;
+        float[] foreignCoordinates = val.getValue();
 
-			float[][] verticesToPlace = placeVerticesInGap(size, aperture, start, vertex.getValue().getCoordinates());
-			return verticesToPlace;
-		}
+        float distanceFromVertex = Toolbox.computeModule(statusCopy,
+                new float[] { foreignCoordinates[0], foreignCoordinates[1] });
 
-		@Override
-		public void preSuperstep() {
-			added=0;
-			k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-			radius = getConf().getFloat(LayoutRoutine.radiusString, LayoutRoutine.radiusDefault);
-			isRadiusDynamic = getConf().getBoolean(LayoutRoutine.dynamicRadiusString, true);
-		}
-	}
+        float inverseSquareDist = new Double(1 / Math.pow(distanceFromVertex,
+                2)).floatValue();
 
-	public static double angleBetween2Lines(Line2D line1, Line2D line2)
-	{
-		double angle1 = Math.atan2(line1.getY1() - line1.getY2(),
-				line1.getX1() - line1.getX2());
-		double angle2 = Math.atan2(line2.getY1() - line2.getY2(),
-				line2.getX1() - line2.getX2());
-		double result = angle1-angle2;
-		if(result < 0)
-			result = Math.PI*2 - Math.abs(result);
-		return result;
-	}
+        force[0] += (statusCopy[0] - foreignCoordinates[0])
+                * inverseSquareDist;
+        force[1] += (statusCopy[1] - foreignCoordinates[1])
+                * inverseSquareDist;
+      }
+
+      float theta = new Double(Math.atan2(force[1], force[0])).floatValue();
+      float start = theta - aperture / 2;
+
+      float[][] verticesToPlace = placeVerticesInGap(size, aperture, start,
+              vertex.getValue().getCoordinates());
+      return verticesToPlace;
+    }
+
+    @Override
+    public void preSuperstep() {
+      added = 0;
+      k = ((FloatWritable) getAggregatedValue(LayoutRoutine.k_agg)).get();
+      radius = getConf().getFloat(LayoutRoutine.radiusString,
+              LayoutRoutine.radiusDefault);
+      isRadiusDynamic = getConf().getBoolean(
+              LayoutRoutine.dynamicRadiusString, true);
+    }
+  }
+
+  public static double angleBetween2Lines(Line2D line1, Line2D line2) {
+    double angle1 = Math.atan2(line1.getY1() - line1.getY2(), line1.getX1()
+            - line1.getX2());
+    double angle2 = Math.atan2(line2.getY1() - line2.getY2(), line2.getX1()
+            - line2.getX2());
+    double result = angle1 - angle2;
+    if (result < 0)
+      result = Math.PI * 2 - Math.abs(result);
+    return result;
+  }
 
 }
-

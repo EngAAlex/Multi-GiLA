@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2016 Alessio Arleo
+/**
+ * Copyright 2014, 2016 Grafos.ml
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,52 +12,36 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *******************************************************************************/
-package unipg.gila.common.datastructures;
+ */
+package unipg.gila.common.partitioning;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.io.WritableFactory;
 
-/**
- * This class identifies a vertex by its id and partition.
- * 
- * @author claudio
- *
- */
-public class PartitionedLongWritable implements WritableComparable<Object>,
-        WritableFactory {
-
+public class PartitionedPositionedVertexValue implements WritableComparable {
   public static final String DELIMITER = "_";
-  protected short partition = -1;
-  protected long id = -1;
+  private Float[] coords;
+  private short partition;
+  private long id;
 
-  public PartitionedLongWritable() {
-
+  public PartitionedPositionedVertexValue() {
   }
 
-  public PartitionedLongWritable(String id) {
+  public PartitionedPositionedVertexValue(String id) {
     String[] tokens = id.split(DELIMITER);
     this.partition = Short.parseShort(tokens[0]);
     this.id = Long.parseLong(tokens[1]);
+    coords = new Float[] { 0.0f, 0.0f };
   }
 
-  public PartitionedLongWritable(short partition, long id) {
-    this.partition = partition;
-    this.id = id;
-  }
-
-  public PartitionedLongWritable(PartitionedLongWritable idToCopy) {
-    this.partition = idToCopy.getPartition();
-    this.id = idToCopy.getId();
-  }
-
-  public PartitionedLongWritable copy() {
-    return new PartitionedLongWritable(partition, id);
+  public PartitionedPositionedVertexValue(String id, float x, float y) {
+    String[] tokens = id.split(DELIMITER);
+    this.partition = Short.parseShort(tokens[0]);
+    this.id = Long.parseLong(tokens[1]);
+    coords = new Float[] { x, y };
   }
 
   public void readFields(DataInput in) throws IOException {
@@ -70,7 +54,6 @@ public class PartitionedLongWritable implements WritableComparable<Object>,
     out.writeLong(id);
   }
 
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -78,55 +61,42 @@ public class PartitionedLongWritable implements WritableComparable<Object>,
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PartitionedLongWritable other = (PartitionedLongWritable) o;
+    PartitionedPositionedVertexValue other = (PartitionedPositionedVertexValue) o;
     if (this.partition == other.partition && this.id == other.id) {
       return true;
     }
     return false;
   }
 
-  @Override
   public String toString() {
     return partition + DELIMITER + id;
   }
 
-  @Override
   public int hashCode() {
     return (int) id;
-  }
-
-  public void setPartition(short partition) {
-    this.partition = partition;
-
   }
 
   public short getPartition() {
     return partition;
   }
 
-  public void setId(long id) {
-    this.id = id;
-  }
-
   public long getId() {
     return id;
+  }
+
+  public Float[] getCoords() {
+    return coords;
+  }
+
+  public void setCoords(Float[] coords) {
+    this.coords = coords;
   }
 
   public int compareTo(Object o) {
     if (o == this) {
       return 0;
     }
-    PartitionedLongWritable other = (PartitionedLongWritable) o;
+    PartitionedPositionedVertexValue other = (PartitionedPositionedVertexValue) o;
     return this.id > other.id ? +1 : this.id < other.id ? -1 : 0;
   }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.apache.hadoop.io.WritableFactory#newInstance()
-   */
-  public Writable newInstance() {
-    return new PartitionedLongWritable();
-  }
-
 }

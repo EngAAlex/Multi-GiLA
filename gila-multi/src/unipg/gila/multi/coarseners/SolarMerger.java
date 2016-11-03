@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.datastructures.LongWritableSet;
 import unipg.gila.common.datastructures.SetWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritableSet;
 import unipg.gila.common.multi.PathWritable;
@@ -105,7 +106,7 @@ public class SolarMerger{
 
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
 			if(vertex.getValue().isAsteroid() && Math.random() < sunChance){
 				vertex.getValue().setAsSun();
@@ -119,8 +120,8 @@ public class SolarMerger{
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -135,7 +136,7 @@ public class SolarMerger{
 		
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
 
 			if(vertex.getValue().isAssigned())
@@ -186,7 +187,7 @@ public class SolarMerger{
 
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(vertex.getValue().isSun() && !vertex.getValue().isAssigned()){
 				SolarMessage sunBroadcast = new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER);
@@ -203,8 +204,8 @@ public class SolarMerger{
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -220,8 +221,8 @@ public class SolarMerger{
 		@Override
 		public void initialize(
 				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
+				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
 				WorkerGlobalCommUsage workerGlobalCommUsage,
 				WorkerContext workerContext) {
 			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -231,7 +232,7 @@ public class SolarMerger{
 		@SuppressWarnings({ "unchecked" })
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException{
 
 			if(!vertex.getValue().isAsteroid() || vertex.getValue().isAssigned())
@@ -346,7 +347,7 @@ public class SolarMerger{
 		}
 
 		@SuppressWarnings("unchecked")
-		protected void refuseOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex, SolarMessage refusedSun){
+		protected void refuseOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex, SolarMessage refusedSun){
 			//INFORM MY SUN THAT AN OFFER HAS BEEN REFUSED
 			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
 			smForMySun.addToExtraPayload(vertex.getId(), refusedSun.getWeight());
@@ -369,7 +370,7 @@ public class SolarMerger{
 			aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 		}
 
-		protected void ackAndPropagateSunOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex, AstralBodyCoordinateWritable value,
+		protected void ackAndPropagateSunOffer(Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex, AstralBodyCoordinateWritable value,
 				SolarMessage chosenOne){
 			//ACK THE SUN OFFER
 			SolarMessage smg = new SolarMessage(vertex.getId(), 1, chosenOne.getValue().copy(), CODE.ACCEPTOFFER);
@@ -389,7 +390,7 @@ public class SolarMerger{
 
 	public static class RegimeMerger extends PlanetResponse{
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException{
 			AstralBodyCoordinateWritable value = vertex.getValue();
 			Iterator<SolarMessage> msgIterator;
@@ -471,7 +472,7 @@ public class SolarMerger{
 
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
 			AstralBodyCoordinateWritable value = vertex.getValue();
 			if(!value.isSun()){
@@ -494,7 +495,7 @@ public class SolarMerger{
 		@SuppressWarnings("unchecked")
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) {
 			Iterator<SolarMessage> messages = msgs.iterator();
 			AstralBodyCoordinateWritable value = vertex.getValue();
@@ -541,7 +542,7 @@ public class SolarMerger{
 		 */
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
 			if(vertex.getValue().isAsteroid()){
 				aggregate(SolarMergerRoutine.asteroidsRemoved, new BooleanWritable(false));
@@ -556,7 +557,7 @@ public class SolarMerger{
 
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(!vertex.getValue().isSun())
 				return;
@@ -581,13 +582,13 @@ public class SolarMerger{
 					vertex.getId().getId(), 
 					vertex.getId().getLayer()+1);
 
-			addEdgeRequest(vertex.getId(), EdgeFactory.create(homologousId, new IntWritable(1)));					
+			addEdgeRequest(vertex.getId(), EdgeFactory.create(homologousId, new SpTreeEdgeValue(1)));					
 			
-			ByteArrayEdges<LayeredPartitionedLongWritable, IntWritable> outEdges = new ByteArrayEdges<LayeredPartitionedLongWritable, IntWritable>();
+			ByteArrayEdges<LayeredPartitionedLongWritable, SpTreeEdgeValue> outEdges = new ByteArrayEdges<LayeredPartitionedLongWritable, SpTreeEdgeValue>();
 			outEdges.setConf(getSpecialConf());
 
-			List<Edge<LayeredPartitionedLongWritable, IntWritable>> edgeList = new LinkedList<Edge<LayeredPartitionedLongWritable, IntWritable>>();
-			edgeList.add(EdgeFactory.create(vertex.getId(), new IntWritable(1)));
+			List<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edgeList = new LinkedList<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>>();
+			edgeList.add(EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(1)));
 			int counter = 0;
 			int weightCounter = 0;
 			
@@ -603,7 +604,7 @@ public class SolarMerger{
 					if(logMerger)
 						log.info("connecting vertex " + neighborSun);
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
-							(IntWritable)current.getValue()));
+							(SpTreeEdgeValue)current.getValue()));
 //					weightCounter += ((IntWritable)current.getValue()).get();
 					weightCounter = Math.max(weightCounter, ((IntWritable)current.getValue()).get());
 					counter++;
@@ -631,7 +632,7 @@ public class SolarMerger{
 
 		@Override
 		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 				Iterable<SolarMessage> msgs) throws IOException {
 			vertex.getValue().resetAssigned();
 		}

@@ -29,41 +29,40 @@ import org.apache.hadoop.io.Writable;
  */
 public class FloatWritableArray implements Writable {
 
-	private float[] internalState;
-	
-	public FloatWritableArray() {
-	}
-	
-	public FloatWritableArray(float[] in){
-		internalState = new float[in.length];
-		for(int i=0; i<in.length; i++)
-			internalState[i] = in[i];
-	}
-	
-	public float[] get(){
-		return internalState;
-	}
-	
-	public void readFields(DataInput in) throws IOException {
-		int length = in.readInt();
-		internalState = new float[length];
-		for(int i=0; i<length; i++)
-			internalState[i] = in.readFloat();
-	}
+  private float[] internalState;
 
-	public void write(DataOutput out) throws IOException {
-		out.writeInt(internalState.length);
-		for(int i=0; i<internalState.length; i++)
-			out.writeFloat(internalState[i]);
-	}
+  public FloatWritableArray() {
+  }
 
-	@Override
-	public String toString() {
-		String result = "";
-		for(float f : internalState)
-			result += result.equals("") ? f : ", " + f;
-		return result;
-	}
+  public FloatWritableArray(float[] in) {
+    internalState = new float[in.length];
+    for (int i = 0; i < in.length; i++)
+      internalState[i] = in[i];
+  }
 
+  public float[] get() {
+    return internalState;
+  }
+
+  public void readFields(DataInput in) throws IOException {
+    int length = in.readInt();
+    internalState = new float[length];
+    for (int i = 0; i < length; i++)
+      internalState[i] = in.readFloat();
+  }
+
+  public void write(DataOutput out) throws IOException {
+    out.writeInt(internalState.length);
+    for (int i = 0; i < internalState.length; i++)
+      out.writeFloat(internalState[i]);
+  }
+
+  @Override
+  public String toString() {
+    String result = "";
+    for (float f : internalState)
+      result += result.equals("") ? f : ", " + f;
+    return result;
+  }
 
 }

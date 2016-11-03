@@ -28,92 +28,102 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import unipg.gila.partitioning.PrefixHashPartitionerFactory;
+import unipg.gila.common.partitioning.PrefixHashPartitionerFactory;
 
 /**
- * This class is used to launch the job. It is a copy of the class "Giraph Runner" in package "org.apache.giraph" with the 
- * sole exception of the "setupGiraphConf" method, used to set the partitioner class.
- * 	
+ * This class is used to launch the job. It is a copy of the class
+ * "Giraph Runner" in package "org.apache.giraph" with the sole exception of the
+ * "setupGiraphConf" method, used to set the partitioner class.
+ * 
  * @author general
  *
  */
-public class GilaRunner implements Tool{
-	
-	  static {
-	    Configuration.addDefaultResource("giraph-site.xml");
-	  }
+public class GilaRunner implements Tool {
 
-	  /** Writable conf */
-	  private Configuration conf;
+  static {
+    Configuration.addDefaultResource("giraph-site.xml");
+  }
 
-	  public Configuration getConf() {
-	    return conf;
-	  }
+  /** Writable conf */
+  private Configuration conf;
 
-	  public void setConf(Configuration conf) {
-	    this.conf = conf;
-	  }
+  public Configuration getConf() {
+    return conf;
+  }
 
-	  /**
-	   * Drives a job run configured for "Giraph on Hadoop MR cluster"
-	   * @param args the command line arguments
-	   * @return job run exit code
-	   */
-	  public int run(String[] args) throws Exception {
-	    if (null == getConf()) { // for YARN profile
-	      conf = new Configuration();
-	    }
-	    GiraphConfiguration giraphConf = new GiraphConfiguration(getConf());
-	    setupGiraphConf(giraphConf);
-	    CommandLine cmd = ConfigurationUtils.parseArgs(giraphConf, args);
-	    if (null == cmd) {
-	      return 0; // user requested help/info printout, don't run a job.
-	    }
-	    // set up job for various platforms
-	    final String vertexClassName = args[0];
-	    final String jobName = "Giraph: " + vertexClassName;
-	    /*if[PURE_YARN]
-	    GiraphYarnClient job = new GiraphYarnClient(giraphConf, jobName);
-	    else[PURE_YARN]*/
-	    GiraphJob job = new GiraphJob(giraphConf, jobName);
-	    prepareHadoopMRJob(job, cmd);
-	    /*end[PURE_YARN]*/
+  public void setConf(Configuration conf) {
+    this.conf = conf;
+  }
 
-	    boolean verbose = !cmd.hasOption('q');
-	    return job.run(verbose) ? 0 : -1;
-	  }
+  /**
+   * Drives a job run configured for "Giraph on Hadoop MR cluster"
+   * 
+   * @param args
+   *          the command line arguments
+   * @return job run exit code
+   */
+  public int run(String[] args) throws Exception {
+    if (null == getConf()) { // for YARN profile
+      conf = new Configuration();
+    }
+    GiraphConfiguration giraphConf = new GiraphConfiguration(getConf());
+    setupGiraphConf(giraphConf);
+    CommandLine cmd = ConfigurationUtils.parseArgs(giraphConf, args);
+    if (null == cmd) {
+      return 0; // user requested help/info printout, don't run a job.
+    }
+    // set up job for various platforms
+    final String vertexClassName = args[0];
+    final String jobName = "Giraph: " + vertexClassName;
+    /*
+     * if[PURE_YARN] GiraphYarnClient job = new GiraphYarnClient(giraphConf,
+     * jobName); else[PURE_YARN]
+     */
+    GiraphJob job = new GiraphJob(giraphConf, jobName);
+    prepareHadoopMRJob(job, cmd);
+    /* end[PURE_YARN] */
 
-	  private void setupGiraphConf(GiraphConfiguration giraphConf) {
-		    giraphConf.setGraphPartitionerFactoryClass(PrefixHashPartitionerFactory.class);
-	}
+    boolean verbose = !cmd.hasOption('q');
+    return job.run(verbose) ? 0 : -1;
+  }
 
-	/**
-	   * Populate internal Hadoop Job (and Giraph IO Formats) with Hadoop-specific
-	   * configuration/setup metadata, propagating exceptions to calling code.
-	   * @param job the GiraphJob object to help populate Giraph IO Format data.
-	   * @param cmd the CommandLine for parsing Hadoop MR-specific args.
-	   */
-	  private void prepareHadoopMRJob(final GiraphJob job, final CommandLine cmd)
-	    throws Exception {
-	    if (cmd.hasOption("vof")) {
-	      if (cmd.hasOption("op")) {
-	        FileOutputFormat.setOutputPath(job.getInternalJob(),
-	          new Path(cmd.getOptionValue("op")));
-	      }
-	    }
-	    if (cmd.hasOption("cf")) {
-	      DistributedCache.addCacheFile(new URI(cmd.getOptionValue("cf")),
-	          job.getConfiguration());
-	    }
-	  }
+  private void setupGiraphConf(GiraphConfiguration giraphConf) {
+    giraphConf
+            .setGraphPartitionerFactoryClass(PrefixHashPartitionerFactory.class);
+  }
 
-	  /**
-	   * Execute GiraphRunner.
-	   *
-	   * @param args Typically command line arguments.
-	   * @throws Exception Any exceptions thrown.
-	   */
-	  public static void main(String[] args) throws Exception {
-	    System.exit(ToolRunner.run(new GilaRunner(), args));
-	  }
+  /**
+   * Populate internal Hadoop Job (and Giraph IO Formats) with Hadoop-specific
+   * configuration/setup metadata, propagating exceptions to calling code.
+   * 
+   * @param job
+   *          the GiraphJob object to help populate Giraph IO Format data.
+   * @param cmd
+   *          the CommandLine for parsing Hadoop MR-specific args.
+   */
+  private void prepareHadoopMRJob(final GiraphJob job, final CommandLine cmd)
+          throws Exception {
+    if (cmd.hasOption("vof")) {
+      if (cmd.hasOption("op")) {
+        FileOutputFormat.setOutputPath(job.getInternalJob(),
+                new Path(cmd.getOptionValue("op")));
+      }
+    }
+    if (cmd.hasOption("cf")) {
+      DistributedCache.addCacheFile(new URI(cmd.getOptionValue("cf")),
+              job.getConfiguration());
+    }
+  }
+
+  /**
+   * Execute GiraphRunner.
+   *
+   * @param args
+   *          Typically command line arguments.
+   * @throws Exception
+   *           Any exceptions thrown.
+   */
+  public static void main(String[] args) throws Exception {
+    System.exit(ToolRunner.run(new GilaRunner(), args));
+  }
 }

@@ -35,12 +35,13 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 
 public abstract class MultiScaleComputation<Z extends Writable, P extends MessageWritable, T extends MessageWritable> extends
-AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
+AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
 
 	//LOGGER
 	public static final String multiscaleLogString = "multi.showLog";
@@ -52,7 +53,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 
 	@Override	
 	public void compute(
-			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
 			Iterable<P> msgs) throws IOException {
 		if(vertex.getId().getLayer() != currentLayer)
 			return;
@@ -66,8 +67,8 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 	@Override
 	public void initialize(
 			GraphState graphState,
-			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, Z, IntWritable> workerClientRequestProcessor,
-			GraphTaskManager<LayeredPartitionedLongWritable, Z, IntWritable> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
@@ -76,30 +77,30 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 		showLog = getConf().getBoolean(multiscaleLogString, false);
 	}
 
-	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
 			Iterable<P> msgs) throws IOException;
 
 	/* (non-Javadoc)
 	 * @see org.apache.giraph.conf.DefaultImmutableClassesGiraphConfigurable#getConf()
 	 */
 	@SuppressWarnings("unchecked")
-	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, IntWritable> getSpecialConf() {
+	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, SpTreeEdgeValue> getSpecialConf() {
 		// TODO Auto-generated method stub
-		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, IntWritable>) super.getConf();
+		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, SpTreeEdgeValue>) super.getConf();
 	}
 
-	public void sendMessageWithWeight(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+	public void sendMessageWithWeight(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
 						LayeredPartitionedLongWritable id, T msg){
 //		MessageWritable w = (MessageWritable) msg;
-		msg.addToWeight(((IntWritable)vertex.getEdgeValue(id)).get());
-//		log.info("sendind " + msg);
+		msg.addToWeight((vertex.getEdgeValue(id)).getValue());
+//		log.info("sendind " + msg);		
 		sendMessage(id, msg);
 	}
 
 	/**
 	 * 
 	 */
-	public void sendMessageToMultipleEdgesWithWeight(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex, Iterator<LayeredPartitionedLongWritable> vertexIdIterator, T message) {
+	public void sendMessageToMultipleEdgesWithWeight(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex, Iterator<LayeredPartitionedLongWritable> vertexIdIterator, T message) {
 		while(vertexIdIterator.hasNext()){
 			MessageWritable messageCopy = message.copy();
 			sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)messageCopy);
@@ -110,12 +111,12 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 	 * 
 	 */
 	public void sendMessageToAllEdgesWithWeight(
-			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
 			T message) {
-		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
+		Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
 		while(edges.hasNext()){			
 			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-			if(current.getLayer() == currentLayer)
+			if(current.getLayer() == currentLayer  && !vertex.getEdgeValue(current).isSpanningTree())
 				sendMessageWithWeight(vertex, current, (T) message.copy());
 		}
 	}
@@ -125,12 +126,12 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 	 */
 	@Override
 	public void sendMessageToAllEdges(
-			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
 			T message) {
-		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
+		Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
 		while(edges.hasNext()){
 			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-			if(current.getLayer() == currentLayer)
+			if(current.getLayer() == currentLayer && !vertex.getEdgeValue(current).isSpanningTree())
 				sendMessage(current, message);
 		}
 	}

@@ -35,6 +35,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
@@ -60,7 +61,7 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 	 */
 	@Override
 	protected void vertexInLayerComputation(
-			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 			Iterable<LayoutMessage> msgs) throws IOException {
 		boolean found = false;
 		Iterator<LayoutMessage> ms = msgs.iterator();
@@ -94,7 +95,7 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 						sendMessage(current.getPayloadVertex().copy(), (LayoutMessage)current.propagateAndDie());
 					}else{
 						float angle = new Float(Math.random()*Math.PI*2);
-						float desiredDistance = ((IntWritable)vertex.getEdgeValue(current.getPayloadVertex())).get()*k;
+						float desiredDistance = vertex.getEdgeValue(current.getPayloadVertex()).getValue()*k;
 						float[] blanks = new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
 								myCoords[1] + new Float(Math.sin(angle)*desiredDistance)};
 						if(SolarPlacerRoutine.logPlacer)
@@ -114,8 +115,8 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 	@Override
 	public void initialize(
 			GraphState graphState,
-			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,

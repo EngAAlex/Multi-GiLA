@@ -23,6 +23,7 @@ import java.util.Iterator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactory;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -34,111 +35,111 @@ import unipg.gila.common.datastructures.LongWritableSet;
  * @author Alessio Arleo
  *
  */
-public class MiniCoordinateWritable implements Writable, WritableFactory{
+public class MiniCoordinateWritable implements Writable, WritableFactory {
 
-	/**
-	 * The vertex X coordinate.
-	 */
-	protected float x;
-	/**
-	 * The vertex Y coordinate.
-	 */
-	protected float y;
-	/**
-	 * A set containing the ids of its one degree neighbors.
-	 */
-	protected LongWritableSet oneEdges;
-	
-	/**
-	 * The connected component index the vertex belongs to.
-	 */
-	protected int component;
+  Logger log = Logger.getLogger(this.getClass());
 
-	public MiniCoordinateWritable() {
-		x = 0.0f;
-		y = 0.0f;
-		component = -1;
-		oneEdges = new LongWritableSet();
-	}
-	
-	public MiniCoordinateWritable(float x, float y, int component){
-		this.x = x;
-		this.y = y;
-		this.component = component;
-		oneEdges = new LongWritableSet();
+  /**
+   * The vertex X coordinate.
+   */
+  protected float x;
+  /**
+   * The vertex Y coordinate.
+   */
+  protected float y;
+  /**
+   * A set containing the ids of its one degree neighbors.
+   */
+  protected LongWritableSet oneEdges;
 
-	}
+  /**
+   * The connected component index the vertex belongs to.
+   */
+  protected int component;
 
-	public MiniCoordinateWritable(float x, float y, JSONArray oEs, int component) throws JSONException{
-		this(x,y,component);
-		oneEdges = new LongWritableSet();
-		
-		for(int i=0; i<oEs.length(); i++)
-			oneEdges.addElement(new LongWritable(oEs.getLong(i)));
-	}
+  public MiniCoordinateWritable() {
+    x = 0.0f;
+    y = 0.0f;
+    component = -1;
+    oneEdges = new LongWritableSet();
+  }
 
-	public float[] getCoordinates(){
-		return new float[]{x, y};
-	}
-	
-	public void setCoordinates(float x, float y) {
-		this.x = x;
-		this.y = y;
-	}
-	
-	public int getOneDegreeVerticesQuantity() {
-		if(oneEdges == null)
-			return 0;
-		return oneEdges.size();
-	}
-	
-	public int getWeight(){
-		return getOneDegreeVerticesQuantity() + 1;
-	}
+  public MiniCoordinateWritable(float x, float y, int component) {
+    this.x = x;
+    this.y = y;
+    this.component = component;
+    oneEdges = new LongWritableSet();
+    log.info("Createted MCW witn coords " + x + " " + y);
+  }
 
-	/**
-	 * Returns an iterator on the one degree neighbors ids of the vertex.
-	 * @return Iterator on the one degree neighbors ids.
-	 */
-	@SuppressWarnings("unchecked")
-	public Iterator<LongWritable> getOneDegreeVertices(){
-		return (Iterator<LongWritable>) oneEdges.iterator();
-	}
-	
-	public void setComponent(int component){
-		this.component = component;
-	}
-	
-	public int getComponent() {
-		return component;
-	}
+  public MiniCoordinateWritable(float x, float y, JSONArray oEs, int component)
+          throws JSONException {
+    this(x, y, component);
+    oneEdges = new LongWritableSet();
 
-	public void readFields(DataInput in) throws IOException {
-		x = in.readFloat();
-		y = in.readFloat();
-//		if(in.readBoolean()){
-			oneEdges.readFields(in);
-//		}
-		component = in.readInt();
-	}
+    for (int i = 0; i < oEs.length(); i++)
+      oneEdges.addElement(new LongWritable(oEs.getLong(i)));
+  }
 
-	public void write(DataOutput out) throws IOException {
-		out.writeFloat(x);
-		out.writeFloat(y);
-//		if(getOneDegreeVerticesQuantity() == 0)
-//			out.writeBoolean(false);
-//		else{
-//			out.writeBoolean(true);
-			oneEdges.write(out);
-//		}
-		out.writeInt(component);
-	}
+  public float[] getCoordinates() {
+    log.info("Returning new float " + x + y);
+    return new float[] { x, y };
+  }
 
-	/* (non-Javadoc)
-	 * @see org.apache.hadoop.io.WritableFactory#newInstance()
-	 */
-	public Writable newInstance() {
-		return new MiniCoordinateWritable();
-	}
+  public void setCoordinates(float x, float y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  public int getOneDegreeVerticesQuantity() {
+    if (oneEdges == null)
+      return 0;
+    return oneEdges.size();
+  }
+
+  public int getWeight() {
+    return getOneDegreeVerticesQuantity() + 1;
+  }
+
+  /**
+   * Returns an iterator on the one degree neighbors ids of the vertex.
+   * 
+   * @return Iterator on the one degree neighbors ids.
+   */
+  @SuppressWarnings("unchecked")
+  public Iterator<LongWritable> getOneDegreeVertices() {
+    return (Iterator<LongWritable>) oneEdges.iterator();
+  }
+
+  public void setComponent(int component) {
+    this.component = component;
+  }
+
+  public int getComponent() {
+    return component;
+  }
+
+  public void readFields(DataInput in) throws IOException {
+    x = in.readFloat();
+    y = in.readFloat();
+    oneEdges.readFields(in);
+    component = in.readInt();
+  }
+
+  public void write(DataOutput out) throws IOException {
+    out.writeFloat(x);
+    out.writeFloat(y);
+    oneEdges.write(out);
+    out.writeInt(component);
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.hadoop.io.WritableFactory#newInstance()
+   */
+  public Writable newInstance() {
+    return new MiniCoordinateWritable();
+  }
 
 }

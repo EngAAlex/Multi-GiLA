@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package unipg.gila.partitioning;
+package unipg.gila.common.partitioning;
 
 import org.apache.giraph.conf.ImmutableClassesGiraphConfiguration;
 import org.apache.giraph.partition.GraphPartitionerFactory;
@@ -30,29 +30,26 @@ import org.apache.hadoop.io.WritableComparable;
  */
 @SuppressWarnings("rawtypes")
 public class PrefixHashPartitionerFactory<I extends WritableComparable, V extends Writable, E extends Writable>
-		implements GraphPartitionerFactory<I, V, E> {
-	/** Saved configuration */
-	private ImmutableClassesGiraphConfiguration conf;
+        implements GraphPartitionerFactory<I, V, E> {
+  /** Saved configuration */
+  private ImmutableClassesGiraphConfiguration conf;
 
-	
-	public MasterGraphPartitioner<I, V, E> createMasterGraphPartitioner() {
-		return new HashMasterPartitioner<I, V, E>(getConf());
-	}
+  public MasterGraphPartitioner<I, V, E> createMasterGraphPartitioner() {
+    return new HashMasterPartitioner<I, V, E>(getConf());
+  }
 
-	
-	public WorkerGraphPartitioner<I, V, E> createWorkerGraphPartitioner() {
-		return new PrefixHashWorkerPartitioner<I, V, E>();
-	}
+  public WorkerGraphPartitioner<I, V, E> createWorkerGraphPartitioner() {
+    return new PrefixHashWorkerPartitioner<I, V, E>();
+  }
 
+  public ImmutableClassesGiraphConfiguration getConf() {
+    return conf;
+  }
 
-	public ImmutableClassesGiraphConfiguration getConf() {
-		return conf;
-	}
+  public void setConf(ImmutableClassesGiraphConfiguration conf) {
+    this.conf = conf;
+  }
 
-
-	public void setConf(ImmutableClassesGiraphConfiguration conf) {
-		this.conf = conf;
-	}
-
-  public void initialize(LocalData<I, V, E, ? extends Writable> localData) { }
+  public void initialize(LocalData<I, V, E, ? extends Writable> localData) {
+  }
 }

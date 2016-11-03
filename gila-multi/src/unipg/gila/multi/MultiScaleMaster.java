@@ -18,7 +18,6 @@
  */
 package unipg.gila.multi;
 
-import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -96,11 +95,9 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
 			adaptationStrategy = tClass.getConstructor().newInstance();
 		} catch (Exception e) {
-			log.info("Caught exceptione, sweithcin to default");
+			log.info("Caught exceptione, swithcing to default");
 			adaptationStrategy = new SizeAndDensityDrivenAdaptationStrategy();
 		} 
-
-		registerPersistentAggregator(LayoutRoutine.ttlMaxAggregator, IntMaxAggregator.class);
 
 	}
 

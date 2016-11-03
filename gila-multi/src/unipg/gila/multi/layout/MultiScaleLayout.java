@@ -19,10 +19,13 @@
 package unipg.gila.multi.layout;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.edge.Edge;
+import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -33,6 +36,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
@@ -51,269 +55,306 @@ import unipg.gila.multi.coarseners.SolarMergerRoutine;
  */
 public class MultiScaleLayout {
 
-	protected static Logger log = Logger.getLogger(MultiScaleLayout.class);
+  protected static Logger log = Logger.getLogger(MultiScaleLayout.class);
 
-	protected static int currentLayer;	
-	
-	public static class Seeder extends AbstractSeeder<AstralBodyCoordinateWritable, IntWritable>{
+  protected static int currentLayer;	
 
-		private float k;
-		
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.AbstractSeeder#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-			k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-		}
+  public static class Seeder extends AbstractSeeder<AstralBodyCoordinateWritable, SpTreeEdgeValue>{
 
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.AbstractSeeder#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> messages) throws IOException {
-			if(vertex.getId().getLayer() != currentLayer)
-				return;
-			else{
-//				log.info(vertex.getId() + " computing hiuar");
-				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
-					throw new IOException("NAN detected");
-				super.compute(vertex, messages);
-			}
-		}
+    private float k;
 
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
-		 */
-		@Override
-		public void sendMessageToAllEdges(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				LayoutMessage message) {
-			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
-			while(edges.hasNext()){
-				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-				if(current.getLayer() != currentLayer)
-					continue;
-				aggregate(LayoutRoutine.max_K_agg, new FloatWritable(((IntWritable)vertex.getEdgeValue(current)).get()*k));
-				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
-				sendMessage(current, msgCopy);
-			}
-		}
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractSeeder#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+    }
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractSeeder#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> messages) throws IOException {
+      if(vertex.getId().getLayer() != currentLayer)
+        return;
+      else{
+        //				log.info(vertex.getId() + " computing hiuar");
+        if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
+          throw new IOException("NAN detected");
+        super.compute(vertex, messages);
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
+     */
+    @Override
+    public void sendMessageToAllEdges(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      LayoutMessage message) {
+      Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
+      while(edges.hasNext()){
+        LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+        if(current.getLayer() != currentLayer)
+          continue;
+        aggregate(LayoutRoutine.max_K_agg, new FloatWritable(vertex.getEdgeValue(current).getValue()*k));
+        LayoutMessage msgCopy = ((LayoutMessage)message).copy();
+        sendMessage(current, msgCopy);
+      }
+    }
+  }
+
+  public static class Propagator extends AbstractPropagator<AstralBodyCoordinateWritable, SpTreeEdgeValue>{
+
+    float modifier;
+    float maxK = Float.MIN_VALUE;
+
+    private HashSet<LayoutMessage> messageCache;
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractPropagator#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      modifier = getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault);
+      maxK = ((FloatWritable)getAggregatedValue(LayoutRoutine.max_K_agg)).get();
+    }
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractPropagator#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> messages) throws IOException {
+      if(vertex.getId().getLayer() != currentLayer)
+        return;
+      else{
+        //				if(LayoutRoutine.logLayout)
+        //					log.info(vertex.getId() + " computing hiuar");
+        if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
+          throw new IOException("NAN detected");
+        super.compute(vertex, messages);
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractPropagator#requestOptimalEdgeLength(org.apache.giraph.graph.Vertex, unipg.gila.common.datastructures.PartitionedLongWritable)
+     */
+    @Override
+    protected float requestOptimalSpringLength(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      LayeredPartitionedLongWritable currentPayload) {
+      if(LayoutRoutine.logLayout)
+        log.info("Suggesting a spring length of " + vertex.getEdgeValue(currentPayload).getValue()*k + " based on " + vertex.getEdgeValue(currentPayload).getValue() + " and " + k);
+      return vertex.getEdgeValue(currentPayload).getValue()*k;
+    }
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractPropagator#requestWalshawConstant()
+     */
+    @Override
+    protected float requestWalshawConstant() {
+      if(LayoutRoutine.logLayout)
+        log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
+        return (float) (Math.pow(maxK,2)*modifier);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
+     */
+    @Override
+    public void sendMessageToAllEdges(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      LayoutMessage message) {
+      messageCache.add(message);
+      //			Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
+      //			while(edges.hasNext()){
+      //				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
+      //				if(currentLayer != current.getLayer())
+      //					continue;
+      //				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
+      //				sendMessage(current, msgCopy);
+      //			}
+    }
+
+    /**
+     * @param message
+     */
+    public void sendMessageToAllSpanningTreeEdges(Set<LayoutMessage> messages, Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex){
+      Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> onEdges = vertex.getEdges().iterator();
+      HashSet<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> spTreeEdges = new HashSet<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>>();
+      while(onEdges.hasNext()){
+        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> current = onEdges.next();
+        if(current.getValue().isSpanningTree())
+          spTreeEdges.add(EdgeFactory.create(current.getTargetVertexId().copy(), new SpTreeEdgeValue(current.getValue())));
+      }
+      Iterator<LayoutMessage> onMessages = messages.iterator();
+      while(onMessages.hasNext()){
+        LayoutMessage currentMessage = onMessages.next();
+        Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> nestedIterator = spTreeEdges.iterator();
+        while(nestedIterator.hasNext()){
+          Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentSpTreeEdge = nestedIterator.next();
+          if(currentSpTreeEdge.getTargetVertexId().getId() != currentMessage.getSenderId()){
+            currentMessage.setSenderId(vertex.getId().getId());
+            sendMessage(currentSpTreeEdge.getTargetVertexId(), currentMessage);
+          }
+        }
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.AbstractPropagator#executePostMessageAction(org.apache.giraph.graph.Vertex)
+     */
+    @Override
+    protected
+    void
+    executePostMessageAction(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex) {
+      sendMessageToAllSpanningTreeEdges(messageCache, vertex);
+    }
+  }
+
+  public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<AstralBodyCoordinateWritable, SpTreeEdgeValue>
+  {
+
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> msgs) throws IOException {
+      if(vertex.getId().getLayer() != currentLayer)
+        return;
+      super.compute(vertex, msgs);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+
+    }
+  }
+
+  public static class MultiScaleGraphExplorerWithComponentsNo extends DrawingBoundariesExplorerWithComponentsNo<AstralBodyCoordinateWritable, SpTreeEdgeValue>
+  {
+
+    @Override
+    public void compute(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> msgs) throws IOException {
+      if(vertex.getId().getLayer() != currentLayer)
+        return;
+      super.compute(vertex, msgs);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+    }
+  }
+
+  public static class MultiScaleDrawingScaler extends DrawingScaler<AstralBodyCoordinateWritable, SpTreeEdgeValue>
+  {
 
 
-	}
+    /* (non-Javadoc)
+     * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+    }
 
-	public static class Propagator extends AbstractPropagator<AstralBodyCoordinateWritable, IntWritable>{
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.LayoutRoutine.DrawingScaler#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> msgs) throws IOException {
+      if(vertex.getId().getLayer() != currentLayer)
+        return;
+      super.compute(vertex, msgs);
+    }
+  }
 
-		float modifier;
-		float maxK = Float.MIN_VALUE;
-		
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.AbstractPropagator#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-			modifier = getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault);
-			maxK = ((FloatWritable)getAggregatedValue(LayoutRoutine.max_K_agg)).get();
-		}
+  public static class MultiScaleLayoutCC extends LayoutCCs<AstralBodyCoordinateWritable, SpTreeEdgeValue>
+  {
 
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.AbstractPropagator#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> messages) throws IOException {
-			if(vertex.getId().getLayer() != currentLayer)
-				return;
-			else{
-//				if(LayoutRoutine.logLayout)
-//					log.info(vertex.getId() + " computing hiuar");
-				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
-					throw new IOException("NAN detected");
-				super.compute(vertex, messages);
-			}
-		}
+    /* (non-Javadoc)
+     * @see unipg.gila.layout.LayoutRoutine.LayoutCCs#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    public void compute(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> msgs) throws IOException {
+      if(vertex.getId().getLayer() != currentLayer)
+        return;
+      super.compute(vertex, msgs);
+    }
 
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.AbstractPropagator#requestOptimalEdgeLength(org.apache.giraph.graph.Vertex, unipg.gila.common.datastructures.PartitionedLongWritable)
-		 */
-		@Override
-		protected float requestOptimalSpringLength(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				LayeredPartitionedLongWritable currentPayload) {
-			if(LayoutRoutine.logLayout)
-				log.info("Suggesting a spring length of " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k + " based on " + ((IntWritable)vertex.getEdgeValue(currentPayload)).get() + " and " + k);
-				return ((IntWritable)vertex.getEdgeValue(currentPayload)).get()*k;
-		}
-		
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.AbstractPropagator#requestWalshawConstant()
-		 */
-		@Override
-		protected float requestWalshawConstant() {
-			if(LayoutRoutine.logLayout)
-				log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
-			return (float) (Math.pow(maxK,2)*modifier);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
-		 */
-		@Override
-		public void sendMessageToAllEdges(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				LayoutMessage message) {
-			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
-			while(edges.hasNext()){
-				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-				if(currentLayer != current.getLayer())
-					continue;
-				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
-				sendMessage(current, msgCopy);
-			}
-		}
-	}
-
-	public static class MultiScaleGraphExplorer extends DrawingBoundariesExplorer<AstralBodyCoordinateWritable, IntWritable>
-	{
-
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() != currentLayer)
-				return;
-			super.compute(vertex, msgs);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-
-		}
-	}
-
-	public static class MultiScaleGraphExplorerWithComponentsNo extends DrawingBoundariesExplorerWithComponentsNo<AstralBodyCoordinateWritable, IntWritable>
-	{
-
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() != currentLayer)
-				return;
-			super.compute(vertex, msgs);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-		}
-	}
-
-	public static class MultiScaleDrawingScaler extends DrawingScaler<AstralBodyCoordinateWritable, IntWritable>
-	{
-
-
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-		}
-
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.LayoutRoutine.DrawingScaler#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() != currentLayer)
-				return;
-			super.compute(vertex, msgs);
-		}
-	}
-
-	public static class MultiScaleLayoutCC extends LayoutCCs<AstralBodyCoordinateWritable, IntWritable>
-	{
-		
-		/* (non-Javadoc)
-		 * @see unipg.gila.layout.LayoutRoutine.LayoutCCs#compute(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		public void compute(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getId().getLayer() != currentLayer)
-				return;
-			super.compute(vertex, msgs);
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();;
-		}
-	}
+    /* (non-Javadoc)
+     * @see org.apache.giraph.graph.AbstractComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();;
+    }
+  }
 
 }

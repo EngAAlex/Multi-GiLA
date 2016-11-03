@@ -32,115 +32,115 @@ import org.apache.log4j.Logger;
  *
  */
 public class PartitioningVertexValue implements Writable {
-	private short currentPartition = -1;
-	private short newPartition = -1;
-	private float[] coords;
-	private LongWritableSet oneEdges;
-	private long component = -1;
-	
-	public PartitioningVertexValue() {
-	}
-	
-	public PartitioningVertexValue(float[] coords) {
-		this();
-		this.coords = coords;
-	}
+  private short currentPartition = -1;
+  private short newPartition = -1;
+  private float[] coords;
+  private LongWritableSet oneEdges;
+  private long component = -1;
 
-	public short getCurrentPartition() {
-		return currentPartition;
-	}
+  public PartitioningVertexValue() {
+  }
 
-	public void setCurrentPartition(short p) {
-		currentPartition = p;
-	}
+  public PartitioningVertexValue(float[] coords) {
+    this();
+    this.coords = coords;
+  }
 
-	public short getNewPartition() {
-		return newPartition;
-	}
+  public short getCurrentPartition() {
+    return currentPartition;
+  }
 
-	public void setNewPartition(short p) {
-		newPartition = p;
-	}	
+  public void setCurrentPartition(short p) {
+    currentPartition = p;
+  }
 
-	public long getComponent() {
-		return component;
-	}
+  public short getNewPartition() {
+    return newPartition;
+  }
 
-	public void setComponent(long component) {
-		this.component = component;
-	}
-	
-	public void addOneEdge(long id){
-		if(oneEdges == null)
-			oneEdges = new LongWritableSet();
-		oneEdges.addElement(new LongWritable(id));
-	}
-	
-	@SuppressWarnings("unchecked")
-	public Iterator<LongWritable> getOneEdges(){
-		if(getOneEdgesNo() == 0)
-			return null;
-		return (Iterator<LongWritable>) oneEdges.iterator();
-	}
-	
-	public int getOneEdgesNo() {
-		if(oneEdges != null)
-			return oneEdges.size();
-		return 0;
-	}
+  public void setNewPartition(short p) {
+    newPartition = p;
+  }
 
-	public float[] getCoords() {
-		return coords;
-	}
+  public long getComponent() {
+    return component;
+  }
 
-	public void readFields(DataInput in) throws IOException {
-		currentPartition = in.readShort();
-		newPartition = in.readShort();
-		component = in.readLong();
-		if(in.readBoolean()){
-			oneEdges = new LongWritableSet();
-			oneEdges.readFields(in);
-		}
-		if(in.readBoolean())
-			coords = new float[]{in.readFloat(), in.readFloat()};
-	}
+  public void setComponent(long component) {
+    this.component = component;
+  }
 
-	public void write(DataOutput out) throws IOException {
-		out.writeShort(currentPartition);
-		out.writeShort(newPartition);
-		out.writeLong(component);
-		if(getOneEdgesNo() == 0)
-			out.writeBoolean(false);
-		else
-			oneEdges.write(out);
-		if(coords == null)
-			out.writeBoolean(false);
-		else{
-			out.writeBoolean(true);
-			out.writeFloat(coords[0]);
-			out.writeFloat(coords[1]);
-		}
-	}
+  public void addOneEdge(long id) {
+    if (oneEdges == null)
+      oneEdges = new LongWritableSet();
+    oneEdges.addElement(new LongWritable(id));
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		PartitioningVertexValue that = (PartitioningVertexValue) o;
-		if (currentPartition != that.currentPartition
-				|| newPartition != that.newPartition) {
-			return false;
-		}
-		return true;
-	}
+  @SuppressWarnings("unchecked")
+  public Iterator<LongWritable> getOneEdges() {
+    if (getOneEdgesNo() == 0)
+      return null;
+    return (Iterator<LongWritable>) oneEdges.iterator();
+  }
 
-	@Override
-	public String toString() {
-		return getCurrentPartition() + " " + getNewPartition();
-	}
+  public int getOneEdgesNo() {
+    if (oneEdges != null)
+      return oneEdges.size();
+    return 0;
+  }
+
+  public float[] getCoords() {
+    return coords;
+  }
+
+  public void readFields(DataInput in) throws IOException {
+    currentPartition = in.readShort();
+    newPartition = in.readShort();
+    component = in.readLong();
+    if (in.readBoolean()) {
+      oneEdges = new LongWritableSet();
+      oneEdges.readFields(in);
+    }
+    if (in.readBoolean())
+      coords = new float[] { in.readFloat(), in.readFloat() };
+  }
+
+  public void write(DataOutput out) throws IOException {
+    out.writeShort(currentPartition);
+    out.writeShort(newPartition);
+    out.writeLong(component);
+    if (getOneEdgesNo() == 0)
+      out.writeBoolean(false);
+    else
+      oneEdges.write(out);
+    if (coords == null)
+      out.writeBoolean(false);
+    else {
+      out.writeBoolean(true);
+      out.writeFloat(coords[0]);
+      out.writeFloat(coords[1]);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PartitioningVertexValue that = (PartitioningVertexValue) o;
+    if (currentPartition != that.currentPartition
+            || newPartition != that.newPartition) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return getCurrentPartition() + " " + getNewPartition();
+  }
 
 }

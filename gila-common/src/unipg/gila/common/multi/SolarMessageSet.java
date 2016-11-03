@@ -30,31 +30,37 @@ import unipg.gila.common.datastructures.SetWritable;
  */
 public class SolarMessageSet extends SetWritable<SolarMessage> {
 
-	/**
-	 * Parameter-less constructor.
-	 * 
-	 */
-	public SolarMessageSet() {
-		internalState = new HashSet<SolarMessage>();
-	}
-	
-	/**
-	 * This constructor will return a new LongWritableSet which is an exact copy of the given set.
-	 * 
-	 * @param toCopy the set to copy.
-	 */
-	public SolarMessageSet(SolarMessageSet toCopy){
-		internalState = new HashSet<SolarMessage>(toCopy.get());
-	}
+  /**
+   * Parameter-less constructor.
+   * 
+   */
+  public SolarMessageSet() {
+    internalState = new HashSet<SolarMessage>();
+  }
 
-	/* (non-Javadoc)
-	 * @see unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput)
-	 */
-	@Override
-	protected SolarMessage specificRead(DataInput in) throws IOException {
-		SolarMessage sm = new SolarMessage();
-		sm.readFields(in);
-		return sm;
-	}
-	
+  /**
+   * This constructor will return a new LongWritableSet which is an exact copy
+   * of the given set.
+   * 
+   * @param toCopy
+   *          the set to copy.
+   */
+  public SolarMessageSet(SolarMessageSet toCopy) {
+    internalState = new HashSet<SolarMessage>(toCopy.get());
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput
+   * )
+   */
+  @Override
+  protected SolarMessage specificRead(DataInput in) throws IOException {
+    SolarMessage sm = new SolarMessage();
+    sm.readFields(in);
+    return sm;
+  }
+
 }

@@ -22,28 +22,28 @@ import unipg.gila.common.datastructures.LongWritableSet;
 
 public class LongWritableSetAggregator implements Aggregator<LongWritableSet> {
 
-	Logger log = Logger.getLogger(getClass());
-	
-	private LongWritableSet internalState;
-	
-	public void aggregate(LongWritableSet in) {
-		internalState.addAll(in);
-	}
+  Logger log = Logger.getLogger(getClass());
 
-	public LongWritableSet createInitialValue() {
-		return new LongWritableSet();
-	}
+  private LongWritableSet internalState;
 
-	public LongWritableSet getAggregatedValue() {
-		return internalState;
-	}
+  public void aggregate(LongWritableSet in) {
+    internalState.addAll(in);
+  }
 
-	public void reset() {
-		internalState.clear();
-	}
+  public LongWritableSet createInitialValue() {
+    return new LongWritableSet();
+  }
 
-	public void setAggregatedValue(LongWritableSet initialSeed) {
-		internalState = initialSeed;
-	}
+  public LongWritableSet getAggregatedValue() {
+    return internalState;
+  }
+
+  public void reset() {
+    internalState.clear();
+  }
+
+  public void setAggregatedValue(LongWritableSet initialSeed) {
+    internalState = initialSeed;
+  }
 
 }

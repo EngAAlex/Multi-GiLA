@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package unipg.gila.partitioning;
+package unipg.gila.common.partitioning;
 
 import org.apache.giraph.partition.HashWorkerPartitioner;
 import org.apache.giraph.partition.PartitionOwner;
@@ -27,12 +27,12 @@ import unipg.gila.common.datastructures.PartitionedLongWritable;
  */
 @SuppressWarnings("rawtypes")
 public class PrefixHashWorkerPartitioner<I extends WritableComparable, V extends Writable, E extends Writable>
-		extends HashWorkerPartitioner<I, V, E> {
+        extends HashWorkerPartitioner<I, V, E> {
 
-	@Override
-	public PartitionOwner getPartitionOwner(I vertexId) {
-		PartitionedLongWritable id = (PartitionedLongWritable) vertexId;
-		return partitionOwnerList.get(Math.abs(id.getPartition()
-				% partitionOwnerList.size()));
-	}
+  @Override
+  public PartitionOwner getPartitionOwner(I vertexId) {
+    PartitionedLongWritable id = (PartitionedLongWritable) vertexId;
+    return partitionOwnerList.get(Math.abs(id.getPartition()
+            % partitionOwnerList.size()));
+  }
 }

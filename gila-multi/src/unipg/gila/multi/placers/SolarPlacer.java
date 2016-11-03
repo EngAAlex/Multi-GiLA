@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
+import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -35,6 +36,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.common.multi.PathWritable;
@@ -60,7 +62,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	 */
 	@Override
 	protected void vertexInLayerComputation(
-			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
+			Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
 			Iterable<LayoutMessage> msgs) throws IOException {
 		AstralBodyCoordinateWritable value = vertex.getValue();
 
@@ -116,11 +118,13 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 						myCoords[1] + chosenPosition[1]}));
 				else{
 					float angle = new Float(Math.random()*Math.PI*2);
-					float desiredDistance = ((IntWritable)vertex.getEdgeValue(currentRecipient.getKey())).get()*k;
+					float desiredDistance = vertex.getEdgeValue(currentRecipient.getKey()).getValue()*k;
 					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), 
 							new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
 						myCoords[1] + new Float(Math.sin(angle)*desiredDistance)}));
 				}
+	       addEdgeRequest(vertex.getId(), EdgeFactory.create(currentRecipient.getKey(), new SpTreeEdgeValue(true))); 
+	       addEdgeRequest(currentRecipient.getKey(), EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true))); 
 			}
 
 			//ARRANGE MOONS
@@ -145,6 +149,8 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 						messageToSend.setWeight(-1);
 						sendMessageToAllEdges(vertex, messageToSend);
 					}
+	        addEdgeRequest(vertex.getId(), EdgeFactory.create(currentRecipient.getKey(), new SpTreeEdgeValue(true))); 
+	        addEdgeRequest(currentRecipient.getKey(), EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true))); 
 				}
 			}
 		}
@@ -211,8 +217,8 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 	@Override
 	public void initialize(
 			GraphState graphState,
-			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> workerClientRequestProcessor,
-			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> graphTaskManager,
+			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+			GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
 			WorkerGlobalCommUsage workerGlobalCommUsage,
 			WorkerContext workerContext) {
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,

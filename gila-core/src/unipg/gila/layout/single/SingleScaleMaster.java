@@ -18,64 +18,84 @@
  */
 package unipg.gila.layout.single;
 
-import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
 import unipg.gila.layout.GraphReintegrationRoutine;
 import unipg.gila.layout.LayoutRoutine;
-import unipg.gila.utils.Toolbox;
+import unipg.gila.layout.single.SingleScaleLayout.SingleDrawingExplorer;
+import unipg.gila.layout.single.SingleScaleLayout.SingleDrawingExplorerWithComponentsNo;
+import unipg.gila.layout.single.SingleScaleLayout.SingleDrawingScaler;
+import unipg.gila.layout.single.SingleScaleLayout.SingleLayoutCCs;
+import unipg.gila.layout.single.SingleScaleLayout.SinglePropagator;
+import unipg.gila.layout.single.SingleScaleLayout.SingleSeeder;
 
 /**
  * @author Alessio Arleo
  *
  */
-public class SingleScaleMaster extends DefaultMasterCompute{
-	
-	LayoutRoutine layoutRoutine;
-	GraphReintegrationRoutine reintegrationRoutine;
-	float k;
-	
-	boolean layoutCompleted;
-	
-	/* (non-Javadoc)
-	 * @see org.apache.giraph.master.DefaultMasterCompute#initialize()
-	 */
-	@Override
-	public void initialize() throws InstantiationException,
-			IllegalAccessException {
-		layoutRoutine = new LayoutRoutine();
-		layoutRoutine.initialize(this, SingleScaleLayout.SingleSeeder.class, SingleScaleLayout.SinglePropagator.class,
-								SingleScaleLayout.SingleDrawingExplorer.class, SingleScaleLayout.SingleDrawingExplorerWithComponentsNo.class, 
-								SingleScaleLayout.SingleDrawingScaler.class, SingleScaleLayout.SingleLayoutCCs.class);
-		
-		reintegrationRoutine = new GraphReintegrationRoutine();
-		reintegrationRoutine.initialize(this);
-		
-	
-		float nl = getConf().getFloat(LayoutRoutine.node_length , LayoutRoutine.defaultNodeValue);
-		float nw = getConf().getFloat(LayoutRoutine.node_width , LayoutRoutine.defaultNodeValue);
-		float ns = getConf().getFloat(LayoutRoutine.node_separation, LayoutRoutine.defaultNodeValue);
-		float k = new Double(ns + Toolbox.computeModule(new float[]{nl, nw})).floatValue();
-//		setAggregatedValue(LayoutRoutine.k_agg, new FloatWritable(k));
-	
-		setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
-				new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(k, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
+public class SingleScaleMaster extends DefaultMasterCompute {
 
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.apache.giraph.master.DefaultMasterCompute#compute()
-	 */
-	@Override
-	public void compute() {
-		if(!layoutCompleted){
-			if(layoutRoutine.compute(getTotalNumVertices(), k))
-				layoutCompleted = true;
-		}else
-			if(reintegrationRoutine.compute())
-				haltComputation();
-	}	
+  LayoutRoutine layoutRoutine;
+  GraphReintegrationRoutine reintegrationRoutine;
+  float k = 0.0f;
+
+  boolean layoutCompleted;
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.giraph.master.DefaultMasterCompute#initialize()
+   */
+  @Override
+  public void initialize() throws InstantiationException,
+          IllegalAccessException {
+    layoutRoutine = new LayoutRoutine();
+    layoutRoutine.initialize(this, SingleSeeder.class, SinglePropagator.class,
+            SingleDrawingExplorer.class,
+            SingleDrawingExplorerWithComponentsNo.class,
+            SingleDrawingScaler.class, SingleLayoutCCs.class);
+
+    reintegrationRoutine = new GraphReintegrationRoutine();
+    reintegrationRoutine.initialize(this);
+
+    setAggregatedValue(
+            LayoutRoutine.ttlMaxAggregator,
+            new IntWritable(getConf().getInt(LayoutRoutine.ttlMaxString,
+                    LayoutRoutine.ttlMaxDefault)));
+    setAggregatedValue(
+            LayoutRoutine.currentAccuracyAggregator,
+            new FloatWritable(getConf().getFloat(LayoutRoutine.accuracyString,
+                    LayoutRoutine.accuracyDefault)));
+    setAggregatedValue(
+            LayoutRoutine.coolingSpeedAggregator,
+            new FloatWritable(getConf().getFloat(LayoutRoutine.coolingSpeed,
+                    LayoutRoutine.defaultCoolingSpeed)));
+    setAggregatedValue(
+            LayoutRoutine.initialTempFactorAggregator,
+            new FloatWritable(getConf().getFloat(
+                    LayoutRoutine.initialTempFactorString,
+                    LayoutRoutine.defaultInitialTempFactor)));
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.giraph.master.DefaultMasterCompute#compute()
+   */
+  @Override
+  public void compute() {
+    if (k == 0.0f)
+      k = ((FloatWritable) getAggregatedValue(LayoutRoutine.k_agg)).get();
+
+    if (!layoutCompleted) {
+      if (layoutRoutine.compute(getTotalNumVertices(), k)) {
+        layoutCompleted = true;
+        reintegrationRoutine.compute();
+      }
+    } else if (reintegrationRoutine.compute())
+      haltComputation();
+  }
 
 }

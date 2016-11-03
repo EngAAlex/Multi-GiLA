@@ -23,41 +23,53 @@ package unipg.gila.layout.force;
  *
  */
 public class LinLog extends Force {
-	
-	private float attractiveForcesConstant;
-	
-	/**
-	 * Parameter-less constructor. It builds an internal map used to recover the options from the user configuration.
-	 */
-	public LinLog() {
-		
-	}
 
-	/* (non-Javadoc)
-	 * @see unipg.dafne.layout.force.Force#generateForce(java.lang.String[])
-	 */
-	@Override
-	public void generateForce(String[] args) {
-		if(args[0] == "")
-			attractiveForcesConstant = 25.0f;
-		else
-			attractiveForcesConstant = Float.parseFloat(args[0]);
-	}
+  private float attractiveForcesConstant;
 
-	/* (non-Javadoc)
-	 * @see unipg.dafne.layout.force.Force#computeAttractiveForce(float[], float)
-	 */
-	@Override
-	public float[] computeAttractiveForce(float deltaX, float deltaY, float distance, float squareDistance, float desiredDistance, int v1Deg, int v2Deg) {
-		return new float[]{attractiveForcesConstant*(deltaX/distance), attractiveForcesConstant*(deltaY/distance)};
-	}
+  /**
+   * Parameter-less constructor. It builds an internal map used to recover the
+   * options from the user configuration.
+   */
+  public LinLog() {
 
-	/* (non-Javadoc)
-	 * @see unipg.dafne.layout.force.Force#computeRepulsiveForce(float[], float)
-	 */
-	@Override
-	public float[] computeRepulsiveForce(float deltaX, float deltaY, float distance, float squareDistance, int v1Deg, int v2Deg) {
-		float degProduct = v1Deg*v2Deg;
-		return new float[]{degProduct*(deltaX/squareDistance),degProduct*(deltaY/squareDistance)};	
-	}
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see unipg.dafne.layout.force.Force#generateForce(java.lang.String[])
+   */
+  @Override
+  public void generateForce(String[] args) {
+    if (args[0] == "")
+      attractiveForcesConstant = 25.0f;
+    else
+      attractiveForcesConstant = Float.parseFloat(args[0]);
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see unipg.dafne.layout.force.Force#computeAttractiveForce(float[], float)
+   */
+  @Override
+  public float[] computeAttractiveForce(float deltaX, float deltaY,
+          float distance, float squareDistance, float desiredDistance,
+          int v1Deg, int v2Deg) {
+    return new float[] { attractiveForcesConstant * (deltaX / distance),
+            attractiveForcesConstant * (deltaY / distance) };
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see unipg.dafne.layout.force.Force#computeRepulsiveForce(float[], float)
+   */
+  @Override
+  public float[] computeRepulsiveForce(float deltaX, float deltaY,
+          float distance, float squareDistance, int v1Deg, int v2Deg) {
+    float degProduct = v1Deg * v2Deg;
+    return new float[] { degProduct * (deltaX / squareDistance),
+            degProduct * (deltaY / squareDistance) };
+  }
 }

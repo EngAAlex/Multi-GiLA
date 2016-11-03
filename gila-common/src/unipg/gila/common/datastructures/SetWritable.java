@@ -27,92 +27,97 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
 
 /**
- * Implementation of a Set implementing the Writable (org.apache.hadoop.io.Writable) interface.
+ * Implementation of a Set implementing the Writable
+ * (org.apache.hadoop.io.Writable) interface.
  * 
  * @author Alessio Arleo
  *
- * @param <P> The class of the object contained in the set. Must implement Writable.
+ * @param <P>
+ *          The class of the object contained in the set. Must implement
+ *          Writable.
  */
 public abstract class SetWritable<P extends Writable> implements Writable {
-	
-	
-	protected Set<P> internalState;	
-	/**
+
+  protected Set<P> internalState;
+
+  /**
 	 * 
 	 */
-	public SetWritable() {
-		internalState = new HashSet<P>();
-	}
-	
-	public SetWritable(Collection<P> cll){
-		this();
-		addAll(cll);
-	}
-	
-	public void addAll(SetWritable<P> in){
-		internalState.addAll(in.get());
-	}
-	
-	public void addAll(Collection<P> it){
-		internalState.addAll(it);
-	}
-	
-	public Set<P> get(){
-		return internalState;
-	}
-	
-	public void reset(){
-		internalState.clear();
-	}
-	
-	public void addElement(P element){
-		internalState.add(element);
-	}
-	
-	public boolean contains(Writable key){
-		return internalState.contains(key);
-	}
-	
-	public boolean remove(Writable elementToRemove){
-		return internalState.remove(elementToRemove);
-	}
+  public SetWritable() {
+    internalState = new HashSet<P>();
+  }
 
-	public int size(){
-		return internalState.size();
-	}
-	
-	public Iterator<? extends Writable> iterator(){
-		return internalState.iterator();
-	}
+  public SetWritable(Collection<P> cll) {
+    this();
+    addAll(cll);
+  }
 
-	public void readFields(DataInput in) throws IOException {
-		internalState.clear();
-		int limit = in.readInt();
-	    for (int i = 0; i < limit; i++) {
-	    	internalState.add(specificRead(in));                       
-	    }
-	}
+  public void addAll(SetWritable<P> in) {
+    internalState.addAll(in.get());
+  }
 
-	/**
-	 * This method is used to let the subclasses properly deserialize the data from the DataInput.  
+  public void addAll(Collection<P> it) {
+    internalState.addAll(it);
+  }
+
+  public Set<P> get() {
+    return internalState;
+  }
+
+  public void reset() {
+    internalState.clear();
+  }
+
+  public void addElement(P element) {
+    internalState.add(element);
+  }
+
+  public boolean contains(Writable key) {
+    return internalState.contains(key);
+  }
+
+  public boolean remove(Writable elementToRemove) {
+    return internalState.remove(elementToRemove);
+  }
+
+  public int size() {
+    return internalState.size();
+  }
+
+  public Iterator<? extends Writable> iterator() {
+    return internalState.iterator();
+  }
+
+  public void readFields(DataInput in) throws IOException {
+    internalState.clear();
+    int limit = in.readInt();
+    for (int i = 0; i < limit; i++) {
+      internalState.add(specificRead(in));
+    }
+  }
+
+  /**
+   * This method is used to let the subclasses properly deserialize the data
+   * from the DataInput.
+   * 
+   * @param in
+   *          The DataInput object from which read the data.
+   * @throws IOException
+   */
+  protected abstract P specificRead(DataInput in) throws IOException;
+
+  public void write(DataOutput out) throws IOException {
+    out.writeInt(internalState.size());
+    Iterator<P> it = internalState.iterator();
+    while (it.hasNext())
+      it.next().write(out);
+  }
+
+  /**
 	 * 
-	 * @param in The DataInput object from which read the data.
-	 * @throws IOException 
 	 */
-	protected abstract P specificRead(DataInput in) throws IOException;
-	
-	public void write(DataOutput out) throws IOException {
-		out.writeInt(internalState.size());
-		Iterator<P> it = internalState.iterator();
-		while(it.hasNext())
-			it.next().write(out);
-	}
+  public void clear() {
+    internalState.clear();
+  }
 
-	/**
-	 * 
-	 */
-	public void clear() {
-		internalState.clear();
-	}
-
-}	
+}

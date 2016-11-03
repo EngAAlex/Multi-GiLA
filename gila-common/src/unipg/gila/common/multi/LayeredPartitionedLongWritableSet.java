@@ -29,34 +29,42 @@ import unipg.gila.common.multi.LayeredPartitionedLongWritable;
  * @author Alessio Arleo
  *
  */
-public class LayeredPartitionedLongWritableSet extends SetWritable<LayeredPartitionedLongWritable> {
+public class LayeredPartitionedLongWritableSet extends
+        SetWritable<LayeredPartitionedLongWritable> {
 
-	/**
-	 * Parameter-less constructor.
-	 * 
-	 */
-	public LayeredPartitionedLongWritableSet() {
-		internalState = new HashSet<LayeredPartitionedLongWritable>();
-	}
-	
-	/**
-	 * This constructor will return a new LongWritableSet which is an exact copy of the given set.
-	 * 
-	 * @param toCopy the set to copy.
-	 */
-	public LayeredPartitionedLongWritableSet(LayeredPartitionedLongWritableSet toCopy){
-		internalState = new HashSet<LayeredPartitionedLongWritable>(toCopy.get());
-	}
-	
-	/* (non-Javadoc)
-	 * @see unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput)
-	 */
-	@Override
-	protected LayeredPartitionedLongWritable specificRead(DataInput in)
-			throws IOException {
-		LayeredPartitionedLongWritable lpw = new LayeredPartitionedLongWritable();
-		lpw.readFields(in);
-		return lpw;
-	}
+  /**
+   * Parameter-less constructor.
+   * 
+   */
+  public LayeredPartitionedLongWritableSet() {
+    internalState = new HashSet<LayeredPartitionedLongWritable>();
+  }
+
+  /**
+   * This constructor will return a new LongWritableSet which is an exact copy
+   * of the given set.
+   * 
+   * @param toCopy
+   *          the set to copy.
+   */
+  public LayeredPartitionedLongWritableSet(
+          LayeredPartitionedLongWritableSet toCopy) {
+    internalState = new HashSet<LayeredPartitionedLongWritable>(toCopy.get());
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * unipg.gila.common.datastructures.SetWritable#specificRead(java.io.DataInput
+   * )
+   */
+  @Override
+  protected LayeredPartitionedLongWritable specificRead(DataInput in)
+          throws IOException {
+    LayeredPartitionedLongWritable lpw = new LayeredPartitionedLongWritable();
+    lpw.readFields(in);
+    return lpw;
+  }
 
 }

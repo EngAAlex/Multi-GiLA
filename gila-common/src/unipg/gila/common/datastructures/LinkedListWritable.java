@@ -30,107 +30,108 @@ import org.apache.log4j.Logger;
  * @author Alessio Arleo
  *
  */
-public abstract class LinkedListWritable<T extends Writable> implements Writable {
+public abstract class LinkedListWritable<T extends Writable> implements
+        Writable {
 
-	protected LinkedList<T> internalState;
-	
-//	Logger log = Logger.getLogger(LinkedListWritable.class);
-	
-	public void addAll(LinkedListWritable<T> toAdd){
-		if(toAdd == null)
-			return;
-		Iterator<T> it = toAdd.iterator();
-		while(it.hasNext())
-			internalState.add(it.next());
-	}
+  protected LinkedList<T> internalState;
 
-	public void enqueue(T toEnqueue){
-		internalState.addFirst(toEnqueue);
-	}
-	
-	public T dequeue(){
-		if(!isEmpty())
-			return internalState.pop();
-		return null;
-	}
-	
-	public int size(){
-		return internalState.size();
-	}
-	
-	public boolean isEmpty(){
-		return internalState.isEmpty();
-	}
-	
-	public Iterator<T> iterator(){
-		return internalState.iterator();
-	}
-	
-	public Writable[] flush() {
-		Writable[] result = internalState.toArray(new Writable[0]);
-		internalState.clear();
-		return result;
-	}
-	
-	public void readFields(DataInput in) throws IOException {
-	    internalState.clear();
+  // Logger log = Logger.getLogger(LinkedListWritable.class);
 
-	    int numFields = in.readInt();
-    
-	    if (numFields == 0)
-	      return;
-	    for(int i=0; i<numFields; i++)
-	    	internalState.add(specificRead(in));
-//	    String className = in.readUTF();
-//	    T obj;
-//	    try {
-//	      Class<T> c = (Class<T>) Class.forName(className);
-//	      for (int i = 0; i < numFields; i++) {
-//	        obj = (T) c.newInstance();
-//	        obj.readFields(in);
-//	        internalState.add(obj);
-//	      }
-//
-//	    } catch (Exception e) {
-//	      e.printStackTrace();
-//	    }
-	}
+  public void addAll(LinkedListWritable<T> toAdd) {
+    if (toAdd == null)
+      return;
+    Iterator<T> it = toAdd.iterator();
+    while (it.hasNext())
+      internalState.add(it.next());
+  }
 
-	public void write(DataOutput out) throws IOException {
-	   int size = internalState.size();
-		out.writeInt(size);
-	    if (size == 0)  
-	      return;
-	    Iterator<T> it = internalState.iterator();
-	    while(it.hasNext())
-	    	it.next().write(out);
-//	    Writable obj = internalState.get(0);
-//
-//	    out.writeUTF(obj.getClass().getCanonicalName());
-//
-//	    for (int i = 0; i < size; i++) {
-//	      obj = internalState.get(i);
-//	      if (obj == null) {
-//	        throw new IOException("Cannot serialize null fields!");
-//	      }
-//	      obj.write(out);
-//	    }
-	}
-	
-	/**
-	 * @param in
-	 * @throws IOException 
-	 */
-	protected abstract T specificRead(DataInput in) throws IOException;
-	
-	public String toString(){
-		if(internalState.isEmpty())
-			return "EMPTY\n";
-		Iterator<T> it = internalState.iterator();
-		String tmp = "";
-		while(it.hasNext())
-			tmp += it.next().toString()+"\n";
-		return tmp;
-	}
+  public void enqueue(T toEnqueue) {
+    internalState.addFirst(toEnqueue);
+  }
+
+  public T dequeue() {
+    if (!isEmpty())
+      return internalState.pop();
+    return null;
+  }
+
+  public int size() {
+    return internalState.size();
+  }
+
+  public boolean isEmpty() {
+    return internalState.isEmpty();
+  }
+
+  public Iterator<T> iterator() {
+    return internalState.iterator();
+  }
+
+  public Writable[] flush() {
+    Writable[] result = internalState.toArray(new Writable[0]);
+    internalState.clear();
+    return result;
+  }
+
+  public void readFields(DataInput in) throws IOException {
+    internalState.clear();
+
+    int numFields = in.readInt();
+
+    if (numFields == 0)
+      return;
+    for (int i = 0; i < numFields; i++)
+      internalState.add(specificRead(in));
+    // String className = in.readUTF();
+    // T obj;
+    // try {
+    // Class<T> c = (Class<T>) Class.forName(className);
+    // for (int i = 0; i < numFields; i++) {
+    // obj = (T) c.newInstance();
+    // obj.readFields(in);
+    // internalState.add(obj);
+    // }
+    //
+    // } catch (Exception e) {
+    // e.printStackTrace();
+    // }
+  }
+
+  public void write(DataOutput out) throws IOException {
+    int size = internalState.size();
+    out.writeInt(size);
+    if (size == 0)
+      return;
+    Iterator<T> it = internalState.iterator();
+    while (it.hasNext())
+      it.next().write(out);
+    // Writable obj = internalState.get(0);
+    //
+    // out.writeUTF(obj.getClass().getCanonicalName());
+    //
+    // for (int i = 0; i < size; i++) {
+    // obj = internalState.get(i);
+    // if (obj == null) {
+    // throw new IOException("Cannot serialize null fields!");
+    // }
+    // obj.write(out);
+    // }
+  }
+
+  /**
+   * @param in
+   * @throws IOException
+   */
+  protected abstract T specificRead(DataInput in) throws IOException;
+
+  public String toString() {
+    if (internalState.isEmpty())
+      return "EMPTY\n";
+    Iterator<T> it = internalState.iterator();
+    String tmp = "";
+    while (it.hasNext())
+      tmp += it.next().toString() + "\n";
+    return tmp;
+  }
 
 }
