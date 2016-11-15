@@ -34,6 +34,7 @@ import org.json.JSONException;
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.PartitionedLongWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 
 import com.google.common.collect.Lists;
@@ -49,10 +50,10 @@ import com.google.common.collect.Lists;
  *
  */
 public class MultiScaleLayoutInputFormat extends
-TextVertexInputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> {
+TextVertexInputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> {
 	
 	@Override
-	public TextVertexInputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable>.TextVertexReader createVertexReader(
+	public TextVertexInputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue>.TextVertexReader createVertexReader(
 			InputSplit in, TaskAttemptContext out) throws IOException {
 		return new JSONPartitionedLongArrayFloatVertexReader();
 	}
@@ -82,14 +83,14 @@ TextVertexInputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritab
 			return null;
 		}
 
-		protected Iterable<Edge<LayeredPartitionedLongWritable, IntWritable>> getEdges(JSONArray jsonVertex) throws JSONException, IOException {
+		protected Iterable<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> getEdges(JSONArray jsonVertex) throws JSONException, IOException {
 			JSONArray jsonEdgeArray = jsonVertex.getJSONArray(6);
-			List<Edge<LayeredPartitionedLongWritable, IntWritable>> edges =	Lists.newArrayList();
+			List<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges =	Lists.newArrayList();
 			int i;
 			for (i = 0; i < jsonEdgeArray.length(); ++i) {
 				JSONArray jsonEdge = jsonEdgeArray.getJSONArray(i);
 				edges.add(EdgeFactory.create(new LayeredPartitionedLongWritable(jsonEdge.getInt(1) + "_" + jsonEdge.getLong(0)),
-						new IntWritable(1)));
+						new SpTreeEdgeValue(1)));
 			}
 			return edges;
 		}

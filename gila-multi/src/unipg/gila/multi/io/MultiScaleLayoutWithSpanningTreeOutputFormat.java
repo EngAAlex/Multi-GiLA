@@ -44,7 +44,7 @@ import unipg.gila.layout.LayoutRoutine;
  * @author Alessio Arleo
  *
  */
-public class MultiScaleLayoutOutputFormat extends
+public class MultiScaleLayoutWithSpanningTreeOutputFormat extends
 TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> {
 
   @Override
@@ -86,19 +86,22 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
       else
         component = "," + vertex.getValue().getComponent();
 
-      return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundler(vertex.getEdges()) + "]]");
+      return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundlerWithSpanningTree(vertex.getEdges(), false) + "]," + "[" + edgeBundlerWithSpanningTree(vertex.getEdges(), true) + "]"  + "]");
     }
   }
 
-  private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges){
+  private String edgeBundlerWithSpanningTree(Iterable<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges, boolean includeSpanningTree){
     String result = "";
+    boolean first = true;
     Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> it = edges.iterator();
     while(it.hasNext()){
       Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> edge = it.next();
-      if(!edge.getValue().isSpanningTree()){
-        result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
-        if(it.hasNext())
+      if(edge.getValue().isSpanningTree() == includeSpanningTree){
+        if(first)
+          first = false;
+        else
           result += ",";
+        result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
       }
     }
     return result;

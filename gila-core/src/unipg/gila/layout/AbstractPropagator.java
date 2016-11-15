@@ -35,7 +35,9 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
+import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.force.FR;
@@ -131,7 +133,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
       if (vValue.hasBeenReset()) {
         tempForce = force.computeAttractiveForce(deltaX, deltaY, distance,
                 squareDistance,
-                requestOptimalSpringLength(vertex, currentPayload), v1Deg,
+                requestOptimalSpringLength(vertex, vertex.getAllEdgeValues(currentPayload)), v1Deg,
                 v2Deg);
         finalForce[0] += tempForce[0];
         finalForce[1] += tempForce[1];
@@ -139,7 +141,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
           log.info("computed attractive " + finalForce[0] + " "
                   + finalForce[1] + " with data " + deltaX + " " + deltaY
                   + " " + distance + " "
-                  + requestOptimalSpringLength(vertex, currentPayload));
+                  + requestOptimalSpringLength(vertex, vertex.getAllEdgeValues(currentPayload)));
       }
 
       // REPULSIVE FORCES
@@ -163,21 +165,25 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
       if (!currentMessage.isAZombie()) {
         aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(
                 false));
+        LayoutMessage temp = (LayoutMessage) currentMessage.propagate();
+        temp.setSenderId(currentMessage.getSenderId());
         sendMessageToAllEdges(vertex,
-                (LayoutMessage) currentMessage.propagate());
+                temp);
       }
 
     }
     
     executePostMessageAction(vertex);
+    
+    float currentWalshawConstant = requestWalshawConstant();
 
     if (LayoutRoutine.logLayout)
-      log.info("Going to moderate on " + walshawConstant + " from "
+      log.info("Going to moderate on " + currentWalshawConstant + " from "
               + repulsiveForce[0] + " " + repulsiveForce[1]);
 
     // REPULSIVE FORCE MODERATION
-    repulsiveForce[0] *= requestWalshawConstant();
-    repulsiveForce[1] *= requestWalshawConstant();
+    repulsiveForce[0] *= currentWalshawConstant;
+    repulsiveForce[1] *= currentWalshawConstant;
 
     finalForce[0] -= repulsiveForce[0];
     finalForce[1] -= repulsiveForce[1];
@@ -210,7 +216,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
    */
   protected float requestOptimalSpringLength(
           Vertex<LayeredPartitionedLongWritable, V, E> vertex,
-          LayeredPartitionedLongWritable currentPayload) {
+          Iterable<E> iterable) {
     return k;
   }
 
@@ -255,5 +261,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
     force.generateForce(getConf().getStrings(
             LayoutRoutine.forceMethodOptionExtraOptionsString, ""));
   }
+
+
 
 }

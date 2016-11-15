@@ -21,6 +21,7 @@ package unipg.gila.common.multi;
 import java.io.DataInput;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import unipg.gila.common.datastructures.SetWritable;
 
@@ -52,6 +53,21 @@ public class PathWritableSet extends SetWritable<PathWritable> {
     internalState = new HashSet<PathWritable>(toCopy.get());
   }
 
+  public void addWithMaxValue(PathWritable temptativeNewElement){
+    if(!internalState.contains(temptativeNewElement))
+      internalState.add(temptativeNewElement);
+    else{
+      Iterator<PathWritable> it = internalState.iterator();
+      while(it.hasNext()){
+        PathWritable current = it.next();
+        if(current.equals(temptativeNewElement))
+          if(current.getPositionInpath() < temptativeNewElement.getPositionInpath())
+            internalState.add(temptativeNewElement);
+          break;            
+      }
+    }  
+  }
+  
   /*
    * (non-Javadoc)
    * 
@@ -65,5 +81,5 @@ public class PathWritableSet extends SetWritable<PathWritable> {
     pw.readFields(in);
     return pw;
   }
-
+  
 }

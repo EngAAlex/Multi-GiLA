@@ -26,9 +26,9 @@ package unipg.gila.multi.layout;
 public class LayoutAdaptationStrategy{
 	
 	public static int maxK = 6;
-	public static float maxAccuracy = 0.0001f;
-	public static float minCoolingSpeed = 0.98f;
-	public static float minInitialTempFactor = 0.8f;
+	public static float maxAccuracy = 0.001f;
+	public static float minCoolingSpeed = 0.8f;
+	public static float minInitialTempFactor = 4;
 
 	
 	public static class DensityDrivenAdaptationStrategy implements AdaptationStrategy{
@@ -115,12 +115,12 @@ public class LayoutAdaptationStrategy{
 		 */
 		public float returnCurrentInitialTempFactor(int currentLayer,
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-			if(nOfEdgesOfLayer < 250)
-				return 0.1f;
-			if(nOfEdgesOfLayer < 500)
-				return 0.2f;
-			if(nOfEdgesOfLayer < 10000)
-				return 0.4f;
+//			if(nOfEdgesOfLayer < 250)
+//				return 0.1f;
+//			if(nOfEdgesOfLayer < 500)
+//				return 0.2f;
+//			if(nOfEdgesOfLayer < 10000)
+//				return 0.4f;
 			return LayoutAdaptationStrategy.minInitialTempFactor;
 		}
 
@@ -131,13 +131,13 @@ public class LayoutAdaptationStrategy{
 				int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
 			if(nOfEdgesOfLayer < 500)
 				return LayoutAdaptationStrategy.minCoolingSpeed;
-			if(nOfEdgesOfLayer < 1500)
-				return 0.96f;
+//			if(nOfEdgesOfLayer < 1500)
+//				return 0.96f;
 			if(nOfEdgesOfLayer < 10000)
-				return 0.94f;
+				return 0.74f;
 			if(nOfEdgesOfLayer < 1000000)
-				return 0.92f;
-			return 0.9f;
+				return 0.72f;
+			return 0.7f;
 		}
 
 		/* (non-Javadoc)

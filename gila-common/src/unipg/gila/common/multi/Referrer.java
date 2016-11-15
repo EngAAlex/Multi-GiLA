@@ -34,15 +34,15 @@ public class Referrer implements Writable {
   int distanceAccumulator = 0;
 
   /**
-	 * 
-	 */
+   * 
+   */
   public Referrer() {
     eventGenerator = new LayeredPartitionedLongWritable();
   }
 
   /**
-	 * 
-	 */
+   * 
+   */
   public Referrer(LayeredPartitionedLongWritable eventG, int distance) {
     eventGenerator = eventG;
     distanceAccumulator = distance;
@@ -82,4 +82,11 @@ public class Referrer implements Writable {
     distanceAccumulator = in.readInt();
   }
 
+  /* (non-Javadoc)
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString() {
+    return "Generator " + eventGenerator + " distance " + distanceAccumulator;
+  }
 }

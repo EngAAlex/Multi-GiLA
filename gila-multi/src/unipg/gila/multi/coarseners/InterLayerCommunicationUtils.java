@@ -44,126 +44,136 @@ import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.common.multi.SolarMessage;
 import unipg.gila.common.partitioning.Spinner;
 import unipg.gila.multi.MultiScaleComputation;
+import unipg.gila.multi.placers.SolarPlacer;
+import unipg.gila.multi.placers.SolarPlacerRoutine;
 
 public class InterLayerCommunicationUtils{
 
-	public static final String destroyLevelsString = "placer.destroyLevels";
-	
-	//LOGGER
-	protected static Logger log = Logger.getLogger(InterLayerCommunicationUtils.class);
+  public static final String destroyLevelsString = "placer.destroyLevels";
 
-	
-	/**
-	 * This computation broadcasts the vertex coordinates before transferring them to the underlying layer at the next superstep.
-	 * 
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage>{
+  //LOGGER
+  protected static Logger log = Logger.getLogger(InterLayerCommunicationUtils.class);
 
-		/* (non-Javadoc)
-		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
-			if(vertex.getValue().getLowerLevelWeight() > 0)
-				sendMessageToAllEdges(vertex, new LayoutMessage(vertex.getId(), vertex.getValue().getCoordinates()));
-		}
-	}
 
-	/**
-	 * This computation transfers the data about the upper level vertices to the lower level ones.
-	 * 
-	 * @author Alessio Arleo
-	 *
-	 */
-	public static class InterLayerDataTransferComputation extends
-	MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage> {
+  /**
+   * This computation broadcasts the vertex coordinates before transferring them to the underlying layer at the next superstep.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class CoordinatesBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage>{
 
-		private boolean destroyLevels;
-		
-		/* (non-Javadoc)
-		 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
-		 */
-		@Override
-		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
-				Iterable<LayoutMessage> msgs) throws IOException {
+    /* (non-Javadoc)
+     * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    protected void vertexInLayerComputation(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> msgs) throws IOException {
+      if(vertex.getValue().getLowerLevelWeight() > 0){
+        sendMessageToAllEdges(vertex, new LayoutMessage(vertex.getId(), vertex.getValue().getCoordinates()));
+      }
+    }
+  }
+
+  /**
+   * This computation transfers the data about the upper level vertices to the lower level ones.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class InterLayerDataTransferComputation extends
+  MultiScaleComputation<AstralBodyCoordinateWritable, LayoutMessage, LayoutMessage> {
+
+    private boolean destroyLevels;
+
+    /* (non-Javadoc)
+     * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
+     */
+    @Override
+    protected void vertexInLayerComputation(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<LayoutMessage> msgs) throws IOException {
       LayeredPartitionedLongWritable mineId = vertex.getId();
-			AstralBodyCoordinateWritable value = vertex.getValue();
+      AstralBodyCoordinateWritable value = vertex.getValue();
       LayeredPartitionedLongWritable lowerID = new LayeredPartitionedLongWritable(mineId.getPartition(), mineId.getId(), mineId.getLayer() - 1);
-			if(value.getLowerLevelWeight() > 0){
-				sendMessage(lowerID, new LayoutMessage(lowerID, value.getCoordinates()));
-				Iterator<LayoutMessage> it = msgs.iterator();
-				while(it.hasNext())
-					sendMessage(lowerID, (LayoutMessage) it.next().propagateAndDie());
-				removeEdgesRequest(lowerID, vertex.getId());
-			}
-			
-			Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> iteratorOnEdges = vertex.getEdges().iterator();
-			while(iteratorOnEdges.hasNext()){
-			  Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = iteratorOnEdges.next();
-			  LayeredPartitionedLongWritable currentTarget = currentEdge.getTargetVertexId();
-			  if(currentEdge.getValue().isSpanningTree())
-			    addEdgeRequest(lowerID, EdgeFactory.create(new LayeredPartitionedLongWritable(currentTarget.getPartition(), currentTarget.getId(), currentTarget.getLayer()-1), new SpTreeEdgeValue(currentEdge.getValue())));
-			}
-			
-			if(destroyLevels){
-				//			vertex.getValue().clearAstralInfo();
-				removeVertexRequest(vertex.getId());
-			}
-		}
-		
-		/* (non-Javadoc)
-		 * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			destroyLevels = getConf().getBoolean(destroyLevelsString, true);
-		}
-	}
+      if(value.getLowerLevelWeight() > 0){
+        sendMessage(lowerID, new LayoutMessage(lowerID, value.getCoordinates()));
+        Iterator<LayoutMessage> it = msgs.iterator();
+        if(SolarPlacerRoutine.logPlacer)
+          log.info("I'm " + vertex.getId());
+        while(it.hasNext()){
+          LayoutMessage currentMessage = it.next();
+          if(SolarPlacerRoutine.logPlacer)
+            log.info("forwarding " + currentMessage.getPayloadVertex() + " to " + lowerID);
+          sendMessage(lowerID, (LayoutMessage) currentMessage.propagateAndDie());
+        }
+        removeEdgesRequest(lowerID, vertex.getId());
+      }
+
+      Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> iteratorOnEdges = vertex.getEdges().iterator();
+      while(iteratorOnEdges.hasNext()){
+        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = iteratorOnEdges.next();
+        LayeredPartitionedLongWritable currentTarget = currentEdge.getTargetVertexId();
+        if(currentEdge.getValue().isSpanningTree())
+          addEdgeRequest(lowerID, EdgeFactory.create(new LayeredPartitionedLongWritable(currentTarget.getPartition(), 
+                                                    currentTarget.getId(), currentTarget.getLayer()-1), 
+                                                    new SpTreeEdgeValue(true)));
+      }
+
+      if(destroyLevels){
+        removeVertexRequest(vertex.getId());
+      }
+    }
+
+    /* (non-Javadoc)
+     * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      destroyLevels = getConf().getBoolean(destroyLevelsString, true);
+    }
+  }
 
 
-	public static class MergerToPlacerDummyComputation extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessageMatrix<LayeredPartitionedLongWritable>>{
+  public static class MergerToPlacerDummyComputation extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, LayoutMessageMatrix<LayeredPartitionedLongWritable>>{
 
-		Random rnd;
-		float bBoxX;
-		float bBoxY;
+    Random rnd;
+    float bBoxX;
+    float bBoxY;
 
-		@Override
-		protected void vertexInLayerComputation(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
-				Iterable<SolarMessage> msgs) throws IOException {
-				float selectedX = rnd.nextFloat()*bBoxX;
-				float selectedY = rnd.nextFloat()*bBoxY;
-				vertex.getValue().setCoordinates(selectedX, selectedY);
-			return;
-		}
+    @Override
+    protected void vertexInLayerComputation(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
+      Iterable<SolarMessage> msgs) throws IOException {
+      float selectedX = rnd.nextFloat()*bBoxX;
+      float selectedY = rnd.nextFloat()*bBoxY;
+      vertex.getValue().setCoordinates(selectedX, selectedY);
+      return;
+    }
 
-		/* (non-Javadoc)
-		 * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
-		 */
-		@Override
-		public void initialize(
-				GraphState graphState,
-				WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
-				GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
-				WorkerGlobalCommUsage workerGlobalCommUsage,
-				WorkerContext workerContext) {
-			super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-					workerGlobalCommUsage, workerContext);
-			rnd = new Random();
-			bBoxX = getConf().getFloat(Spinner.bBoxStringX, 1200.0f);
-			bBoxY = getConf().getFloat(Spinner.bBoxStringY, bBoxX);
-		}
-	}
+    /* (non-Javadoc)
+     * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
+     */
+    @Override
+    public void initialize(
+      GraphState graphState,
+      WorkerClientRequestProcessor<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> workerClientRequestProcessor,
+      GraphTaskManager<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> graphTaskManager,
+      WorkerGlobalCommUsage workerGlobalCommUsage,
+      WorkerContext workerContext) {
+      super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+        workerGlobalCommUsage, workerContext);
+      rnd = new Random();
+      bBoxX = getConf().getFloat(Spinner.bBoxStringX, 1200.0f);
+      bBoxY = getConf().getFloat(Spinner.bBoxStringY, bBoxX);
+    }
+  }
 }

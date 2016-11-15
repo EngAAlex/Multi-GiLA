@@ -23,7 +23,6 @@ import java.util.Iterator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactory;
-import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -36,8 +35,6 @@ import unipg.gila.common.datastructures.LongWritableSet;
  *
  */
 public class MiniCoordinateWritable implements Writable, WritableFactory {
-
-  Logger log = Logger.getLogger(this.getClass());
 
   /**
    * The vertex X coordinate.
@@ -69,7 +66,6 @@ public class MiniCoordinateWritable implements Writable, WritableFactory {
     this.y = y;
     this.component = component;
     oneEdges = new LongWritableSet();
-    log.info("Createted MCW witn coords " + x + " " + y);
   }
 
   public MiniCoordinateWritable(float x, float y, JSONArray oEs, int component)
@@ -82,7 +78,6 @@ public class MiniCoordinateWritable implements Writable, WritableFactory {
   }
 
   public float[] getCoordinates() {
-    log.info("Returning new float " + x + y);
     return new float[] { x, y };
   }
 

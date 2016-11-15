@@ -38,103 +38,107 @@ import org.apache.log4j.Logger;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
+import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 
 public abstract class MultiScaleComputation<Z extends Writable, P extends MessageWritable, T extends MessageWritable> extends
 AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
 
-	//LOGGER
-	public static final String multiscaleLogString = "multi.showLog";
-	
-	Logger log = Logger.getLogger(MultiScaleComputation.class);
+  //LOGGER
+  public static final String multiscaleLogString = "multi.showLog";
 
-	protected int currentLayer;
-	private boolean showLog;
+  Logger log = Logger.getLogger(MultiScaleComputation.class);
 
-	@Override	
-	public void compute(
-			Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
-			Iterable<P> msgs) throws IOException {
-		if(vertex.getId().getLayer() != currentLayer)
-			return;
-		else{
-			if(showLog)
-				log.info("I'm " + vertex.getId());
-			vertexInLayerComputation(vertex, msgs);
-		}
-	}
+  protected int currentLayer;
+  private boolean showLog;
 
-	@Override
-	public void initialize(
-			GraphState graphState,
-			WorkerClientRequestProcessor<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> workerClientRequestProcessor,
-			GraphTaskManager<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> graphTaskManager,
-			WorkerGlobalCommUsage workerGlobalCommUsage,
-			WorkerContext workerContext) {
-		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
-				workerGlobalCommUsage, workerContext);
-		currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-		showLog = getConf().getBoolean(multiscaleLogString, false);
-	}
+  @Override	
+  public void compute(
+    Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
+    Iterable<P> msgs) throws IOException {
+    if(vertex.getId().getLayer() != currentLayer)
+      return;
+    else{
+      if(showLog){
+        log.info("I'm " + vertex.getId());
+      }
+      vertexInLayerComputation(vertex, msgs);
+    }
+  }
 
-	protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
-			Iterable<P> msgs) throws IOException;
+  @Override
+  public void initialize(
+    GraphState graphState,
+    WorkerClientRequestProcessor<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> workerClientRequestProcessor,
+    GraphTaskManager<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> graphTaskManager,
+    WorkerGlobalCommUsage workerGlobalCommUsage,
+    WorkerContext workerContext) {
+    super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
+      workerGlobalCommUsage, workerContext);
+    currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+    showLog = getConf().getBoolean(multiscaleLogString, false);
+  }
 
-	/* (non-Javadoc)
-	 * @see org.apache.giraph.conf.DefaultImmutableClassesGiraphConfigurable#getConf()
-	 */
-	@SuppressWarnings("unchecked")
-	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, SpTreeEdgeValue> getSpecialConf() {
-		// TODO Auto-generated method stub
-		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, SpTreeEdgeValue>) super.getConf();
-	}
+  protected abstract void vertexInLayerComputation(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
+    Iterable<P> msgs) throws IOException;
 
-	public void sendMessageWithWeight(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
-						LayeredPartitionedLongWritable id, T msg){
-//		MessageWritable w = (MessageWritable) msg;
-		msg.addToWeight((vertex.getEdgeValue(id)).getValue());
-//		log.info("sendind " + msg);		
-		sendMessage(id, msg);
-	}
+  /* (non-Javadoc)
+   * @see org.apache.giraph.conf.DefaultImmutableClassesGiraphConfigurable#getConf()
+   */
+  @SuppressWarnings("unchecked")
+  public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, SpTreeEdgeValue> getSpecialConf() {
+    // TODO Auto-generated method stub
+    return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, SpTreeEdgeValue>) super.getConf();
+  }
 
-	/**
-	 * 
-	 */
-	public void sendMessageToMultipleEdgesWithWeight(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex, Iterator<LayeredPartitionedLongWritable> vertexIdIterator, T message) {
-		while(vertexIdIterator.hasNext()){
-			MessageWritable messageCopy = message.copy();
-			sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)messageCopy);
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	public void sendMessageToAllEdgesWithWeight(
-			Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
-			T message) {
-		Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
-		while(edges.hasNext()){			
-			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-			if(current.getLayer() == currentLayer  && !vertex.getEdgeValue(current).isSpanningTree())
-				sendMessageWithWeight(vertex, current, (T) message.copy());
-		}
-	}
+  public void sendMessageWithWeight(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
+    LayeredPartitionedLongWritable id, T msg){
+    //		MessageWritable w = (MessageWritable) msg;
+    msg.addToWeight((vertex.getEdgeValue(id)).getValue());
+    //		log.info("sendind " + msg);		
+    sendMessage(id, msg);
+  }
 
-	/* (non-Javadoc)
-	 * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
-	 */
-	@Override
-	public void sendMessageToAllEdges(
-			Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
-			T message) {
-		Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
-		while(edges.hasNext()){
-			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-			if(current.getLayer() == currentLayer && !vertex.getEdgeValue(current).isSpanningTree())
-				sendMessage(current, message);
-		}
-	}
+  /**
+   * 
+   */
+  public void sendMessageToMultipleEdgesWithWeight(Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex, Iterator<LayeredPartitionedLongWritable> vertexIdIterator, T message) {
+    while(vertexIdIterator.hasNext()){
+      MessageWritable messageCopy = message.copy();
+      sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)messageCopy);
+    }
+  }
+
+  /**
+   * 
+   */
+  public void sendMessageToAllEdgesWithWeight(
+    Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
+    T message) {
+    Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
+    while(edges.hasNext()){			
+      Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = edges.next();
+      LayeredPartitionedLongWritable currentID = currentEdge.getTargetVertexId();
+      if(currentID.getLayer() == currentLayer && !currentEdge.getValue().isSpanningTree())
+        sendMessageWithWeight(vertex, currentID, (T) message.copy());
+    }
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.giraph.graph.AbstractComputation#sendMessageToAllEdges(org.apache.giraph.graph.Vertex, org.apache.hadoop.io.Writable)
+   */
+  @Override
+  public void sendMessageToAllEdges(
+    Vertex<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue> vertex,
+    T message) {
+    Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
+    while(edges.hasNext()){
+      Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = edges.next();
+      LayeredPartitionedLongWritable currentID = currentEdge.getTargetVertexId();
+      if(currentID.getLayer() == currentLayer && !currentEdge.getValue().isSpanningTree())
+        sendMessage(currentID, message);
+    }
+  }
 
 }
 

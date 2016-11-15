@@ -19,26 +19,21 @@
 package unipg.gila.multi.placers;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
-import org.apache.giraph.edge.Edge;
+import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
@@ -67,6 +62,8 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		Iterator<LayoutMessage> ms = msgs.iterator();
 		if(!ms.hasNext() || vertex.getValue().isSun())
 			return;
+    if(SolarPlacerRoutine.logPlacer)
+      log.info("I'm " + vertex.getId());
 		//		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 		//		while(edges.hasNext()){
 		//			Edge<LayeredPartitionedLongWritable, IntWritable> currentEdge = edges.next();
@@ -84,14 +81,16 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		float[] myCoords = vertex.getValue().getCoordinates();
 		ms = msgs.iterator();
 		while(ms.hasNext()){
-			LayoutMessage current = (LayoutMessage) ms.next();
+			LayoutMessage current = ms.next();
 			if(!current.isAZombie() && !current.getPayloadVertex().equals(vertex.getId())){
+			  log.info("Checking for neighbor " + current.getPayloadVertex());
 				if(vertex.getEdgeValue(current.getPayloadVertex()) != null){
-					if(SolarPlacerRoutine.logPlacer)						
-						log.info("I'm propagating to my neighbor " + current.getPayloadVertex() + " the message" + current);
+					if(SolarPlacerRoutine.logPlacer){
+						log.info("I'm "+ vertex.getId() + " propagating to my neighbor " + current.getPayloadVertex());
+					}
 					if(current.getWeight() >= 0){
 						if(SolarPlacerRoutine.logPlacer)
-							log.info("Retransmitting to " + current.getPayloadVertex());
+							log.info("Retransmitting coordinates");
 						sendMessage(current.getPayloadVertex().copy(), (LayoutMessage)current.propagateAndDie());
 					}else{
 						float angle = new Float(Math.random()*Math.PI*2);
@@ -99,9 +98,11 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 						float[] blanks = new float[]{myCoords[0] + new Float(Math.cos(angle)*desiredDistance),
 								myCoords[1] + new Float(Math.sin(angle)*desiredDistance)};
 						if(SolarPlacerRoutine.logPlacer)
-							log.info("Blanks received; generating random coordinates with coordinates" + blanks[0] + " " + blanks[1] + " starting from " + myCoords[0] + " " + myCoords[1]);
+							log.info("Blanks received; generating random coordinates");
 						sendMessage(current.getPayloadVertex().copy(), new LayoutMessage(current.getPayloadVertex().copy(), blanks));
 					}
+	        addEdgeRequest(vertex.getId(), EdgeFactory.create(current.getPayloadVertex(), new SpTreeEdgeValue(true))); 
+	        addEdgeRequest(current.getPayloadVertex(), EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true))); 
 				}
 			}
 		}

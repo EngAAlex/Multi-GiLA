@@ -24,6 +24,8 @@ import org.apache.hadoop.io.IntWritable;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.CoordinatesBroadcast;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.InterLayerDataTransferComputation;
+import unipg.gila.multi.spanningtree.SpanningTreeCreationRoutine.SpanningTreeConsistencyEnforcerForMoons;
+import unipg.gila.multi.spanningtree.SpanningTreeCreationRoutine.SpanningTreeConsistencyEnforcerForPlanets;
 
 /**
  * @author Alessio Arleo
@@ -58,6 +60,9 @@ public class SolarPlacerRoutine {
 				master.setAggregatedValue(SolarMergerRoutine.currentLayer, new IntWritable(currentLayer - 1));
 			counter++; return false;
 		case 3 : master.setComputation(PlacerCoordinateDelivery.class); counter++; return false;
+    case 4 : master.setComputation(PlacerCoordinateDelivery.class); counter++; return false;
+    case 5 : master.setComputation(SpanningTreeConsistencyEnforcerForMoons.class); counter++; return false;
+    case 6 : master.setComputation(SpanningTreeConsistencyEnforcerForPlanets.class); counter++; return false;
 		default : reset(); return true;
 		}
 	}

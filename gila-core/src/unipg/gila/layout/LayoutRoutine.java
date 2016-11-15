@@ -70,7 +70,7 @@ public class LayoutRoutine {
   // #############CLINT OPTIONS
 
   // LOGGING OPTIONS
-  public static final String logLayoutString = "layout.logLayout";
+  public static final String logLayoutString = "layout.showLog";
 
   // COMPUTATION OPTIONS
   public static final String ttlMaxString = "layout.flooding.ttlMax";

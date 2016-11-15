@@ -36,6 +36,7 @@ import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorer;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorerWithComponentsNo;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleLayoutCC;
 import unipg.gila.multi.placers.SolarPlacerRoutine;
+import unipg.gila.multi.spanningtree.SpanningTreeCreationRoutine;
 
 /**
  * @author Alessio Arleo
@@ -43,185 +44,192 @@ import unipg.gila.multi.placers.SolarPlacerRoutine;
  */
 public class MultiScaleMaster extends DefaultMasterCompute {
 
-	//LOGGER
-	Logger log = Logger.getLogger(getClass());
-	
-	public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
+  //LOGGER
+  Logger log = Logger.getLogger(getClass());
 
-	public static final String multiCounterString = "Global Counters";
+  public static final String adaptationStrategyString = "multi.layout.adaptationStrategy";
 
-	LayoutRoutine layoutRoutine;
-	SolarMergerRoutine mergerRoutine;
-	SolarPlacerRoutine placerRoutine;
-	GraphReintegrationRoutine reintegrationRoutine;
-	AdaptationStrategy adaptationStrategy;
+  public static final String multiCounterString = "Global Counters";
 
-	boolean merging;
-	boolean placing;
-	boolean layout;
-	boolean reintegrating;
-	boolean preparePlacer;
-	boolean angularMaximization;
-	boolean forceMaximization;
-	int angularMaximizationIterations;
-	int angularMaximizationIterationsMax;
-	boolean terminate;
+  LayoutRoutine layoutRoutine;
+  SolarMergerRoutine mergerRoutine;
+  SpanningTreeCreationRoutine spanningTreeRoutine;
+  SolarPlacerRoutine placerRoutine;
+  GraphReintegrationRoutine reintegrationRoutine;
+  AdaptationStrategy adaptationStrategy;
 
-	@SuppressWarnings("unchecked")
-	public void initialize() throws InstantiationException ,IllegalAccessException {
-		layoutRoutine = new LayoutRoutine();
-		layoutRoutine.initialize(this, MultiScaleLayout.Seeder.class, MultiScaleLayout.Propagator.class,
-				MultiScaleGraphExplorer.class, MultiScaleGraphExplorerWithComponentsNo.class,
-				MultiScaleDrawingScaler.class,
-				MultiScaleLayoutCC.class);
+  boolean merging;
+  boolean placing;
+  boolean layout;
+  boolean reintegrating;
+  boolean preparePlacer;
+  boolean spanningTreeSetup;
+  //	boolean angularMaximization;
+  boolean forceMaximization;
+  int angularMaximizationIterations;
+  int angularMaximizationIterationsMax;
+  boolean terminate;
 
-		mergerRoutine = new SolarMergerRoutine();
-		mergerRoutine.initialize(this);
+  @SuppressWarnings("unchecked")
+  public void initialize() throws InstantiationException ,IllegalAccessException {
+    layoutRoutine = new LayoutRoutine();
+    layoutRoutine.initialize(this, MultiScaleLayout.Seeder.class, MultiScaleLayout.Propagator.class,
+      MultiScaleGraphExplorer.class, MultiScaleGraphExplorerWithComponentsNo.class,
+      MultiScaleDrawingScaler.class,
+      MultiScaleLayoutCC.class);
 
-		placerRoutine = new SolarPlacerRoutine();
-		placerRoutine.initialize(this);
+    mergerRoutine = new SolarMergerRoutine();
+    mergerRoutine.initialize(this);
 
-		reintegrationRoutine = new GraphReintegrationRoutine();
-		reintegrationRoutine.initialize(this);
+    placerRoutine = new SolarPlacerRoutine();
+    placerRoutine.initialize(this);
 
-		merging=false;
-		layout=false;
-		reintegrating=false;
-		preparePlacer = false;
-		placing=false;
-		terminate = false;
+    reintegrationRoutine = new GraphReintegrationRoutine();
+    reintegrationRoutine.initialize(this);
 
-		try {
-			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
-			adaptationStrategy = tClass.getConstructor().newInstance();
-		} catch (Exception e) {
-			log.info("Caught exceptione, swithcing to default");
-			adaptationStrategy = new SizeAndDensityDrivenAdaptationStrategy();
-		} 
+    spanningTreeRoutine = new SpanningTreeCreationRoutine();
+    spanningTreeRoutine.initialize(this);
+    
+    merging=false;
+    layout=false;
+    reintegrating=false;
+    spanningTreeSetup = false;
+    preparePlacer = false;
+    placing=false;
+    terminate = false;
 
-	}
+    try {
+      Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
+      adaptationStrategy = tClass.getConstructor().newInstance();
+    } catch (Exception e) {
+      log.info("Caught exceptione, swithcing to default");
+      adaptationStrategy = new SizeAndDensityDrivenAdaptationStrategy();
+    } 
 
-	public void compute() {
-		if(getSuperstep() == 0){
-			merging = true;
-		}
-				
-		if(terminate){
-			getContext().getCounter(multiCounterString, "Supersteps").increment(getSuperstep());
-			haltComputation();
-			return;
-		}
-		int currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get(); 
+  }
 
-		if(merging)
-			if(!mergerRoutine.compute()){
-				return;
-			}
-			else{
-				merging = false;
-				preparePlacer = true;
-				setComputation(MergerToPlacerDummyComputation.class);
-				return;
-			}
-		int noOfVertices = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator)).get(new IntWritable(currentLayer))).get();
-		int noOfLayers = ((IntWritable)getAggregatedValue(SolarMergerRoutine.layerNumberAggregator)).get();
-		int noOfEdges = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator)).get(new IntWritable(currentLayer))).get();
+  public void compute() {
+    if(getSuperstep() == 0){
+      merging = true;
+    }
 
-		if(preparePlacer){
-			preparePlacer = false;
-			layout = true;
+    if(terminate){
+      getContext().getCounter(multiCounterString, "Supersteps").increment(getSuperstep());
+      haltComputation();
+      return;
+    }
+    int currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get(); 
 
-			int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
-					noOfVertices, 
-					noOfEdges);
-			if(currentLayer == 0)
-				selectedK = (selectedK > 2 ? 2 : selectedK);
-			updateCountersAndAggregators(selectedK, currentLayer, noOfLayers, noOfVertices, noOfEdges);
-		}
+    if(merging){
+      if(!mergerRoutine.compute()){
+        return;
+      }else{
+        merging = false;
+        spanningTreeSetup = true;
+      }
+    }
+    
+    if(spanningTreeSetup)
+      if(!spanningTreeRoutine.compute()){
+        return;
+      }else{
+        preparePlacer = true;
+        setComputation(MergerToPlacerDummyComputation.class);
+        spanningTreeSetup = false;
+        return;
+      }
 
-		if(currentLayer >= 0 && !reintegrating){
+    int noOfVertices = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator)).get(new IntWritable(currentLayer))).get();
+    int noOfLayers = ((IntWritable)getAggregatedValue(SolarMergerRoutine.layerNumberAggregator)).get();
+    int noOfEdges = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator)).get(new IntWritable(currentLayer))).get();
 
-			if(layout){
-				int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
-				float optimalEdgeLength = (float)currentEdgeWeight;
+    if(preparePlacer){
+      preparePlacer = false;
+      layout = true;
 
-				optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+      int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
+        noOfVertices, 
+        noOfEdges);
+      if(currentLayer == 0)
+        selectedK = (selectedK > 2 ? 2 : selectedK);
+      updateCountersAndAggregators(selectedK, currentLayer, noOfLayers, noOfVertices, noOfEdges);
+    }
 
-				setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
-						new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
+    if(currentLayer >= 0 && !reintegrating){
 
-				if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
-					return;
-				}else{
-					layout = false;
-					if(currentLayer > 0){
-						placing = true;
-					}else{
-						reintegrating = true;
-					}
+      if(layout){
+        int currentEdgeWeight = ((IntWritable)((MapWritable)getAggregatedValue(SolarMergerRoutine.layerEdgeWeightsAggregator)).get(new IntWritable(currentLayer))).get();
+        float optimalEdgeLength = (float)currentEdgeWeight;
 
-				}
-			}
-			if(placing)
-				if(!placerRoutine.compute())
-					return;
-				else{
-					placing = false;
-					layout = true;
-//					log.info("deactivated placer");
-					resetLayoutAggregators();
+        optimalEdgeLength *= ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
 
-					//					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
+        setAggregatedValue(LayoutRoutine.walshawConstant_agg, 
+          new FloatWritable(getConf().getFloat(LayoutRoutine.repulsiveForceModerationString,(float) (Math.pow(optimalEdgeLength, 2) * getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault)))));
 
-					int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
-							noOfVertices, 
-							noOfEdges);
-					if(currentLayer == 0)
-						selectedK = (selectedK > 2 ? 2 : selectedK);
-					updateCountersAndAggregators(selectedK, currentLayer, noOfLayers, noOfVertices, noOfEdges);
+        if(!layoutRoutine.compute(noOfVertices, optimalEdgeLength)){
+          return;
+        }else{
+          layout = false;
+          if(currentLayer > 0){
+            placing = true;
+          }else{
+            reintegrating = true;
+          }
 
-					return;
-				}
+        }
+      }
+      if(placing)
+        if(!placerRoutine.compute())
+          return;
+        else{
+          placing = false;
+          layout = true;
+          resetLayoutAggregators();
+          int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
+            noOfVertices, 
+            noOfEdges);
+          if(currentLayer == 0)
+            selectedK = (selectedK > 2 ? 2 : selectedK);
+          updateCountersAndAggregators(selectedK, currentLayer, noOfLayers, noOfVertices, noOfEdges);
 
-		}
-		if(reintegrating)
-			if(reintegrationRoutine.compute()){
-				terminate = true;
-				haltComputation();
-			}
-	}
-	
-	private void updateCountersAndAggregators(int selectedK, int currentLayer, int noOfLayers, int noOfVertices, int noOfEdges){
-		setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
+          return;
+        }
 
-		setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(
-				adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-		setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(
-				adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-		setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(
-				adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+    }
+    if(reintegrating)
+      if(reintegrationRoutine.compute()){
+        terminate = true;
+        haltComputation();
+      }
+  }
 
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k").increment(selectedK);
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment(
-				(long) (adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment(
-				(long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
-				(long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
-//		getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
-//		getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
+  private void updateCountersAndAggregators(int selectedK, int currentLayer, int noOfLayers, int noOfVertices, int noOfEdges){
+    setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
 
-	}
+    setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(
+      adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+    setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(
+      adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+    setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(
+      adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
 
-	/**
-	 * 
-	 */
-	private void resetLayoutAggregators() {
-//		setAggregatedValue(LayoutRoutine.componentNumber, new IntWritable(0));
-		setAggregatedValue(LayoutRoutine.max_K_agg, new FloatWritable(Float.MIN_VALUE));
-		setAggregatedValue(LayoutRoutine.componentNoOfNodes, new MapWritable());
-		setAggregatedValue(LayoutRoutine.maxCoords, new MapWritable());
-		setAggregatedValue(LayoutRoutine.minCoords, new MapWritable());
-	}
+    getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k").increment(selectedK);
+    getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment(
+      (long) (adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
+    getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment(
+      (long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
+    getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
+      (long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
+  }
+
+  /**
+   * 
+   */
+  private void resetLayoutAggregators() {
+    setAggregatedValue(LayoutRoutine.max_K_agg, new FloatWritable(Float.MIN_VALUE));
+    setAggregatedValue(LayoutRoutine.componentNoOfNodes, new MapWritable());
+    setAggregatedValue(LayoutRoutine.maxCoords, new MapWritable());
+    setAggregatedValue(LayoutRoutine.minCoords, new MapWritable());
+  }
 
 }

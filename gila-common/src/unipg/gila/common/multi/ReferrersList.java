@@ -20,6 +20,7 @@ package unipg.gila.common.multi;
 
 import java.io.DataInput;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import unipg.gila.common.datastructures.LinkedListWritable;
@@ -52,6 +53,18 @@ public class ReferrersList extends LinkedListWritable<Referrer> {
     Referrer current = new Referrer();
     current.readFields(in);
     return current;
+  }
+  
+  /* (non-Javadoc)
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString() {
+    String toReturn = "Referrers: \n";
+    Iterator<Referrer> it = internalState.iterator();
+    while(it.hasNext())
+      toReturn += it.next().toString() + "\n";
+    return toReturn;
   }
 
 }

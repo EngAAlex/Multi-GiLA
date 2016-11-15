@@ -105,11 +105,13 @@ public class MultiScaleLayout {
       LayoutMessage message) {
       Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
       while(edges.hasNext()){
-        LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-        if(current.getLayer() != currentLayer)
+        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = edges.next();
+        LayeredPartitionedLongWritable current = currentEdge.getTargetVertexId();
+        if(current.getLayer() != currentLayer || currentEdge.getValue().isSpanningTree())
           continue;
         aggregate(LayoutRoutine.max_K_agg, new FloatWritable(vertex.getEdgeValue(current).getValue()*k));
         LayoutMessage msgCopy = ((LayoutMessage)message).copy();
+        msgCopy.setSenderId(vertex.getId().getId());
         sendMessage(current, msgCopy);
       }
     }
@@ -163,10 +165,20 @@ public class MultiScaleLayout {
     @Override
     protected float requestOptimalSpringLength(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
-      LayeredPartitionedLongWritable currentPayload) {
+      Iterable<SpTreeEdgeValue> eValues) {
+      Iterator<SpTreeEdgeValue> cc = eValues.iterator();
+      int value = 1;
+      while(cc.hasNext()){
+        SpTreeEdgeValue current = cc.next();
+        if(!current.isSpanningTree()){
+          value = current.getValue();
+          break;
+        }
+      }
+        
       if(LayoutRoutine.logLayout)
-        log.info("Suggesting a spring length of " + vertex.getEdgeValue(currentPayload).getValue()*k + " based on " + vertex.getEdgeValue(currentPayload).getValue() + " and " + k);
-      return vertex.getEdgeValue(currentPayload).getValue()*k;
+        log.info("Suggesting a spring length of " + value*k + " based on " + value + " and " + k);
+      return value*k;
     }
 
     /* (non-Javadoc)
@@ -175,8 +187,9 @@ public class MultiScaleLayout {
     @Override
     protected float requestWalshawConstant() {
       if(LayoutRoutine.logLayout)
-        log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
-        return (float) (Math.pow(maxK,2)*modifier);
+        log.info("Suggested walshawConstant " + Math.sqrt(maxK)*modifier + " from " + Math.sqrt(maxK) + " " + modifier);;
+//        log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
+        return (float) (Math.sqrt(maxK)*modifier);
     }
 
     /* (non-Javadoc)
@@ -186,7 +199,9 @@ public class MultiScaleLayout {
     public void sendMessageToAllEdges(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
       LayoutMessage message) {
-      messageCache.add(message);
+      if(messageCache == null)
+        messageCache = new HashSet<LayoutMessage>();
+      messageCache.add(message.copy());
       //			Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
       //			while(edges.hasNext()){
       //				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
@@ -230,7 +245,8 @@ public class MultiScaleLayout {
     void
     executePostMessageAction(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex) {
-      sendMessageToAllSpanningTreeEdges(messageCache, vertex);
+      if(messageCache != null)
+        sendMessageToAllSpanningTreeEdges(messageCache, vertex);
     }
   }
 

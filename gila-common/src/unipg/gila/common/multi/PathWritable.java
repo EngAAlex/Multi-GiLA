@@ -82,7 +82,7 @@ public class PathWritable implements Writable {
       return false;
     PathWritable oPath = (PathWritable) obj;
     if (this == obj
-            || (this.positionInPath == oPath.getPositionInpath() && this.referencedSun
+            || (/*this.positionInPath == oPath.getPositionInpath() &&*/ this.referencedSun
                     .equals(oPath.getReferencedSun())))
       return true;
     return false;
@@ -95,7 +95,7 @@ public class PathWritable implements Writable {
    */
   @Override
   public int hashCode() {
-    return (this.positionInPath + " " + this.referencedSun.toString())
+    return (/*this.positionInPath + " " +*/ this.referencedSun.toString())
             .hashCode();
   }
 
