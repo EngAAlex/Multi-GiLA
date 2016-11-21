@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
-import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.edge.MutableEdge;
 import org.apache.giraph.graph.GraphState;
@@ -142,8 +141,10 @@ public class SpanningTreeCreationRoutine {
             if(!alreadyConnected){
               alreadyConnected = true;
             }else{
-              sendMessage(current.getTargetVertexId(), new LayoutMessage(vertex.getId(), new float[]{0,0})); //inform the planet to disconnect the spanning tree from the moon
+              sendMessage(current.getTargetVertexId(), new LayoutMessage(vertex.getId(), new float[]{0,0})); //inform the planet to disconnect the spanning tree from the oon
+              getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
               mutableEdges.remove();
+              
               //              removeEdgeRequest(vertex.getId(), current.getTargetVertexId());
               //              removeEdgeRequest(current.getTargetVertexId(), vertex.getId());              
             }

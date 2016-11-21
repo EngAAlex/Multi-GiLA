@@ -153,6 +153,7 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
     sendMessageToAllEdges(vertex, toSend);
     aggregate(LayoutRoutine.MessagesAggregatorString, new BooleanWritable(
             false));
+    getContext().getCounter("Messages Statistics", "Messages sent during drawing process").increment(1);
   }
 
   /*

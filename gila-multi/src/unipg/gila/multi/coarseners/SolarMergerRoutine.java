@@ -33,25 +33,18 @@ import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
-import unipg.gila.aggregators.LongWritableSetAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntMaxAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
-import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
-import unipg.gila.common.datastructures.LongWritableSet;
-import unipg.gila.common.multi.SolarMessage;
-import unipg.gila.layout.LayoutRoutine;
-import unipg.gila.multi.MultiScaleComputation;
-import unipg.gila.multi.coarseners.SolarMerger.MoonSweep;
-import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse;
 import unipg.gila.multi.coarseners.SolarMerger.AsteroidCaller;
 import unipg.gila.multi.coarseners.SolarMerger.DummySolarMergerComputation;
+import unipg.gila.multi.coarseners.SolarMerger.MoonSweep;
+import unipg.gila.multi.coarseners.SolarMerger.PlanetResponse;
 import unipg.gila.multi.coarseners.SolarMerger.RegimeMerger;
 import unipg.gila.multi.coarseners.SolarMerger.SolarMergeVertexCreation;
-import unipg.gila.multi.coarseners.SolarMerger.SunDiscovery;
 import unipg.gila.multi.coarseners.SolarMerger.SolarSweep;
 import unipg.gila.multi.coarseners.SolarMerger.SunBroadcast;
+import unipg.gila.multi.coarseners.SolarMerger.SunDiscovery;
 import unipg.gila.multi.coarseners.SolarMerger.SunGeneration;
-import unipg.gila.multi.layout.MultiScaleLayout;
 
 
 /**
@@ -86,8 +79,8 @@ public class SolarMergerRoutine {
 	//MERGER COUNTERS
 	public static final String COUNTER_GROUP = "Merging Counters";
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
-	public static final String NUMBER_OF_ASTEROIDS_COUNTER = "Number of asteroids left";
-	public static final String LAST_SUN_CHANCE_COUNTER = "Last sun chance";
+//	public static final String NUMBER_OF_ASTEROIDS_COUNTER = "Number of asteroids left";
+//	public static final String LAST_SUN_CHANCE_COUNTER = "Last sun chance";
 	public static final String logMergerString = "merger.showLog";
 
 	public static final String sunsPerComponent = "AGG_SUNS_PER_COMPONENT";
@@ -157,7 +150,6 @@ public class SolarMergerRoutine {
 		}
 		if(messagesNegotiationDone && master.getComputation().equals(RegimeMerger.class)){
 			if(!timeForTheMoons){
-//				master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).setValue(0);
 				master.setComputation(AsteroidCaller.class);
 			}else{
 				master.setComputation(SolarMergeVertexCreation.class);
@@ -176,7 +168,6 @@ public class SolarMergerRoutine {
 				float currentSunChance = ((FloatWritable)master.getAggregatedValue(sunChanceAggregatorString)).get();
 				currentSunChance += currentSunChance*0.05f;
 				currentSunChance = currentSunChance > 1.0f ? 1.0f : currentSunChance;
-				master.getContext().getCounter(COUNTER_GROUP, LAST_SUN_CHANCE_COUNTER).setValue(new Float(currentSunChance*100).longValue());
 				master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(currentSunChance));
 			}
 			return false;
@@ -199,8 +190,8 @@ public class SolarMergerRoutine {
 			waitForDummy = false;
 			int layerSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerVertexSizeAggregator)).get(new IntWritable(cLayer+1))).get();
 			int edgeSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerEdgeSizeAggregator)).get(new IntWritable(cLayer+1))).get();
-			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "By Time Layer " + (cLayer+1) + " vertices").increment(layerSize);
-			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "By Time Layer " + (cLayer+1) + " edges").increment(edgeSize);
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " vertices").increment(layerSize);
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " edges").increment(edgeSize);
 			int currentLayerNo = ((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get();
 			master.setAggregatedValue(layerNumberAggregator, new IntWritable(currentLayerNo++));
 			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
@@ -273,7 +264,6 @@ public class SolarMergerRoutine {
 		master.setAggregatedValue(mergerAttempts, new IntWritable(1));
 		baseSunChance = master.getConf().getFloat(sunChance, sunChanceDefault);
 		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(baseSunChance));
-		master.getContext().getCounter(COUNTER_GROUP, LAST_SUN_CHANCE_COUNTER).setValue(new Float(baseSunChance*100).longValue());
 		
 		master.registerPersistentAggregator(sunsPerComponent, ComponentIntSumAggregator.class);
 		

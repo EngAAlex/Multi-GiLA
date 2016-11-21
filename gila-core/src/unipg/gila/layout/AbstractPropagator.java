@@ -30,14 +30,11 @@ import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
-import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.force.FR;
@@ -169,6 +166,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
         temp.setSenderId(currentMessage.getSenderId());
         sendMessageToAllEdges(vertex,
                 temp);
+        getContext().getCounter("Messages Statistics", "Messages sent during drawing process").increment(1);
       }
 
     }

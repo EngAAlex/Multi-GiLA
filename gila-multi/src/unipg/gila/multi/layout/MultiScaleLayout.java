@@ -38,7 +38,6 @@ import org.apache.log4j.Logger;
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;

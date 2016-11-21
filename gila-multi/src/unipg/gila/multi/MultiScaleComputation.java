@@ -30,7 +30,6 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
@@ -38,7 +37,6 @@ import org.apache.log4j.Logger;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
-import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 
 public abstract class MultiScaleComputation<Z extends Writable, P extends MessageWritable, T extends MessageWritable> extends
@@ -46,6 +44,8 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
 
   //LOGGER
   public static final String multiscaleLogString = "multi.showLog";
+  
+  public static final String MESSAGES_COUNTER_GROUP = "Messages Statistics";
 
   Logger log = Logger.getLogger(MultiScaleComputation.class);
 
@@ -97,6 +97,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
     msg.addToWeight((vertex.getEdgeValue(id)).getValue());
     //		log.info("sendind " + msg);		
     sendMessage(id, msg);
+    getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
   }
 
   /**
@@ -106,6 +107,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
     while(vertexIdIterator.hasNext()){
       MessageWritable messageCopy = message.copy();
       sendMessageWithWeight(vertex, vertexIdIterator.next(), (T)messageCopy);
+      getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
     }
   }
 
@@ -119,8 +121,10 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
     while(edges.hasNext()){			
       Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = edges.next();
       LayeredPartitionedLongWritable currentID = currentEdge.getTargetVertexId();
-      if(currentID.getLayer() == currentLayer && !currentEdge.getValue().isSpanningTree())
+      if(currentID.getLayer() == currentLayer && !currentEdge.getValue().isSpanningTree()){
         sendMessageWithWeight(vertex, currentID, (T) message.copy());
+        getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
+      }
     }
   }
 
@@ -135,8 +139,10 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
     while(edges.hasNext()){
       Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentEdge = edges.next();
       LayeredPartitionedLongWritable currentID = currentEdge.getTargetVertexId();
-      if(currentID.getLayer() == currentLayer && !currentEdge.getValue().isSpanningTree())
+      if(currentID.getLayer() == currentLayer && !currentEdge.getValue().isSpanningTree()){
         sendMessage(currentID, message);
+        getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
+      }
     }
   }
 

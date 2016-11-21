@@ -25,10 +25,10 @@ package unipg.gila.multi.layout;
 
 public class LayoutAdaptationStrategy{
 	
-	public static int maxK = 6;
+	public static int maxK = 9;
 	public static float maxAccuracy = 0.001f;
 	public static float minCoolingSpeed = 0.8f;
-	public static float minInitialTempFactor = 4;
+	public static float minInitialTempFactor = 6;
 
 	
 	public static class DensityDrivenAdaptationStrategy implements AdaptationStrategy{
@@ -98,16 +98,16 @@ public class LayoutAdaptationStrategy{
 			if(nOfEdgesOfLayer < 1000)
 				return LayoutAdaptationStrategy.maxK;
 			if(nOfEdgesOfLayer < 5000)
-				return 5;
+				return 8;
 			if(nOfEdgesOfLayer < 10000)
-				return 4;
+				return 7;
 //			if(nOfEdgesOfLayer > 50000)
 //				return 3;
 			if(nOfEdgesOfLayer > 1000000)
-				return 1;
-			if(nOfEdgesOfLayer > 100000)
 				return 2;
-			return 3;
+			if(nOfEdgesOfLayer > 100000)
+				return 4;
+			return 5;
 		}
 
 		/* (non-Javadoc)

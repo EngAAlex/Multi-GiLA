@@ -16,7 +16,6 @@
 package unipg.gila.multi.coarseners;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,23 +33,17 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
-import unipg.gila.common.datastructures.LongWritableSet;
 import unipg.gila.common.datastructures.SetWritable;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
-import unipg.gila.common.multi.LayeredPartitionedLongWritableSet;
-import unipg.gila.common.multi.PathWritable;
-import unipg.gila.common.multi.PathWritableSet;
 import unipg.gila.common.multi.SolarMessage;
-import unipg.gila.common.multi.SolarMessageSet;
 import unipg.gila.common.multi.SolarMessage.CODE;
-import unipg.gila.layout.LayoutRoutine;
+import unipg.gila.common.multi.SolarMessageSet;
 import unipg.gila.multi.MultiScaleComputation;
 
 /**
@@ -59,7 +52,8 @@ import unipg.gila.multi.MultiScaleComputation;
  */
 public class SolarMerger{
 
-	
+	protected final static String MERGER_MESSAGES_COUNTER = "Messages sent during merging process";
+  
 	//GLOBAL STATIC ATTRIBUTES
 	public static boolean logMerger;
 	
@@ -540,7 +534,6 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException {
 			if(vertex.getValue().isAsteroid()){
 				aggregate(SolarMergerRoutine.asteroidsRemoved, new BooleanWritable(false));
-				getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).increment(1);
 			}else
 				vertex.getValue().setAssigned();
 		}
