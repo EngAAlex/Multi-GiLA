@@ -30,7 +30,6 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
@@ -47,9 +46,11 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 	
 	Logger log = Logger.getLogger(MultiScaleComputation.class);
 
+	public static final String MESSAGES_COUNTER_GROUP = "Messages Statistics";
+	
 	protected int currentLayer;
 	private boolean showLog;
-
+	
 	@Override	
 	public void compute(
 			Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
@@ -84,16 +85,14 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, IntWritable> getSpecialConf() {
-		// TODO Auto-generated method stub
 		return (ImmutableClassesGiraphConfiguration<LayeredPartitionedLongWritable, Writable, IntWritable>) super.getConf();
 	}
 
 	public void sendMessageWithWeight(Vertex<LayeredPartitionedLongWritable, Z, IntWritable> vertex,
 						LayeredPartitionedLongWritable id, T msg){
-//		MessageWritable w = (MessageWritable) msg;
 		msg.addToWeight(((IntWritable)vertex.getEdgeValue(id)).get());
-//		log.info("sendind " + msg);
 		sendMessage(id, msg);
+    getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
 	}
 
 	/**
@@ -130,8 +129,10 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, IntWritable, P, T> {
 		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> edges = vertex.getEdges().iterator();
 		while(edges.hasNext()){
 			LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-			if(current.getLayer() == currentLayer)
+			if(current.getLayer() == currentLayer){
 				sendMessage(current, message);
+		    getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
+			}
 		}
 	}
 

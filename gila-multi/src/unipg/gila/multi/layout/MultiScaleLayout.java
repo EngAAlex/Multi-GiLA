@@ -34,7 +34,6 @@ import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.LayoutMessageMatrix;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.AbstractPropagator;
 import unipg.gila.layout.AbstractSeeder;
@@ -43,6 +42,7 @@ import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo;
 import unipg.gila.layout.LayoutRoutine.DrawingScaler;
 import unipg.gila.layout.LayoutRoutine.LayoutCCs;
+import unipg.gila.multi.MultiScaleComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 
 /**
@@ -85,7 +85,6 @@ public class MultiScaleLayout {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
-//				log.info(vertex.getId() + " computing hiuar");
 				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
 					throw new IOException("NAN detected");
 				super.compute(vertex, messages);
@@ -107,6 +106,7 @@ public class MultiScaleLayout {
 				aggregate(LayoutRoutine.max_K_agg, new FloatWritable(((IntWritable)vertex.getEdgeValue(current)).get()*k));
 				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
 				sendMessage(current, msgCopy);
+		    getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
 			}
 		}
 
@@ -145,8 +145,6 @@ public class MultiScaleLayout {
 			if(vertex.getId().getLayer() != currentLayer)
 				return;
 			else{
-//				if(LayoutRoutine.logLayout)
-//					log.info(vertex.getId() + " computing hiuar");
 				if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
 					throw new IOException("NAN detected");
 				super.compute(vertex, messages);
@@ -189,6 +187,7 @@ public class MultiScaleLayout {
 					continue;
 				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
 				sendMessage(current, msgCopy);
+		    getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
 			}
 		}
 	}

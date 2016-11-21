@@ -16,7 +16,6 @@
 package unipg.gila.multi.coarseners;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,22 +33,16 @@ import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
-import unipg.gila.common.datastructures.LongWritableSet;
 import unipg.gila.common.datastructures.SetWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
-import unipg.gila.common.multi.LayeredPartitionedLongWritableSet;
-import unipg.gila.common.multi.PathWritable;
-import unipg.gila.common.multi.PathWritableSet;
 import unipg.gila.common.multi.SolarMessage;
-import unipg.gila.common.multi.SolarMessageSet;
 import unipg.gila.common.multi.SolarMessage.CODE;
-import unipg.gila.layout.LayoutRoutine;
+import unipg.gila.common.multi.SolarMessageSet;
 import unipg.gila.multi.MultiScaleComputation;
 
 /**
@@ -190,10 +183,10 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(vertex.getValue().isSun() && !vertex.getValue().isAssigned()){
 				SolarMessage sunBroadcast = new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER);
-				sunBroadcast.setWeight(vertex.getValue().astralWeight());
+				sunBroadcast.setWeight(0);
 				sendMessageToAllEdgesWithWeight(vertex, sunBroadcast);
 			if(logMerger)
-				log.info("I'm " + vertex.getId().getId()+ " and I'm broadcasting my sun offer");
+				log.info("I'm broadcasting my sun offer");
 			}
 		}
 
@@ -350,8 +343,8 @@ public class SolarMerger{
 			//INFORM MY SUN THAT AN OFFER HAS BEEN REFUSED
 			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
 			smForMySun.addToExtraPayload(vertex.getId(), refusedSun.getWeight());
+      smForMySun.setWeight(refusedSun.getWeight());
 			if(vertex.getValue().isPlanet()){
-				smForMySun.setWeight(refusedSun.getWeight());
 				sendMessageWithWeight(vertex, vertex.getValue().getSun(), smForMySun);
 			}else
 				sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), smForMySun);
@@ -415,11 +408,10 @@ public class SolarMerger{
 				while(msgIterator.hasNext()){
 					SolarMessage currentMessage =  msgIterator.next();					
 					if(!currentMessage.getValue().equals(vertex.getId()) && (currentMessage.getCode().equals(CODE.REFUSEOFFER) || currentMessage.getCode().equals(CODE.SUNDISCOVERY))){ //THE SUN OFFER HAS BEEN DECLINED. SAVING THE DATA INTO THE NEIGHBORING SYSTEMS DATA STR.
-						//							log.info("Me, sun " + vertex.getId().getId() + " accept as a neighboring sun the vertex " + currentMessage.getValue());
-						//							if(currentMessage.getExtraPayload() != null)
-						//								log.info("Referrers " + currentMessage.getExtraPayload().toString());
-						//							else
-						//								log.info("No referrers in this message");
+					  if(logMerger){
+				      log.info("Registering for referenced sun " + currentMessage.getValue() + " total weight " + currentMessage.getWeight() + " " +
+				          currentMessage.getExtraPayload().toString());
+					  }
 						value.addNeighbourSystem(currentMessage.getValue(), currentMessage.getExtraPayload(), currentMessage.getWeight());
 					}
 				}
@@ -444,13 +436,12 @@ public class SolarMerger{
 
 					if(currentMessage.getCode().equals(CODE.REFUSEOFFER)){// && !vertex.getValue().isAssigned()) || currentMessage.getCode().equals(CODE.SUNDISCOVERY)){
 						SolarMessage messageToSend = (SolarMessage)currentMessage.propagate();
-						if(logMerger)
-							log.info("Propagating " + currentMessage + " with " + messageToSend);
 						messageToSend.addToExtraPayload(vertex.getId(), messageToSend.getWeight());
 						if(vertex.getValue().isPlanet()){
 							sendMessageWithWeight(vertex, vertex.getValue().getSun(), messageToSend);
-						}else
+						}else{
 							sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageToSend);
+						}
 						aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
 					}
 				}
@@ -522,9 +513,7 @@ public class SolarMerger{
 						if(vertex.getValue().isPlanet())
 							sendMessageWithWeight(vertex, vertex.getValue().getSun(), messageForSun);
 						else{
-							//								if(vertex.getValue().getProxies() == null)
-							//									log.info("vertex" + vertex.getId() + " has distance " + value.getDistanceFromSun() + " and get Proxies is null");
-							sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageForSun);
+						  sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageForSun);
 						}
 					}else //ISOLATED SUN
 						value.addNeighbourSystem(xu.getValue().copy(), null, xu.getWeight());
@@ -545,7 +534,6 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException {
 			if(vertex.getValue().isAsteroid()){
 				aggregate(SolarMergerRoutine.asteroidsRemoved, new BooleanWritable(false));
-				getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, SolarMergerRoutine.NUMBER_OF_ASTEROIDS_COUNTER).increment(1);
 			}else
 				vertex.getValue().setAssigned();
 		}
@@ -596,15 +584,10 @@ public class SolarMerger{
 				while(neighborSystems.hasNext()){
 					Entry<Writable, Writable> current = neighborSystems.next();
 					LayeredPartitionedLongWritable neighborSun = (LayeredPartitionedLongWritable) current.getKey();
-					if(neighborSun.equals(homologousId) || neighborSun.equals(vertex.getId())){
-						log.info("selfaloop " + neighborSun + " " + homologousId + " " + vertex.getId());
-						continue;
-					}
 					if(logMerger)
 						log.info("connecting vertex " + neighborSun);
 					edgeList.add(EdgeFactory.create(new LayeredPartitionedLongWritable(neighborSun.getPartition(), neighborSun.getId(), neighborSun.getLayer() + 1),
 							(IntWritable)current.getValue()));
-//					weightCounter += ((IntWritable)current.getValue()).get();
 					weightCounter = Math.max(weightCounter, ((IntWritable)current.getValue()).get());
 					counter++;
 				}

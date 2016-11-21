@@ -171,10 +171,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				else{
 					placing = false;
 					layout = true;
-//					log.info("deactivated placer");
 					resetLayoutAggregators();
-
-					//					layoutRoutine.compute(noOfVertices, optimalEdgeLength);
 
 					int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers, 
 							noOfVertices, 
@@ -211,8 +208,6 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				(long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
 		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
 				(long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
-//		getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " vertices").increment(noOfVertices);
-//		getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + currentLayer + " edges").increment(noOfEdges);
 
 	}
 
@@ -220,7 +215,6 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	 * 
 	 */
 	private void resetLayoutAggregators() {
-//		setAggregatedValue(LayoutRoutine.componentNumber, new IntWritable(0));
 		setAggregatedValue(LayoutRoutine.max_K_agg, new FloatWritable(Float.MIN_VALUE));
 		setAggregatedValue(LayoutRoutine.componentNoOfNodes, new MapWritable());
 		setAggregatedValue(LayoutRoutine.maxCoords, new MapWritable());

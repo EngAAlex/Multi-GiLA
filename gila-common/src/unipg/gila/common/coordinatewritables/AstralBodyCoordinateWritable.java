@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
-import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -41,9 +40,7 @@ import unipg.gila.common.multi.ReferrersList;
  */
 public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
-	//LOGGER
-//	Logger log = Logger.getLogger(AstralBodyCoordinateWritable.class);
-	
+
 	protected LayeredPartitionedLongWritable favProxy;
 	protected LayeredPartitionedLongWritableSet sunProxies;
 	protected LayeredPartitionedLongWritable sun;
@@ -59,29 +56,21 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public AstralBodyCoordinateWritable() {
 		super();
-		//		sunProxy = new LayeredPartitionedLongWritable();
-//				sun = new LayeredPartitionedLongWritable();
 	}
 
 
 	public AstralBodyCoordinateWritable(float x, float y, JSONArray oEs,
 			int component) throws JSONException {
 		super(x, y, oEs, component);
-		//		sunProxy = new LayeredPartitionedLongWritable();
-		//		sun = new LayeredPartitionedLongWritable();
 	}
 
 	public AstralBodyCoordinateWritable(int lowerLevelWeigth, float x, float y, int component) {
 		super(x, y, component);
-		//		sunProxy = new LayeredPartitionedLongWritable();
-		//		sun = new LayeredPartitionedLongWritable();
 		this.lowerLevelWeight = lowerLevelWeigth;
 	}
 
 	public AstralBodyCoordinateWritable(float x, float y, int component) {
 		super(x, y, component);
-		//		sunProxy = new LayeredPartitionedLongWritable();
-		//		sun = new LayeredPartitionedLongWritable();
 	}
 
 	public int astralWeight(){
@@ -91,10 +80,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public int getLowerLevelWeight(){
 		return lowerLevelWeight;
 	}
-
-	//	public LayeredPartitionedLongWritable getProxy(){
-	//		return sunProxy;
-	//	}
 
 	public int getDistanceFromSun(){
 		return distanceFromSun;
@@ -174,7 +159,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			planets	=	new MapWritable();
 		planets.put(id.copy(), new PathWritableSet());
 		astralWeight += weight;
-//		log.info("Me, sun accept as a planet the vertex " + id);
 	}
 
 	public void addMoon(LayeredPartitionedLongWritable id, int weight){
@@ -182,47 +166,40 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 			moons =	new MapWritable();
 		moons.put(id.copy(), new PathWritableSet());
 		astralWeight += weight;
-//		log.info("Me, sun accept as a moon the vertex " + id);
 	}
 
-	public void addNeighbourSystem(LayeredPartitionedLongWritable sun, ReferrersList referrers, int weight){
-		if(neighborSystems == null)
-			neighborSystems = new MapWritable();
-//		log.info("Preparing to add neighbor system " + sun + " with referrers " + (referrers == null ? "zero null" : referrers.size()));
-		if(neighborSystems.containsKey(sun)){
-			if(weight > ((IntWritable)neighborSystems.get(sun)).get())
-				neighborSystems.put(sun, new IntWritable(weight));
-		}else
-			neighborSystems.put(sun, new IntWritable(weight));
+  public void addNeighbourSystem(LayeredPartitionedLongWritable sun,
+    ReferrersList referrers, int weight) {
+    if (neighborSystems == null)
+      neighborSystems = new MapWritable();
+    if (neighborSystems.containsKey(sun)) {
+      if (weight > ((IntWritable) neighborSystems.get(sun)).get())
+        neighborSystems.put(sun, new IntWritable(weight));
+    } else
+      neighborSystems.put(sun, new IntWritable(weight));
 
-		if(referrers == null)
-			return;
-		Iterator<Referrer> it = (Iterator<Referrer>) referrers.iterator();
-		while(it.hasNext()){
-			Referrer currentReferrer = it.next();
-//			log.info("currentReferrer " + currentReferrer.getEventGenerator());
-			if(planets.containsKey(currentReferrer.getEventGenerator())){
-//				log.info("Registering for planet neighbor " + sun + " total " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
-//				((PathWritableSet)planets.get(currentReferrer)).addElement(new PathWritable(
-//						1, Integer.MAX_VALUE - (ttl - 1), sun));
-				((PathWritableSet)planets.get(currentReferrer.getEventGenerator())).addElement(new PathWritable(
-						(weight - currentReferrer.getDistanceAccumulator()), sun));
-			}
-			else {
-				//########################################## WARNING!!
-				//The following code contains a potential vulnerability. The bug causes the refuse message towards the refused sun to have its extra payload initialized
-				//with the conflict generating vertex. The problem has no fix yet, so this patch should allow the computation to end ignoring the vertices into the referrer stacjk
-				//that are neither planets nor moons.
-				if(moons != null){
-					PathWritableSet pSet = (PathWritableSet)moons.get(currentReferrer.getEventGenerator()); 
-					if(pSet != null){
-//						log.info("Registering for moon neighbor " + sun + " weight " + weight + " checkpoint " + (weight - currentReferrer.getDistanceAccumulator()));
-						pSet.addElement(new PathWritable((weight - currentReferrer.getDistanceAccumulator()), sun));
-					}
-				}
-			}
-		}
-	}
+    if (referrers == null)
+      return;
+    Iterator<Referrer> it = (Iterator<Referrer>) referrers.iterator();
+    while (it.hasNext()) {
+      Referrer currentReferrer = it.next();
+      int currentDistanceAccumulator = currentReferrer.getDistanceAccumulator();
+      int difference = weight - currentDistanceAccumulator;
+      PathWritable tmp = new PathWritable(difference, sun);
+      if (planets.containsKey(currentReferrer.getEventGenerator())) {
+        PathWritableSet pSet = ((PathWritableSet) planets.get(currentReferrer.getEventGenerator()));
+            if(!pSet.contains(tmp))
+              pSet.addElement(tmp);
+      } else {
+        if (moons != null) {
+          PathWritableSet pSet = (PathWritableSet) moons.get(currentReferrer
+            .getEventGenerator());
+          if(!pSet.contains(tmp))
+            pSet.addElement(tmp);
+        }
+      }
+    }
+  }
 	
 	public int getPathLengthForNeighbor(LayeredPartitionedLongWritable neighbor){
 		return ((IntWritable)neighborSystems.get(neighbor)).get();
@@ -252,18 +229,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		return null;
 	}	
 
-//	public String neighborSystemsStateToString(){
-//		if(neighborSystems == null)
-//			return "No neighboring system";
-//		Iterator<LayeredPartitionedLongWritable> it = neighbourSystemsIterator();
-//		String result = "";
-//		while(it.hasNext()){
-//			LayeredPartitionedLongWritable current = it.next();
-//			result+= "Neighbor system: "+current.getId()+ " at layer " + current.getLayer()+"\n";
-//		}
-//		return result;
-//	}
-
 	public LayeredPartitionedLongWritable getSun() {
 		if(sun == null)
 			return new LayeredPartitionedLongWritable();
@@ -272,7 +237,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 
 	public void setSun(LayeredPartitionedLongWritable sun){
 		this.sun = sun;
-		//		sunProxy = sun;
 	}
 	
 	public void setSun(LayeredPartitionedLongWritable sun, LayeredPartitionedLongWritable favProxy){
@@ -296,10 +260,6 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 	public LayeredPartitionedLongWritableSet getProxies(){
 		return sunProxies;
 	}
-
-	//	public LayeredPartitionedLongWritable getProxy(){
-	//		return sunProxy;
-	//	}
 
 	public void clearAstralInfo(){
 		cleared = true;

@@ -114,13 +114,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 
 			v2Deg = currentMessage.getWeight();
 			
-			
-//			float weightRatio = v2Deg/(float)v1Deg;
-			
-//			float weightRatio = 1;
-			
-//			log.info("Ma weight vs theirs " + v1Deg + " " + v2Deg + " " + weightRatio);
-			
 			//ATTRACTIVE FORCES
 			if(vValue.hasBeenReset()){
 				tempForce = force.computeAttractiveForce(deltaX, deltaY, distance, squareDistance, requestOptimalSpringLength(vertex, currentPayload), v1Deg, v2Deg);				
@@ -134,9 +127,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 			tempForce = force.computeRepulsiveForce(deltaX, deltaY, distance, squareDistance, v1Deg, v2Deg);
 			if(LayoutRoutine.logLayout)
 				log.info("computed repulsive " + tempForce[0] + " " + tempForce[1] + " with data " + deltaX + " " + deltaY + " " + distance);
-
-//			if(vValue.isAnalyzed(new LongWritable(currentPayload.getId())))
-//				log.info("Im " + vertex.getId() + " recalculating for " + currentPayload.getId() + " forces " + tempForce[0] + " " + tempForce[1]);
 			
 			repulsiveForce[0] += (repulsiveForceEnhancer*tempForce[0]);
 			repulsiveForce[1] += (repulsiveForceEnhancer*tempForce[1]);
@@ -149,7 +139,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 			}
 
 		}
-//		log.info(vertex.getId() + "vertecompletato");
+
 		if(LayoutRoutine.logLayout)
 			log.info("Going to moderate on " + walshawConstant + " from " + repulsiveForce[0] + " " + repulsiveForce[1]);
 		
@@ -161,7 +151,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends IntWrita
 		finalForce[1] -= repulsiveForce[1];
 		
 		if(LayoutRoutine.logLayout)
-			log.info("computed repuslive " + repulsiveForce[0] + " " + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
+			log.info("computed repulsive " + repulsiveForce[0] + " " + repulsiveForce[1] + " final " + finalForce[0] + " " + finalForce[1]);
 		
 		vValue.setAsMoving();
 		vValue.addToForceVector(finalForce);

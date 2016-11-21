@@ -32,17 +32,11 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableFactories;
 import org.apache.log4j.Logger;
-import org.mortbay.log.Log;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
 import unipg.gila.common.datastructures.FloatWritableArray;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.SingleLayerLayoutMessage;
-import unipg.gila.common.datastructures.messagetypes.MessageWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
 
