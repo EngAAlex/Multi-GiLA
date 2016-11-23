@@ -150,8 +150,6 @@ public class MultiScaleLayout {
       if(vertex.getId().getLayer() != currentLayer)
         return;
       else{
-        //				if(LayoutRoutine.logLayout)
-        //					log.info(vertex.getId() + " computing hiuar");
         if(new Float(vertex.getValue().getCoordinates()[0]).isNaN() || new Float(vertex.getValue().getCoordinates()[1]).isNaN())
           throw new IOException("NAN detected");
         super.compute(vertex, messages);
@@ -174,7 +172,7 @@ public class MultiScaleLayout {
           break;
         }
       }
-        
+
       if(LayoutRoutine.logLayout)
         log.info("Suggesting a spring length of " + value*k + " based on " + value + " and " + k);
       return value*k;
@@ -186,9 +184,8 @@ public class MultiScaleLayout {
     @Override
     protected float requestWalshawConstant() {
       if(LayoutRoutine.logLayout)
-        log.info("Suggested walshawConstant " + Math.sqrt(maxK)*modifier + " from " + Math.sqrt(maxK) + " " + modifier);;
-//        log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
-        return (float) (Math.sqrt(maxK)*modifier);
+        log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
+        return (float) (Math.pow(maxK,2)*modifier);
     }
 
     /* (non-Javadoc)
@@ -201,14 +198,6 @@ public class MultiScaleLayout {
       if(messageCache == null)
         messageCache = new HashSet<LayoutMessage>();
       messageCache.add(message.copy());
-      //			Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges = vertex.getEdges().iterator();
-      //			while(edges.hasNext()){
-      //				LayeredPartitionedLongWritable current = edges.next().getTargetVertexId();
-      //				if(currentLayer != current.getLayer())
-      //					continue;
-      //				LayoutMessage msgCopy = ((LayoutMessage)message).copy();
-      //				sendMessage(current, msgCopy);
-      //			}
     }
 
     /**
@@ -244,8 +233,10 @@ public class MultiScaleLayout {
     void
     executePostMessageAction(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex) {
-      if(messageCache != null)
+      if(messageCache != null){
         sendMessageToAllSpanningTreeEdges(messageCache, vertex);
+        messageCache.clear();
+      }
     }
   }
 
