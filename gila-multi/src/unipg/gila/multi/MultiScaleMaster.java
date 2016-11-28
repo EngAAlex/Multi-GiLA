@@ -30,7 +30,7 @@ import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.MergerToPlacerDummyComputation;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.layout.AdaptationStrategy;
-import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeAndDensityDrivenAdaptationStrategy;
+import unipg.gila.multi.layout.LayoutAdaptationStrategy.SizeDrivenAdaptationStrategy;
 import unipg.gila.multi.layout.MultiScaleLayout;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleDrawingScaler;
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorer;
@@ -93,11 +93,11 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		terminate = false;
 
 		try {
-			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeAndDensityDrivenAdaptationStrategy.class.toString())[0]);
+			Class<? extends AdaptationStrategy> tClass = (Class<? extends AdaptationStrategy>) Class.forName(getConf().getStrings(adaptationStrategyString, SizeDrivenAdaptationStrategy.class.toString())[0]);
 			adaptationStrategy = tClass.getConstructor().newInstance();
 		} catch (Exception e) {
-			log.info("Caught exceptione, sweithcin to default");
-			adaptationStrategy = new SizeAndDensityDrivenAdaptationStrategy();
+			log.info("Could not instantiate the adaptation strategy provided by user -- Switching to default");
+			adaptationStrategy = new SizeDrivenAdaptationStrategy();
 		} 
 
 		registerPersistentAggregator(LayoutRoutine.ttlMaxAggregator, IntMaxAggregator.class);
@@ -194,20 +194,17 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	private void updateCountersAndAggregators(int selectedK, int currentLayer, int noOfLayers, int noOfVertices, int noOfEdges){
 		setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(selectedK));
 
-		setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(
-				adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-		setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(
-				adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
-		setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(
-				adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)));
+		float coolingSpeed = adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges);
+		float initialTemp = adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges);
+		float accuracy = adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges);
+		setAggregatedValue(LayoutRoutine.coolingSpeedAggregator, new FloatWritable(coolingSpeed));
+		setAggregatedValue(LayoutRoutine.initialTempFactorAggregator, new FloatWritable(initialTemp));
+		setAggregatedValue(LayoutRoutine.currentAccuracyAggregator, new FloatWritable(accuracy));
 
 		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k").increment(selectedK);
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment(
-				(long) (adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment(
-				(long) (adaptationStrategy.returnCurrentInitialTempFactor(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100));
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment(
-				(long) (adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers, noOfVertices, noOfEdges)*100000));
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " coolingSpeed").increment((long) (coolingSpeed*100));
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " tempFactor").increment((long) (initialTemp*100));
+		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " accuracy").increment((long) (accuracy*100000));
 
 	}
 
