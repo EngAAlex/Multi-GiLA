@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
 import org.apache.giraph.edge.Edge;
-import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.GraphState;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
@@ -205,18 +204,23 @@ public class MultiScaleLayout {
      */
     public void sendMessageToAllSpanningTreeEdges(Set<LayoutMessage> messages, Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex){
       Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> onEdges = vertex.getEdges().iterator();
-      HashSet<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> spTreeEdges = new HashSet<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>>();
+      //      HashSet<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> spTreeEdges = new HashSet<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>>();
+      //      while(onEdges.hasNext()){
+      //        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> current = onEdges.next();
+      //        if(current.getValue().isSpanningTree())
+      //          spTreeEdges.add(EdgeFactory.create(current.getTargetVertexId().copy(), new SpTreeEdgeValue(current.getValue())));
+      //      }
       while(onEdges.hasNext()){
-        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> current = onEdges.next();
-        if(current.getValue().isSpanningTree())
-          spTreeEdges.add(EdgeFactory.create(current.getTargetVertexId().copy(), new SpTreeEdgeValue(current.getValue())));
-      }
-      Iterator<LayoutMessage> onMessages = messages.iterator();
-      while(onMessages.hasNext()){
-        LayoutMessage currentMessage = onMessages.next();
-        Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> nestedIterator = spTreeEdges.iterator();
-        while(nestedIterator.hasNext()){
-          Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentSpTreeEdge = nestedIterator.next();
+        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentSpTreeEdge = onEdges.next();
+        if(!currentSpTreeEdge.getValue().isSpanningTree())
+          continue;
+        Iterator<LayoutMessage> onMessages = messages.iterator();
+        while(onMessages.hasNext()){
+          LayoutMessage currentMessage = onMessages.next();
+          //        Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> nestedIterator = spTreeEdges.iterator();
+          //        Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> nestedIterator = vertex.getEdges().iterator();
+          //        while(nestedIterator.hasNext()){
+          //          Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> currentSpTreeEdge = nestedIterator.next();
           if(currentSpTreeEdge.getTargetVertexId().getId() != currentMessage.getSenderId()){
             currentMessage.setSenderId(vertex.getId().getId());
             sendMessage(currentSpTreeEdge.getTargetVertexId(), currentMessage);

@@ -27,8 +27,8 @@ public class LayoutAdaptationStrategy{
 	
 	public static int maxK = 9;
 	public static float maxAccuracy = 0.001f;
-	public static float minCoolingSpeed = 0.8f;
-	public static float minInitialTempFactor = 6;
+	public static float minCoolingSpeed = 0.88f;
+	public static float minInitialTempFactor = 2;
 
 	
 	public static class DensityDrivenAdaptationStrategy implements AdaptationStrategy{
@@ -134,10 +134,10 @@ public class LayoutAdaptationStrategy{
 //			if(nOfEdgesOfLayer < 1500)
 //				return 0.96f;
 			if(nOfEdgesOfLayer < 10000)
-				return 0.74f;
+				return 0.82f;
 			if(nOfEdgesOfLayer < 1000000)
-				return 0.72f;
-			return 0.7f;
+				return 0.8f;
+			return 0.8f;
 		}
 
 		/* (non-Javadoc)
