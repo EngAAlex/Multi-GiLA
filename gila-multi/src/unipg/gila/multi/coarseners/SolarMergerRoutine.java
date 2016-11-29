@@ -24,7 +24,6 @@ import java.util.Iterator;
 import org.apache.giraph.aggregators.BooleanAndAggregator;
 import org.apache.giraph.aggregators.FloatMaxAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
-import org.apache.giraph.aggregators.IntSumAggregator;
 import org.apache.giraph.master.MasterCompute;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
@@ -180,10 +179,6 @@ public class SolarMergerRoutine {
 			master.setComputation(RegimeMerger.class);
 			return false;
 		}
-//		if(getComputation().equals(EdgeDuplicatesRemover.class)){
-//			setComputation(SunGeneration.class);
-//			return;
-//		}
 		int cLayer = ((IntWritable)master.getAggregatedValue(currentLayer)).get();
 		if(checkForNewLayer){
 			checkForNewLayer = false;
@@ -193,20 +188,16 @@ public class SolarMergerRoutine {
 			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " vertices").increment(layerSize);
 			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " edges").increment(edgeSize);
 			int currentLayerNo = ((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get();
-			master.setAggregatedValue(layerNumberAggregator, new IntWritable(currentLayerNo++));
+			master.setAggregatedValue(layerNumberAggregator, new IntWritable(currentLayerNo + 1));
 			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
 			if(master.getSuperstep() > 1){
 				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
-//				int avgNoOfSuns = computeAverageOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
 				int maxNoOfSuns = computeMaxOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
-//				log.info("GIGI avh" + layerSize + " " + avgNoOfSuns);
-//				log.info("GIGI avh" + layerSize + " " + maxNoOfSuns);
 				if(maxNoOfSuns <= layerThreshold){
 					//haltComputation();
 					return true;
 				}else{
 					master.setComputation(SunGeneration.class);
-//					master.setComputation(MultiScaleLayout.MultiScaleGraphExplorerWithComponentsNo.class);
 					master.setAggregatedValue(sunsPerComponent, new MapWritable());
 					master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(master.getConf().getFloat(sunChance, sunChanceDefault)));
 				}
@@ -250,7 +241,7 @@ public class SolarMergerRoutine {
 	IllegalAccessException {
 		master = myMaster;
 		master.registerPersistentAggregator(currentLayer, IntMaxAggregator.class);
-		master.registerPersistentAggregator(layerNumberAggregator, IntSumAggregator.class);
+		master.registerPersistentAggregator(layerNumberAggregator, IntMaxAggregator.class);
 		master.registerPersistentAggregator(layerVertexSizeAggregator, ComponentIntSumAggregator.class);
 		master.registerPersistentAggregator(layerEdgeSizeAggregator, ComponentIntSumAggregator.class);		
 		master.registerPersistentAggregator(layerEdgeWeightsAggregator, ComponentIntMaxAggregator.class);		

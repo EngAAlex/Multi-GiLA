@@ -166,7 +166,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
         temp.setSenderId(currentMessage.getSenderId());
         sendMessageToAllEdges(vertex,
                 temp);
-        getContext().getCounter("Messages Statistics", "Messages sent during drawing process").increment(1);
       }
 
     }

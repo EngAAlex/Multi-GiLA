@@ -21,14 +21,10 @@ import java.util.Iterator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.io.formats.TextVertexOutputFormat;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
-import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
@@ -88,21 +84,23 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
 
       return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundler(vertex.getEdges()) + "]]");
     }
-  }
-
-  private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges){
-    String result = "";
-    Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> it = edges.iterator();
-    while(it.hasNext()){
-      Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> edge = it.next();
-      if(!edge.getValue().isSpanningTree()){
-        result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
-        if(it.hasNext())
-          result += ",";
+    
+    private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges){
+      String result = "";
+      Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> it = edges.iterator();
+      while(it.hasNext()){
+        Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> edge = it.next();
+        if(!edge.getValue().isSpanningTree()){
+          if(showPartitioning)
+            result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
+          else
+            result += edge.getTargetVertexId().getId();
+          if(it.hasNext())
+            result += ",";
+        }
       }
+      return result;
     }
-    return result;
   }
-
 
 }

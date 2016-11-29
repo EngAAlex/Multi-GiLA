@@ -34,10 +34,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
 
-import com.google.common.collect.Lists;
-
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
@@ -462,7 +459,7 @@ public class GraphReintegration {
         addVertexRequest(oE, value, ale);
         addEdgeRequest(neighborVertex.getId(),
                 ((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(
-                        neighborVertex.getId(), WritableFactories
+                        oE, WritableFactories
                                 .newInstance(getConf().getEdgeValueClass()))));
       } catch (IOException e) {
         e.printStackTrace();
