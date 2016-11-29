@@ -22,13 +22,10 @@ import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.io.formats.TextVertexOutputFormat;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
-import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
 
@@ -45,61 +42,63 @@ import unipg.gila.layout.LayoutRoutine;
  */
 public class MultiScaleLayoutOutputFormat extends
 TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> {
-	
-	@Override
-	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable>.TextVertexWriter createVertexWriter(
-			TaskAttemptContext arg0) throws IOException,
-			InterruptedException {
-		return new LayerFilteredJSONWithPartitioningAndComponentVertexWriter();
-	}
 
-	protected class LayerFilteredJSONWithPartitioningAndComponentVertexWriter extends TextVertexWriterToEachLine {
-		
-		protected boolean showPartitioning;
-		protected boolean showComponent;
-		
-		@Override
-		public void initialize(TaskAttemptContext context) throws IOException,
-				InterruptedException {
-			super.initialize(context);
-			showPartitioning = getConf().getBoolean(LayoutRoutine.showPartitioningString, false);
-			showComponent = getConf().getBoolean(LayoutRoutine.showComponentString, true);
-		}
-		
-		@Override
-		protected Text convertVertexToLine(
-				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex)
-						throws IOException {
-			if(vertex.getId().getLayer() != 0)
-				return new Text("");
-			float[] cohords = vertex.getValue().getCoordinates();
-			String partition;
-			String component;
-			if(!showPartitioning)
-				partition = "";
-			else
-				partition = vertex.getId().getPartition() + ",";
-			
-			if(!showComponent)
-				component = "";
-			else
-				component = "," + vertex.getValue().getComponent();
-			
-			return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundler(vertex.getEdges()) + "]]");
-		}
-	}
+  @Override
+  public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable>.TextVertexWriter createVertexWriter(
+    TaskAttemptContext arg0) throws IOException,
+    InterruptedException {
+    return new LayerFilteredJSONWithPartitioningAndComponentVertexWriter();
+  }
 
-	private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, IntWritable>> edges){
-		String result = "";
-		Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> it = edges.iterator();
-		while(it.hasNext()){
-			Edge<LayeredPartitionedLongWritable, IntWritable> edge = it.next();
-			result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
-			if(it.hasNext())
-				result += ",";
-		}
-		return result;
-	}
+  protected class LayerFilteredJSONWithPartitioningAndComponentVertexWriter extends TextVertexWriterToEachLine {
 
+    protected boolean showPartitioning;
+    protected boolean showComponent;
 
-	}
+    @Override
+    public void initialize(TaskAttemptContext context) throws IOException,
+    InterruptedException {
+      super.initialize(context);
+      showPartitioning = getConf().getBoolean(LayoutRoutine.showPartitioningString, false);
+      showComponent = getConf().getBoolean(LayoutRoutine.showComponentString, true);
+    }
+
+    @Override
+    protected Text convertVertexToLine(
+      Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex)
+          throws IOException {
+      if(vertex.getId().getLayer() != 0)
+        return new Text("");
+      float[] cohords = vertex.getValue().getCoordinates();
+      String partition;
+      String component;
+      if(!showPartitioning)
+        partition = "";
+      else
+        partition = vertex.getId().getPartition() + ",";
+
+      if(!showComponent)
+        component = "";
+      else
+        component = "," + vertex.getValue().getComponent();
+
+      return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundler(vertex.getEdges()) + "]]");    
+    }
+    
+    private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, IntWritable>> edges){
+      String result = "";
+      Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> it = edges.iterator();
+      while(it.hasNext()){
+        Edge<LayeredPartitionedLongWritable, IntWritable> edge = it.next();
+        if(showPartitioning)
+          result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
+        else
+          result += edge.getTargetVertexId().getId();
+        if(it.hasNext())
+          result += ",";
+      }
+      return result;
+    }
+  }
+
+}

@@ -34,10 +34,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
 
-import com.google.common.collect.Lists;
-
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
@@ -374,12 +371,10 @@ public class GraphReintegration {
 			value.setCoordinates(coordinatesOfVertexToPlace[0], coordinatesOfVertexToPlace[1]);
 			value.setComponent(neighborVertex.getValue().getComponent());
 			LayeredPartitionedLongWritable oE = new LayeredPartitionedLongWritable(neighborVertex.getId().getPartition(), idOfOneEdge);
-//			oE.setId(idOfOneEdge);
-//			oE.setPartition(neighborVertex.getId().getPartition());
 			added++;
 			try {
 				addVertexRequest(oE, value, ale);
-				addEdgeRequest(neighborVertex.getId(), ((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(neighborVertex.getId(), WritableFactories.newInstance(getConf().getEdgeValueClass()))));					
+				addEdgeRequest(neighborVertex.getId(), ((Edge<LayeredPartitionedLongWritable, E>) EdgeFactory.create(oE, WritableFactories.newInstance(getConf().getEdgeValueClass()))));					
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

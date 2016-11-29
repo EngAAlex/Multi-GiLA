@@ -108,19 +108,19 @@ TextVertexOutputFormat<LongWritable, PartitioningVertexValue, EdgeValue> {
 			return new Text("[" + vertex.getId() + "," + component + vValue.getCurrentPartition() + "," + finalX + "," + finalY + "," + oneEdges +
 					",[" + edgeBundler(vertex.getEdges()) + "]]");
 		}
+		
+	  private String edgeBundler(Iterable<Edge<LongWritable, EdgeValue>> edges){
+	    String result = "";
+	    Iterator<Edge<LongWritable, EdgeValue>> it = edges.iterator();
+	    while(it.hasNext()){
+	      Edge<LongWritable, EdgeValue> edge = it.next();
+	      result += "[" + edge.getTargetVertexId() + "," + edge.getValue().getPartition() + "]";
+	      if(it.hasNext())
+	        result += ",";
+	    }
+	    return result;
+	  }
 
-	}
-
-	private static String edgeBundler(Iterable<Edge<LongWritable, EdgeValue>> edges){
-		String result = "";
-		Iterator<Edge<LongWritable, EdgeValue>> it = edges.iterator();
-		while(it.hasNext()){
-			Edge<LongWritable, EdgeValue> edge = it.next();
-			result += "[" + edge.getTargetVertexId() + "," + edge.getValue().getPartition() + "]";
-			if(it.hasNext())
-				result += ",";
-		}
-		return result;
 	}
 	
 }

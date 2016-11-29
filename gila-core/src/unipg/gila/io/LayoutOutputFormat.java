@@ -42,59 +42,58 @@ import unipg.gila.layout.LayoutRoutine;
  */
 public class LayoutOutputFormat extends
 TextVertexOutputFormat<PartitionedLongWritable, CoordinateWritable, NullWritable> {
-	
-	@Override
-	public TextVertexOutputFormat<PartitionedLongWritable, CoordinateWritable, NullWritable>.TextVertexWriter createVertexWriter(
-			TaskAttemptContext arg0) throws IOException,
-			InterruptedException {
-		return new JSONWithPartitioningAndComponentVertexWriter();
-	}
 
-	protected class JSONWithPartitioningAndComponentVertexWriter extends TextVertexWriterToEachLine {
-		
-		protected boolean showPartitioning;
-		protected boolean showComponent;
-		
-		@Override
-		public void initialize(TaskAttemptContext context) throws IOException,
-				InterruptedException {
-			super.initialize(context);
-			showPartitioning = getConf().getBoolean(LayoutRoutine.showPartitioningString, false);
-			showComponent = getConf().getBoolean(LayoutRoutine.showComponentString, true);
-		}
-		
-		@Override
-		protected Text convertVertexToLine(
-				Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex)
-						throws IOException {
-			float[] cohords = vertex.getValue().getCoordinates();
-			String partition;
-			String component;
-			if(!showPartitioning)
-				partition = "";
-			else
-				partition = vertex.getId().getPartition() + ",";
-			
-			if(!showComponent)
-				component = "";
-			else
-				component = "," + vertex.getValue().getComponent();
-			
-			return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundler(vertex.getEdges()) + "]]");
-		}
-	}
+  @Override
+  public TextVertexOutputFormat<PartitionedLongWritable, CoordinateWritable, NullWritable>.TextVertexWriter createVertexWriter(
+    TaskAttemptContext arg0) throws IOException,
+    InterruptedException {
+    return new JSONWithPartitioningAndComponentVertexWriter();
+  }
 
-	private String edgeBundler(Iterable<Edge<PartitionedLongWritable, NullWritable>> edges){
-		String result = "";
-		Iterator<Edge<PartitionedLongWritable, NullWritable>> it = edges.iterator();
-		while(it.hasNext()){
-			Edge<PartitionedLongWritable, NullWritable> edge = it.next();
-			result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
-			if(it.hasNext())
-				result += ",";
-		}
-		return result;
-	}
+  protected class JSONWithPartitioningAndComponentVertexWriter extends TextVertexWriterToEachLine {
 
+    protected boolean showPartitioning;
+    protected boolean showComponent;
 
-	}
+    @Override
+    public void initialize(TaskAttemptContext context) throws IOException,
+    InterruptedException {
+      super.initialize(context);
+      showPartitioning = getConf().getBoolean(LayoutRoutine.showPartitioningString, false);
+      showComponent = getConf().getBoolean(LayoutRoutine.showComponentString, true);
+    }
+
+    @Override
+    protected Text convertVertexToLine(
+      Vertex<PartitionedLongWritable, CoordinateWritable, NullWritable> vertex)
+          throws IOException {
+      float[] cohords = vertex.getValue().getCoordinates();
+      String partition;
+      String component;
+      if(!showPartitioning)
+        partition = "";
+      else
+        partition = vertex.getId().getPartition() + ",";
+
+      if(!showComponent)
+        component = "";
+      else
+        component = "," + vertex.getValue().getComponent();
+
+      return new Text("[" + vertex.getId().getId() + "," + partition + cohords[0] + "," + cohords[1] + component + ",[" + edgeBundler(vertex.getEdges()) + "]]");
+    }
+    
+    private String edgeBundler(Iterable<Edge<PartitionedLongWritable, NullWritable>> edges){
+      String result = "";
+      Iterator<Edge<PartitionedLongWritable, NullWritable>> it = edges.iterator();
+      while(it.hasNext()){
+        Edge<PartitionedLongWritable, NullWritable> edge = it.next();
+        result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getPartition() + "]";
+        if(it.hasNext())
+          result += ",";
+      }
+      return result;
+    }
+  }
+
+}
