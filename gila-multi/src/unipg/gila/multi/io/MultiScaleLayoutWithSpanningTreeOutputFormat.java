@@ -21,14 +21,10 @@ import java.util.Iterator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.io.formats.TextVertexOutputFormat;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
-import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
@@ -73,7 +69,7 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
           throws IOException {
       if(vertex.getId().getLayer() != 0)
         return new Text("");
-      float[] cohords = vertex.getValue().getCoordinates();
+      double[] cohords = vertex.getValue().getCoordinates();
       String partition;
       String component;
       if(!showPartitioning)

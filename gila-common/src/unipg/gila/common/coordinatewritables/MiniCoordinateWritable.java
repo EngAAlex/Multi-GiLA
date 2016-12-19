@@ -39,11 +39,11 @@ public class MiniCoordinateWritable implements Writable, WritableFactory {
   /**
    * The vertex X coordinate.
    */
-  protected float x;
+  protected double x;
   /**
    * The vertex Y coordinate.
    */
-  protected float y;
+  protected double y;
   /**
    * A set containing the ids of its one degree neighbors.
    */
@@ -61,14 +61,14 @@ public class MiniCoordinateWritable implements Writable, WritableFactory {
     oneEdges = new LongWritableSet();
   }
 
-  public MiniCoordinateWritable(float x, float y, int component) {
+  public MiniCoordinateWritable(double x, double y, int component) {
     this.x = x;
     this.y = y;
     this.component = component;
     oneEdges = new LongWritableSet();
   }
 
-  public MiniCoordinateWritable(float x, float y, JSONArray oEs, int component)
+  public MiniCoordinateWritable(double x, double y, JSONArray oEs, int component)
           throws JSONException {
     this(x, y, component);
     oneEdges = new LongWritableSet();
@@ -77,11 +77,11 @@ public class MiniCoordinateWritable implements Writable, WritableFactory {
       oneEdges.addElement(new LongWritable(oEs.getLong(i)));
   }
 
-  public float[] getCoordinates() {
-    return new float[] { x, y };
+  public double[] getCoordinates() {
+    return new double[] { x, y };
   }
 
-  public void setCoordinates(float x, float y) {
+  public void setCoordinates(double x, double y) {
     this.x = x;
     this.y = y;
   }
@@ -115,15 +115,15 @@ public class MiniCoordinateWritable implements Writable, WritableFactory {
   }
 
   public void readFields(DataInput in) throws IOException {
-    x = in.readFloat();
-    y = in.readFloat();
+    x = in.readDouble();
+    y = in.readDouble();
     oneEdges.readFields(in);
     component = in.readInt();
   }
 
   public void write(DataOutput out) throws IOException {
-    out.writeFloat(x);
-    out.writeFloat(y);
+    out.writeDouble(x);
+    out.writeDouble(y);
     oneEdges.write(out);
     out.writeInt(component);
   }

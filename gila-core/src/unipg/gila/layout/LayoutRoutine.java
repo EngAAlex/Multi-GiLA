@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.apache.giraph.aggregators.BooleanAndAggregator;
-import org.apache.giraph.aggregators.FloatMaxAggregator;
+import org.apache.giraph.aggregators.DoubleMaxAggregator;
 import org.apache.giraph.aggregators.IntMaxAggregator;
 import org.apache.giraph.aggregators.LongSumAggregator;
 import org.apache.giraph.comm.WorkerClientRequestProcessor;
@@ -32,20 +32,19 @@ import org.apache.giraph.master.MasterCompute;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
-import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMaxAggregator;
-import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentFloatXYMinAggregator;
+import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentDoubleXYMaxAggregator;
+import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentDoubleXYMinAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentIntSumAggregator;
 import unipg.gila.aggregators.ComponentAggregatorAbstract.ComponentMapOverwriteAggregator;
-import unipg.gila.aggregators.LongWritableSetAggregator;
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.FloatWritableArray;
+import unipg.gila.common.datastructures.DoubleWritableArray;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.coolingstrategies.CoolingStrategy;
@@ -78,12 +77,12 @@ public class LayoutRoutine {
   public static final String convergenceThresholdString = "layout.convergence-threshold";
   public static final int ttlMaxDefault = 3;
   public static final int maxSstepsDefault = 10000;
-  public static final float defaultConvergenceThreshold = 0.85f;
+  public static final double defaultConvergenceThreshold = 0.85;
 
   // MESSAGES OPTIONS
   public static final String useQueuesString = "flooding.useQueues";
   public static final String queueUnloadFactor = "layout.queueUnloadFactor";
-  public static final float queueUnloadFactorDefault = 0.1f;
+  public static final double queueUnloadFactorDefault = 0.1;
 
   // REINTEGRATION OPTIONS
   public static final String radiusString = "reintegration.radius";
@@ -94,24 +93,24 @@ public class LayoutRoutine {
   public static final String componentPaddingConfString = "reintegration.componentPadding";
   public static final String minimalAngularResolutionString = "reintegration.minimalAngularResolution";
   public static final String lowThresholdString = "reintegration.fairLowThreshold";
-  public static final float lowThresholdDefault = 2.0f;
-  public static final float defaultPadding = 20.0f;
-  public static final float radiusDefault = 0.2f;
-  public static final float coneWidthDefault = 90.0f;
+  public static final double lowThresholdDefault = 2.0;
+  public static final double defaultPadding = 20.0;
+  public static final double radiusDefault = 0.2;
+  public static final double coneWidthDefault = 90.0;
 
   // DRAWING OPTIONS
   public final static String node_length = "layout.node_length";
   public final static String node_width = "layout.node_width";
   public final static String node_separation = "layout.node_separation";
-  public final static float defaultNodeValue = 20.0f;
+  public final static double defaultNodeValue = 20.0;
   public final static String initialTempFactorString = "layout.initialTempFactor";
-  public static float defaultInitialTempFactor = 2.0f;
+  public static double defaultInitialTempFactor = 2.0;
   public static final String coolingSpeed = "layout.coolingSpeed";
-  public final static float defaultCoolingSpeed = 0.93f;
+  public final static double defaultCoolingSpeed = 0.93;
   public static final String walshawModifierString = "layout.walshawModifier";
-  public static final float walshawModifierDefault = 1.0f;
+  public static final double walshawModifierDefault = 1.0;
   public static final String accuracyString = "layout.accuracy";
-  public static final float accuracyDefault = 0.01f;
+  public static final double accuracyDefault = 0.01;
   public static final String forceMethodOptionString = "layout.forceModel";
   public static final String forceMethodOptionExtraOptionsString = "layout.forceModel.extraOptions";
   public static final String sendDegTooOptionString = "layout.sendDegreeIntoLayoutMessages";
@@ -151,10 +150,10 @@ public class LayoutRoutine {
   protected static final String COUNTER_GROUP = "Drawing Counters";
 
   protected static final String minRationThresholdString = "layout.minRatioThreshold";
-  protected static final float defaultMinRatioThreshold = 0.2f;
+  protected static final double defaultMinRatioThreshold = 0.2;
 
   public static final String repulsiveForceEnhancerString = "layout.enhanceRepulsiveForcesBy";
-  public static final float repulsiveForceEnhancementDefault = 2.0f;
+  public static final double repulsiveForceEnhancementDefault = 2.0;
 
   // GLOBAL STATIC VARIABLES
   public static boolean logLayout;
@@ -162,7 +161,7 @@ public class LayoutRoutine {
   // INSTANCE VARIABLES
   protected long propagationSteps;
   // protected long allVertices;
-  protected float threshold;
+  protected double threshold;
   protected boolean halting;
   long settledSteps;
   protected int readyToSleep;
@@ -206,7 +205,7 @@ public class LayoutRoutine {
 
     maxSuperstep = master.getConf().getInt(computationLimit, maxSstepsDefault);
 
-    threshold = master.getConf().getFloat(convergenceThresholdString,
+    threshold = master.getConf().getDouble(convergenceThresholdString,
             defaultConvergenceThreshold);
 
     master.registerAggregator(convergenceAggregatorString,
@@ -233,24 +232,24 @@ public class LayoutRoutine {
     // COORDINATES AGGREGATORS
 
     master.registerPersistentAggregator(maxCoords,
-            ComponentFloatXYMaxAggregator.class);
+            ComponentDoubleXYMaxAggregator.class);
     master.registerPersistentAggregator(minCoords,
-            ComponentFloatXYMinAggregator.class);
+            ComponentDoubleXYMinAggregator.class);
     master.registerAggregator(scaleFactorAgg,
             ComponentMapOverwriteAggregator.class);
 
     // LAYOUT AGGREGATORS
 
-    master.registerPersistentAggregator(max_K_agg, FloatMaxAggregator.class);
-    master.registerPersistentAggregator(k_agg, FloatMaxAggregator.class);
+    master.registerPersistentAggregator(max_K_agg, DoubleMaxAggregator.class);
+    master.registerPersistentAggregator(k_agg, DoubleMaxAggregator.class);
     master.registerPersistentAggregator(walshawConstant_agg,
-            FloatMaxAggregator.class);
+      DoubleMaxAggregator.class);
     master.registerPersistentAggregator(initialTempFactorAggregator,
-            FloatMaxAggregator.class);
+      DoubleMaxAggregator.class);
     master.registerPersistentAggregator(coolingSpeedAggregator,
-            FloatMaxAggregator.class);
+      DoubleMaxAggregator.class);
     master.registerPersistentAggregator(currentAccuracyAggregator,
-            FloatMaxAggregator.class);
+      DoubleMaxAggregator.class);
     master.registerPersistentAggregator(ttlMaxAggregator,
             IntMaxAggregator.class);
 
@@ -264,23 +263,22 @@ public class LayoutRoutine {
     master.registerAggregator(angleMaximizationClockwiseAggregator,
             BooleanAndAggregator.class);
 
-    float nl = master.getConf().getFloat(LayoutRoutine.node_length,
+    double nl = master.getConf().getDouble(LayoutRoutine.node_length,
             LayoutRoutine.defaultNodeValue);
-    float nw = master.getConf().getFloat(LayoutRoutine.node_width,
+    double nw = master.getConf().getDouble(LayoutRoutine.node_width,
             LayoutRoutine.defaultNodeValue);
-    float ns = master.getConf().getFloat(LayoutRoutine.node_separation,
+    double ns = master.getConf().getDouble(LayoutRoutine.node_separation,
             LayoutRoutine.defaultNodeValue);
-    float k = new Double(ns + Toolbox.computeModule(new float[] { nl, nw }))
-            .floatValue();
-    master.setAggregatedValue(LayoutRoutine.k_agg, new FloatWritable(k));
+    double k = ns + Toolbox.computeModule(new double[] { nl, nw });
+    master.setAggregatedValue(LayoutRoutine.k_agg, new DoubleWritable(k));
 
     master.setAggregatedValue(
             LayoutRoutine.walshawConstant_agg,
-            new FloatWritable(master.getConf().getFloat(
+            new DoubleWritable(master.getConf().getDouble(
                     LayoutRoutine.repulsiveForceModerationString,
-                    (float) (Math.pow(k, 2) * master.getConf().getFloat(
+                    Math.pow(k, 2) * master.getConf().getDouble(
                             LayoutRoutine.walshawModifierString,
-                            LayoutRoutine.walshawModifierDefault)))));
+                            LayoutRoutine.walshawModifierDefault))));
   }
 
   /**
@@ -289,7 +287,7 @@ public class LayoutRoutine {
    * 
    * @throws IllegalAccessException
    */
-  protected void superstepOneSpecials(float optimalEdgeLength)
+  protected void superstepOneSpecials(double optimalEdgeLength)
           throws IllegalAccessException {
 
     MapWritable aggregatedMaxComponentData = master
@@ -306,10 +304,10 @@ public class LayoutRoutine {
     // defaultInitialTempFactor);
 
     coolingStrategy = new LinearCoolingStrategy(
-            new String[] { String.valueOf(((FloatWritable) master
+            new String[] { String.valueOf(((DoubleWritable) master
                     .getAggregatedValue(coolingSpeedAggregator)).get()) });
 
-    float tempConstant = ((FloatWritable) master
+    double tempConstant = ((DoubleWritable) master
             .getAggregatedValue(initialTempFactorAggregator)).get();
 
     MapWritable correctedSizeMap = new MapWritable();
@@ -322,40 +320,39 @@ public class LayoutRoutine {
 
       Writable key = currentEntryMax.getKey();
 
-      float[] maxCurrent = ((FloatWritableArray) currentEntryMax.getValue())
+      double[] maxCurrent = ((DoubleWritableArray) currentEntryMax.getValue())
               .get();
-      float[] minCurrent = ((FloatWritableArray) aggregatedMinComponentData
+      double[] minCurrent = ((DoubleWritableArray) aggregatedMinComponentData
               .get(key)).get();
 
       int noOfNodes = ((IntWritable) componentNodesMap.get(key)).get();
       if (noOfNodes == 1) {
-        float[] correctedSizes = new float[] { 1, 1 };
-        float[] scaleFactors = new float[] { 1, 1 };
-        float[] temps = new float[] { 0, 0 };
+        double[] correctedSizes = new double[] { 1, 1 };
+        double[] scaleFactors = new double[] { 1, 1 };
+        double[] temps = new double[] { 0, 0 };
 
-        correctedSizeMap.put(key, new FloatWritableArray(correctedSizes));
-        tempMap.put(key, new FloatWritableArray(temps));
-        scaleFactorMap.put(key, new FloatWritableArray(scaleFactors));
+        correctedSizeMap.put(key, new DoubleWritableArray(correctedSizes));
+        tempMap.put(key, new DoubleWritableArray(temps));
+        scaleFactorMap.put(key, new DoubleWritableArray(scaleFactors));
         continue;
       }
 
-      float w = Toolbox.floatFuzzyMath((maxCurrent[0] - minCurrent[0]))
+      double w = Toolbox.doubleFuzzyMath((maxCurrent[0] - minCurrent[0]))
               + optimalEdgeLength;
-      float h = Toolbox.floatFuzzyMath((maxCurrent[1] - minCurrent[1]))
+      double h = Toolbox.doubleFuzzyMath((maxCurrent[1] - minCurrent[1]))
               + optimalEdgeLength;
 
-      float ratio = h / w;
-      float W = new Double(Math.sqrt(noOfNodes / ratio) * optimalEdgeLength)
-              .floatValue();
-      float H = ratio * W;
+      double ratio = h / w;
+      double W = Math.sqrt(noOfNodes / ratio) * optimalEdgeLength;
+      double H = ratio * W;
 
-      float[] correctedSizes = new float[] { W, H };
-      float[] scaleFactors = new float[] { W / w, H / h };
-      float[] temps = new float[] { W / tempConstant, H / tempConstant };
+      double[] correctedSizes = new double[] { W, H };
+      double[] scaleFactors = new double[] { W / w, H / h };
+      double[] temps = new double[] { W / tempConstant, H / tempConstant };
 
-      correctedSizeMap.put(key, new FloatWritableArray(correctedSizes));
-      tempMap.put(key, new FloatWritableArray(temps));
-      scaleFactorMap.put(key, new FloatWritableArray(scaleFactors));
+      correctedSizeMap.put(key, new DoubleWritableArray(correctedSizes));
+      tempMap.put(key, new DoubleWritableArray(temps));
+      scaleFactorMap.put(key, new DoubleWritableArray(scaleFactors));
 
     }
 
@@ -376,10 +373,10 @@ public class LayoutRoutine {
 
     while (tempsIterator.hasNext()) {
       Entry<Writable, Writable> currentTemp = tempsIterator.next();
-      float[] temps = ((FloatWritableArray) currentTemp.getValue()).get();
+      double[] temps = ((DoubleWritableArray) currentTemp.getValue()).get();
       newTempsMap.put(
               currentTemp.getKey(),
-              new FloatWritableArray(new float[] {
+              new DoubleWritableArray(new double[] {
                       coolingStrategy.cool(temps[0]),
                       coolingStrategy.cool(temps[1]) }));
 
@@ -392,7 +389,7 @@ public class LayoutRoutine {
    * The main master compute method.
    * 
    */
-  public boolean compute(long noOfVertices, float optimalEdgeLength) {
+  public boolean compute(long noOfVertices, double optimalEdgeLength) {
     if (ignition) {
       totalCalls++;
       egira = master.getSuperstep();
@@ -493,7 +490,7 @@ public class LayoutRoutine {
           extends
           AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
-    protected float[] coords;
+    protected double[] coords;
     protected V vValue;
 
     /*
@@ -524,7 +521,7 @@ public class LayoutRoutine {
       coords = vValue.getCoordinates();
       MapWritable myCoordsPackage = new MapWritable();
       myCoordsPackage.put(new IntWritable(vValue.getComponent()),
-              new FloatWritableArray(coords));
+              new DoubleWritableArray(coords));
       aggregate(maxCoords, myCoordsPackage);
       aggregate(minCoords, myCoordsPackage);
     }
@@ -612,12 +609,11 @@ public class LayoutRoutine {
     public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
             Iterable<LayoutMessage> msgs) throws IOException {
       V vValue = vertex.getValue();
-      float[] coords = vValue.getCoordinates();
-      float[] factors = ((FloatWritableArray) scaleFactors
+      double[] coords = vValue.getCoordinates();
+      double[] factors = ((DoubleWritableArray) scaleFactors
               .get(new IntWritable(vValue.getComponent()))).get();
-      float[] minCoords = ((FloatWritableArray) minCoordinateMap
+      double[] minCoords = ((DoubleWritableArray) minCoordinateMap
               .get(new IntWritable(vValue.getComponent()))).get();
-      log.info("con zino " + factors[0] + " " + factors[1]);
       vValue.setCoordinates((coords[0] - minCoords[0]) * factors[0],
               (coords[1] - minCoords[1]) * factors[1]);
     }
@@ -635,8 +631,6 @@ public class LayoutRoutine {
           AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
     MapWritable offsets;
-
-    float componentPadding;
 
     /*
      * (non-Javadoc)
@@ -663,8 +657,8 @@ public class LayoutRoutine {
     public void compute(Vertex<LayeredPartitionedLongWritable, V, E> vertex,
             Iterable<LayoutMessage> msgs) throws IOException {
       V vValue = vertex.getValue();
-      float[] coords = vValue.getCoordinates();
-      float[] ccOffset = ((FloatWritableArray) offsets.get(new IntWritable(
+      double[] coords = vValue.getCoordinates();
+      double[] ccOffset = ((DoubleWritableArray) offsets.get(new IntWritable(
               vValue.getComponent()))).get();
       vValue.setCoordinates(((coords[0] + ccOffset[0]) * ccOffset[2])
               + ccOffset[3], ((coords[1] + ccOffset[1]) * ccOffset[2])

@@ -18,8 +18,6 @@
  */
 package unipg.gila.layout.force;
 
-import org.apache.log4j.Logger;
-
 import unipg.gila.utils.Toolbox;
 
 /**
@@ -27,8 +25,6 @@ import unipg.gila.utils.Toolbox;
  *
  */
 public class FR extends Force {
-
-  Logger log = Logger.getLogger(this.getClass());
 
   /**
    * Parameter-less constructor.
@@ -52,12 +48,11 @@ public class FR extends Force {
    * @see unipg.dafne.layout.force.Force#computeAttractiveForce(float[], float)
    */
   @Override
-  public float[] computeAttractiveForce(float deltaX, float deltaY,
-          float distance, float squareDistance, float desiredDistance,
+  public double[] computeAttractiveForce(double deltaX, double deltaY,
+    double distance, double squareDistance, double desiredDistance,
           int v1Deg, int v2Deg) {
-    return new float[] { deltaX * distance / desiredDistance,
+    return new double[] { deltaX * distance / desiredDistance,
             deltaY * distance / desiredDistance };
-    // return squareDistance/k;
   }
 
   /*
@@ -66,13 +61,11 @@ public class FR extends Force {
    * @see unipg.dafne.layout.force.Force#computeRepulsiveForce(float[], float)
    */
   @Override
-  public float[] computeRepulsiveForce(float deltaX, float deltaY,
-          float distance, float squareDistance, int v1Deg, int v2Deg) {
-    // float degCorrection = v2Deg/(float)v1Deg;
-    float degCorrection = 1.0f;
-    return new float[] {
-            degCorrection * (deltaX / Toolbox.floatFuzzyMath(squareDistance)),
-            degCorrection * (deltaY / Toolbox.floatFuzzyMath(squareDistance)) };
-    // return 1/distance;
+  public double[] computeRepulsiveForce(double deltaX, double deltaY,
+    double distance, double squareDistance, int v1Deg, int v2Deg) {
+    double degCorrection = 1.0f;
+    return new double[] {
+            degCorrection * (deltaX / Toolbox.doubleFuzzyMath(squareDistance)),
+            degCorrection * (deltaY / Toolbox.doubleFuzzyMath(squareDistance)) };
   }
 }

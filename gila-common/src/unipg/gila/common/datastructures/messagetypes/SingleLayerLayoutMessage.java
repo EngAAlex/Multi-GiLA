@@ -53,7 +53,7 @@ public class SingleLayerLayoutMessage extends
    * @param coords
    */
   public SingleLayerLayoutMessage(PartitionedLongWritable payloadVertex,
-          float[] coords) {
+    double[] coords) {
     super(payloadVertex, coords);
   }
 
@@ -65,7 +65,7 @@ public class SingleLayerLayoutMessage extends
    * @param coords
    */
   public SingleLayerLayoutMessage(PartitionedLongWritable payloadVertex,
-          int ttl, float[] coords) {
+          int ttl, double[] coords) {
     super(payloadVertex, ttl, coords);
   }
 
@@ -84,9 +84,9 @@ public class SingleLayerLayoutMessage extends
    * unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagate()
    */
   @Override
-  public MessageWritable<PartitionedLongWritable, float[]> propagate() {
+  public MessageWritable<PartitionedLongWritable, double[]> propagate() {
     SingleLayerLayoutMessage toReturn = new SingleLayerLayoutMessage(
-            payloadVertex, ttl - 1, new float[] { value[0], value[1] });
+            payloadVertex, ttl - 1, new double[] { value[0], value[1] });
     toReturn.setWeight(weight);
     // if(getDeg() != -1)
     // toReturn.setDeg(getDeg());
@@ -101,9 +101,9 @@ public class SingleLayerLayoutMessage extends
    * ()
    */
   @Override
-  public MessageWritable<PartitionedLongWritable, float[]> propagateAndDie() {
+  public MessageWritable<PartitionedLongWritable, double[]> propagateAndDie() {
     SingleLayerLayoutMessage toReturn = new SingleLayerLayoutMessage(
-            payloadVertex, new float[] { value[0], value[1] });
+            payloadVertex, new double[] { value[0], value[1] });
     toReturn.setWeight(weight);
     return toReturn;
   }
@@ -119,7 +119,7 @@ public class SingleLayerLayoutMessage extends
   protected void specificRead(DataInput in) throws IOException {
     payloadVertex = new PartitionedLongWritable();
     payloadVertex.readFields(in);
-    value = new float[2];
+    value = new double[2];
     value[0] = in.readFloat();
     value[1] = in.readFloat();
     // if(in.readBoolean())
@@ -137,8 +137,8 @@ public class SingleLayerLayoutMessage extends
   @Override
   protected void specificWrite(DataOutput out) throws IOException {
     payloadVertex.write(out);
-    out.writeFloat(value[0]);
-    out.writeFloat(value[1]);
+    out.writeDouble(value[0]);
+    out.writeDouble(value[1]);
     // if(getDeg() == -1)
     // out.writeBoolean(false);
     // else{

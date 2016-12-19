@@ -62,14 +62,14 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
     // sun = new LayeredPartitionedLongWritable();
   }
 
-  public AstralBodyCoordinateWritable(float x, float y, JSONArray oEs,
+  public AstralBodyCoordinateWritable(double x, double y, JSONArray oEs,
     int component) throws JSONException {
     super(x, y, oEs, component);
     // sunProxy = new LayeredPartitionedLongWritable();
     // sun = new LayeredPartitionedLongWritable();
   }
 
-  public AstralBodyCoordinateWritable(int lowerLevelWeigth, float x, float y,
+  public AstralBodyCoordinateWritable(int lowerLevelWeigth, double x, double y,
     int component) {
     super(x, y, component);
     // sunProxy = new LayeredPartitionedLongWritable();
@@ -77,7 +77,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
     this.lowerLevelWeight = lowerLevelWeigth;
   }
 
-  public AstralBodyCoordinateWritable(float x, float y, int component) {
+  public AstralBodyCoordinateWritable(double x, double y, int component) {
     super(x, y, component);
     // sunProxy = new LayeredPartitionedLongWritable();
     // sun = new LayeredPartitionedLongWritable();

@@ -69,7 +69,7 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
           throws IOException {
       if(vertex.getId().getLayer() != 0)
         return new Text("");
-      float[] cohords = vertex.getValue().getCoordinates();
+      double[] cohords = vertex.getValue().getCoordinates();
       String partition;
       String component;
       if(!showPartitioning)

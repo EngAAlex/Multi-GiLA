@@ -566,7 +566,7 @@ public class SolarMerger{
 			aggregate(SolarMergerRoutine.layerVertexSizeAggregator, infoToUpdate);
 
 			AstralBodyCoordinateWritable value = vertex.getValue();
-			float[] coords = value.getCoordinates();
+			double[] coords = value.getCoordinates();
 
 			LayeredPartitionedLongWritable homologousId = new LayeredPartitionedLongWritable(vertex.getId().getPartition(), 
 					vertex.getId().getId(), 

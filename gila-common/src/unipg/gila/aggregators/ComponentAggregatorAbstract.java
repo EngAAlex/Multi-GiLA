@@ -23,6 +23,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Writable;
 
+import unipg.gila.common.datastructures.DoubleWritableArray;
 import unipg.gila.common.datastructures.FloatWritableArray;
 
 /**
@@ -182,4 +183,48 @@ public abstract class ComponentAggregatorAbstract implements
 
   }
 
+  /**
+   * This aggregator keeps the maximum float coordinates (float[]{x,y}) for each
+   * key.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class ComponentDoubleXYMaxAggregator extends
+          ComponentAggregatorAbstract {
+
+    protected double[] checkEligibility(double[] mycoords, double[] newest) {
+      double[] arrayToSave = new double[] { Math.max(mycoords[0], newest[0]),
+              Math.max(mycoords[1], newest[1]) };
+      return arrayToSave;
+    }
+
+    @Override
+    protected void specificAggregate(Entry<Writable, Writable> current) {
+      double[] myData = ((DoubleWritableArray) current.getValue()).get();
+      double[] foreignData = ((DoubleWritableArray) internalState.get(current
+              .getKey())).get();
+      internalState.put(current.getKey(), new DoubleWritableArray(
+              checkEligibility(myData, foreignData)));
+    }
+  }
+
+  /**
+   * This aggregator keeps the minimum float coordinates (float[]{x,y}) for each
+   * key.
+   * 
+   * @author Alessio Arleo
+   *
+   */
+  public static class ComponentDoubleXYMinAggregator extends
+          ComponentDoubleXYMaxAggregator {
+
+    @Override
+    protected double[] checkEligibility(double[] mycoords, double[] newest) {
+      double[] arrayToSave = new double[] { Math.min(mycoords[0], newest[0]),
+              Math.min(mycoords[1], newest[1]) };
+      return arrayToSave;
+    };
+
+  }  
 }

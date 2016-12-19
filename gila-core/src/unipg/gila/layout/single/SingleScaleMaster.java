@@ -19,7 +19,7 @@
 package unipg.gila.layout.single;
 
 import org.apache.giraph.master.DefaultMasterCompute;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 
 import unipg.gila.layout.GraphReintegrationRoutine;
@@ -39,7 +39,7 @@ public class SingleScaleMaster extends DefaultMasterCompute {
 
   LayoutRoutine layoutRoutine;
   GraphReintegrationRoutine reintegrationRoutine;
-  float k = 0.0f;
+  double k = 0.0f;
 
   boolean layoutCompleted;
 
@@ -66,15 +66,15 @@ public class SingleScaleMaster extends DefaultMasterCompute {
                     LayoutRoutine.ttlMaxDefault)));
     setAggregatedValue(
             LayoutRoutine.currentAccuracyAggregator,
-            new FloatWritable(getConf().getFloat(LayoutRoutine.accuracyString,
+            new DoubleWritable(getConf().getDouble(LayoutRoutine.accuracyString,
                     LayoutRoutine.accuracyDefault)));
     setAggregatedValue(
             LayoutRoutine.coolingSpeedAggregator,
-            new FloatWritable(getConf().getFloat(LayoutRoutine.coolingSpeed,
+            new DoubleWritable(getConf().getDouble(LayoutRoutine.coolingSpeed,
                     LayoutRoutine.defaultCoolingSpeed)));
     setAggregatedValue(
             LayoutRoutine.initialTempFactorAggregator,
-            new FloatWritable(getConf().getFloat(
+            new DoubleWritable(getConf().getDouble(
                     LayoutRoutine.initialTempFactorString,
                     LayoutRoutine.defaultInitialTempFactor)));
   }
@@ -86,8 +86,8 @@ public class SingleScaleMaster extends DefaultMasterCompute {
    */
   @Override
   public void compute() {
-    if (k == 0.0f)
-      k = ((FloatWritable) getAggregatedValue(LayoutRoutine.k_agg)).get();
+    if (k == 0.0)
+      k = ((DoubleWritable) getAggregatedValue(LayoutRoutine.k_agg)).get();
 
     if (!layoutCompleted) {
       if (layoutRoutine.compute(getTotalNumVertices(), k)) {

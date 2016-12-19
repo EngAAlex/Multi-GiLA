@@ -46,7 +46,7 @@ public class LayoutMessage extends
    * @param coords
    */
   public LayoutMessage(LayeredPartitionedLongWritable payloadVertex,
-          float[] coords) {
+          double[] coords) {
     super(payloadVertex, coords);
   }
 
@@ -58,7 +58,7 @@ public class LayoutMessage extends
    * @param coords
    */
   public LayoutMessage(LayeredPartitionedLongWritable payloadVertex, int ttl,
-          float[] coords) {
+          double[] coords) {
     super(payloadVertex, ttl, coords);
   }
 
@@ -69,9 +69,9 @@ public class LayoutMessage extends
    * unipg.dafne.common.datastructures.messagetypes.MessageWritable#propagate()
    */
   @Override
-  public MessageWritable<LayeredPartitionedLongWritable, float[]> propagate() {
+  public MessageWritable<LayeredPartitionedLongWritable, double[]> propagate() {
     LayoutMessage toReturn = new LayoutMessage(payloadVertex, ttl - 1,
-            new float[] { value[0], value[1] });
+            new double[] { value[0], value[1] });
     toReturn.setWeight(weight);
     // if(getDeg() != -1)
     // toReturn.setDeg(getDeg());
@@ -86,8 +86,8 @@ public class LayoutMessage extends
    * ()
    */
   @Override
-  public MessageWritable<LayeredPartitionedLongWritable, float[]> propagateAndDie() {
-    LayoutMessage toReturn = new LayoutMessage(payloadVertex, new float[] {
+  public MessageWritable<LayeredPartitionedLongWritable, double[]> propagateAndDie() {
+    LayoutMessage toReturn = new LayoutMessage(payloadVertex, new double[] {
             value[0], value[1] });
     toReturn.setWeight(weight);
     return toReturn;
@@ -104,9 +104,9 @@ public class LayoutMessage extends
   protected void specificRead(DataInput in) throws IOException {
     payloadVertex = new LayeredPartitionedLongWritable();
     payloadVertex.readFields(in);
-    value = new float[2];
-    value[0] = in.readFloat();
-    value[1] = in.readFloat();
+    value = new double[2];
+    value[0] = in.readDouble();
+    value[1] = in.readDouble();
     senderId = in.readLong();
   }
 
@@ -120,8 +120,8 @@ public class LayoutMessage extends
   @Override
   protected void specificWrite(DataOutput out) throws IOException {
     payloadVertex.write(out);
-    out.writeFloat(value[0]);
-    out.writeFloat(value[1]);
+    out.writeDouble(value[0]);
+    out.writeDouble(value[1]);
     out.writeLong(senderId);
   }
 

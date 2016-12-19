@@ -26,7 +26,7 @@ package unipg.gila.coolingstrategies;
  */
 public class LinearCoolingStrategy extends CoolingStrategy {
 
-  private float coolingSpeed;
+  private double coolingSpeed;
 
   public LinearCoolingStrategy(String[] args) {
     super(args);
@@ -34,11 +34,11 @@ public class LinearCoolingStrategy extends CoolingStrategy {
 
   @Override
   protected void generateCoolingStrategy(String[] args) {
-    coolingSpeed = Float.parseFloat(args[0]);
+    coolingSpeed = Double.parseDouble(args[0]);
   }
 
   @Override
-  public float cool(float temperature) {
+  public double cool(double temperature) {
     return temperature * coolingSpeed;
   }
 

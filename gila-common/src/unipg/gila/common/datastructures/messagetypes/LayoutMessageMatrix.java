@@ -31,7 +31,7 @@ import unipg.gila.common.datastructures.PartitionedLongWritable;
  *
  */
 public class LayoutMessageMatrix<I extends PartitionedLongWritable> extends
-        MessageWritable<I, float[]> {
+        MessageWritable<I, double[]> {
 
   /**
 	 * 
@@ -44,11 +44,11 @@ public class LayoutMessageMatrix<I extends PartitionedLongWritable> extends
    * @param payloadVertex
    * @param coords
    */
-  public LayoutMessageMatrix(I payloadVertex, float[] coords) {
+  public LayoutMessageMatrix(I payloadVertex, double[] coords) {
     super(payloadVertex, coords);
   }
 
-  public LayoutMessageMatrix(I payloadVertex, int ttl, float[] coords) {
+  public LayoutMessageMatrix(I payloadVertex, int ttl, double[] coords) {
     super(payloadVertex, ttl, coords);
   }
 
@@ -68,7 +68,7 @@ public class LayoutMessageMatrix<I extends PartitionedLongWritable> extends
    * unipg.gila.common.datastructures.messagetypes.MessageWritable#propagate()
    */
   @Override
-  public MessageWritable<I, float[]> propagate() {
+  public MessageWritable<I, double[]> propagate() {
     return null;
   }
 
@@ -80,7 +80,7 @@ public class LayoutMessageMatrix<I extends PartitionedLongWritable> extends
    * ()
    */
   @Override
-  public MessageWritable<I, float[]> propagateAndDie() {
+  public MessageWritable<I, double[]> propagateAndDie() {
     return null;
   }
 

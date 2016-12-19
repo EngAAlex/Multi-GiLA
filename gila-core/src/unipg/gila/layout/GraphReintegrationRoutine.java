@@ -28,17 +28,15 @@ import java.util.Map;
 import org.apache.giraph.graph.Computation;
 import org.apache.giraph.master.MasterCompute;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
 
-import com.google.common.collect.Lists;
-
-import unipg.gila.common.datastructures.FloatWritableArray;
+import unipg.gila.common.datastructures.DoubleWritableArray;
 import unipg.gila.layout.GraphReintegration.FairShareReintegrateOneEdges;
 import unipg.gila.layout.GraphReintegration.PlainDummyComputation;
-import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorer;
 import unipg.gila.layout.LayoutRoutine.DrawingBoundariesExplorerWithComponentsNo;
 import unipg.gila.layout.LayoutRoutine.LayoutCCs;
+
+import com.google.common.collect.Lists;
 
 /**
  * @author Alessio Arleo
@@ -102,10 +100,10 @@ public class GraphReintegrationRoutine {
    */
   protected void computeComponentGridLayout() {
 
-    float componentPadding = master.getConf().getFloat(
+    double componentPadding = master.getConf().getDouble(
             LayoutRoutine.componentPaddingConfString,
             LayoutRoutine.defaultPadding);
-    float minRatioThreshold = master.getConf().getFloat(
+    double minRatioThreshold = master.getConf().getDouble(
             LayoutRoutine.minRationThresholdString,
             LayoutRoutine.defaultMinRatioThreshold);
 
@@ -131,21 +129,21 @@ public class GraphReintegrationRoutine {
     int coloumnNo = new Double(Math.ceil(Math.sqrt(componentsNo.size() - 1)))
             .intValue();
 
-    Point2D.Float cursor = new Point2D.Float(0.0f, 0.0f);
-    Point2D.Float tableOrigin = new Point2D.Float(0.0f, 0.0f);
+    Point2D.Double cursor = new Point2D.Double(0.0f, 0.0f);
+    Point2D.Double tableOrigin = new Point2D.Double(0.0f, 0.0f);
 
     int maxID = componentSizeSorter[componentSizeSorter.length - 1].get();
     int maxNo = componentSizeSorterValues[componentSizeSorter.length - 1]
             .get();// ((LongWritable)componentsNo.get(new
                    // LongWritable(maxID))).get();
 
-    float[] translationCorrection = ((FloatWritableArray) minCoordsMap
+    double[] translationCorrection = ((DoubleWritableArray) minCoordsMap
             .get(new IntWritable(maxID))).get();
-    offsets.put(new IntWritable(maxID), new FloatWritableArray(new float[] {
+    offsets.put(new IntWritable(maxID), new DoubleWritableArray(new double[] {
             -translationCorrection[0], -translationCorrection[1], 1.0f,
             cursor.x, cursor.y }));
 
-    float[] maxComponents = ((FloatWritableArray) maxCoordsMap
+    double[] maxComponents = ((DoubleWritableArray) maxCoordsMap
             .get(new IntWritable(maxID))).get();
     // float componentPadding =
     // getConf().getFloat(FloodingMaster.componentPaddingConfString,
@@ -155,7 +153,7 @@ public class GraphReintegrationRoutine {
                                        // UPPER LEFT CORNER.
     tableOrigin.setLocation(cursor);
 
-    float coloumnMaxY = 0.0f;
+    double coloumnMaxY = 0.0f;
     int counter = 1;
 
     for (int j = componentSizeSorter.length - 2; j >= 0; j--) { // THE OTHER
@@ -164,10 +162,10 @@ public class GraphReintegrationRoutine {
                                                                 // ARE ARRANGED
                                                                 // IN A GRID.
       int currentComponent = componentSizeSorter[j].get();
-      maxComponents = ((FloatWritableArray) maxCoordsMap.get(new IntWritable(
+      maxComponents = ((DoubleWritableArray) maxCoordsMap.get(new IntWritable(
               currentComponent))).get();
-      float sizeRatio = (float) componentSizeSorterValues[j].get() / maxNo;
-      translationCorrection = ((FloatWritableArray) minCoordsMap
+      double sizeRatio = (double) componentSizeSorterValues[j].get() / maxNo;
+      translationCorrection = ((DoubleWritableArray) minCoordsMap
               .get(new IntWritable(currentComponent))).get();
 
       if (sizeRatio < minRatioThreshold)
@@ -179,8 +177,8 @@ public class GraphReintegrationRoutine {
       maxComponents[1] *= sizeRatio;
 
       offsets.put(new IntWritable(currentComponent),
-              new FloatWritableArray(
-                      new float[] { -translationCorrection[0],
+              new DoubleWritableArray(
+                      new double[] { -translationCorrection[0],
                               -translationCorrection[1], sizeRatio, cursor.x,
                               cursor.y }));
       if (maxComponents[1] > coloumnMaxY)

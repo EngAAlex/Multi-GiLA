@@ -46,6 +46,6 @@ public abstract class CoolingStrategy {
    *          The current temperature.
    * @return the cooled temperature according to the cooling strategy.
    */
-  public abstract float cool(float temperature);
+  public abstract double cool(double temperature);
 
 }

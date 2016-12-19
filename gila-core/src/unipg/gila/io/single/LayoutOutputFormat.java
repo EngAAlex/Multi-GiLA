@@ -76,7 +76,7 @@ public class LayoutOutputFormat
     protected Text convertVertexToLine(
             Vertex<LayeredPartitionedLongWritable, CoordinateWritable, IntWritable> vertex)
             throws IOException {
-      float[] cohords = vertex.getValue().getCoordinates();
+      double[] cohords = vertex.getValue().getCoordinates();
       String partition;
       String component;
       if (!showPartitioning)

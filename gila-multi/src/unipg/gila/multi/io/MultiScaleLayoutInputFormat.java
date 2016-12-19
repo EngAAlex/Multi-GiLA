@@ -23,8 +23,6 @@ import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.io.formats.TextVertexInputFormat;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -75,7 +73,7 @@ TextVertexInputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritab
 		@Override
 		protected AstralBodyCoordinateWritable getValue(JSONArray jsonVertex) throws
 		JSONException, IOException {
-				return new AstralBodyCoordinateWritable(new Double(jsonVertex.getDouble(3)).floatValue(), new Double(jsonVertex.getDouble(4)).floatValue(), jsonVertex.getJSONArray(5), jsonVertex.getInt(1));
+				return new AstralBodyCoordinateWritable(jsonVertex.getDouble(3), jsonVertex.getDouble(4), jsonVertex.getJSONArray(5), jsonVertex.getInt(1));
 		}
 
 		protected Vertex<PartitionedLongWritable, CoordinateWritable, FloatWritable> handleException(Text line, JSONArray jsonVertex,

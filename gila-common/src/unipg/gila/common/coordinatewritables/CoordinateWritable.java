@@ -24,7 +24,6 @@ import org.apache.hadoop.io.Writable;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import unipg.gila.common.datastructures.LinkedListWritable;
 import unipg.gila.common.datastructures.LongWritableSet;
 
 /**
@@ -38,11 +37,11 @@ public class CoordinateWritable extends MiniCoordinateWritable {
   /**
    * The X component of the forces acting on the vertex.
    */
-  protected float fX;
+  protected double fX;
   /**
    * The Y component of the forces acting on the vertex.
    */
-  protected float fY;
+  protected double fY;
   /**
    * A switch used to know if the vertex has been reset or not; it is used to
    * check if whether to include the attractive forces or not at the next
@@ -57,7 +56,7 @@ public class CoordinateWritable extends MiniCoordinateWritable {
   /**
    * The shortest incident edge.
    */
-  protected float shortestEdge = Float.MAX_VALUE;
+  protected double shortestEdge = Double.MAX_VALUE;
 
   // protected LinkedListWritable<Writable> messageStack;
 
@@ -69,7 +68,7 @@ public class CoordinateWritable extends MiniCoordinateWritable {
     justReset = false;
   }
 
-  public CoordinateWritable(Float x, Float y, int component) {
+  public CoordinateWritable(double x, double y, int component) {
     super(x, y, component);
     fX = 0.0f;
     fY = 0.0f;
@@ -77,7 +76,7 @@ public class CoordinateWritable extends MiniCoordinateWritable {
     justReset = false;
   }
 
-  public CoordinateWritable(float x, float y, JSONArray oEs, int component)
+  public CoordinateWritable(double x, double y, JSONArray oEs, int component)
           throws JSONException {
     super(x, y, oEs, component);
     fX = 0.0f;
@@ -144,13 +143,13 @@ public class CoordinateWritable extends MiniCoordinateWritable {
    * @param force
    *          The array to add to the internal force array.
    */
-  public void addToForceVector(float[] force) {
+  public void addToForceVector(double[] force) {
     this.fX += force[0];
     this.fY += force[1];
   }
 
-  public float[] getForceVector() {
-    return new float[] { fX, fY };
+  public double[] getForceVector() {
+    return new double[] { fX, fY };
   }
 
   public void resetForceVector() {
@@ -158,11 +157,11 @@ public class CoordinateWritable extends MiniCoordinateWritable {
     this.fY = 0.0f;
   }
 
-  public float getShortestEdge() {
+  public double getShortestEdge() {
     return shortestEdge;
   }
 
-  public void setShortestEdge(float shortestEdge) {
+  public void setShortestEdge(double shortestEdge) {
     if (shortestEdge < this.shortestEdge)
       this.shortestEdge = shortestEdge;
   }
@@ -204,20 +203,20 @@ public class CoordinateWritable extends MiniCoordinateWritable {
   @Override
   public void readFields(DataInput in) throws IOException {
     super.readFields(in);
-    fX = in.readFloat();
-    fY = in.readFloat();
+    fX = in.readDouble();
+    fY = in.readDouble();
     analyzed.readFields(in);
     // if(in.readBoolean())
     // messageStack.readFields(in);
     justReset = in.readBoolean();
-    shortestEdge = in.readFloat();
+    shortestEdge = in.readDouble();
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    out.writeFloat(fX);
-    out.writeFloat(fY);
+    out.writeDouble(fX);
+    out.writeDouble(fY);
     analyzed.write(out);
     // if(messageLeftInStack() == 0)
     // out.writeBoolean(false);
@@ -226,7 +225,7 @@ public class CoordinateWritable extends MiniCoordinateWritable {
     // messageStack.write(out);
     // }
     out.writeBoolean(justReset);
-    out.writeFloat(shortestEdge);
+    out.writeDouble(shortestEdge);
   }
 
   /*

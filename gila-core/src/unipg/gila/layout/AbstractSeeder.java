@@ -28,7 +28,7 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -36,7 +36,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.FloatWritableArray;
+import unipg.gila.common.datastructures.DoubleWritableArray;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.utils.Toolbox;
@@ -57,8 +57,8 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
         extends
         AbstractComputation<LayeredPartitionedLongWritable, V, E, LayoutMessage, LayoutMessage> {
 
-  float initialTemp;
-  float accuracy;
+  double initialTemp;
+  double accuracy;
   int ttlmax;
 
   MapWritable tempsMap;
@@ -93,18 +93,18 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
 
     int component = vValue.getComponent();
 
-    float coords[] = vValue.getCoordinates();
-    float[] forces = vValue.getForceVector();
+    double coords[] = vValue.getCoordinates();
+    double[] forces = vValue.getForceVector();
 
-    float displacementModule = Toolbox.computeModule(forces);
-    float correctedDispModule;
+    double displacementModule = Toolbox.computeModule(forces);
+    double correctedDispModule;
 
     if (displacementModule > 0) {
 
-      float tempX;
-      float tempY;
+      double tempX;
+      double tempY;
 
-      float[] temps = ((FloatWritableArray) tempsMap.get(new IntWritable(
+      double[] temps = ((DoubleWritableArray) tempsMap.get(new IntWritable(
               component))).get();
 
       tempX = (forces[0] / displacementModule * Math.min(displacementModule,
@@ -118,16 +118,7 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
       vValue.setCoordinates(coords[0], coords[1]);
 
       correctedDispModule = Toolbox
-              .computeModule(new float[] { tempX, tempY });
-
-      // log.info("displ " + displacementModule + " " + temps[0] + "  " +
-      // temps[1] + correctedDispModule + " " + tempX + " " + tempY + " " +
-      // coords[0] + " " + coords[1]);
-      //
-      // if(Float.isNaN(tempX) || Float.isNaN(tempY) ||
-      // Float.isNaN(displacementModule))
-      // throw new IOException("NaN alert ALPHA " + tempX + " " + tempY + " " +
-      // temps[0] + " " + temps[1] + " " + displacementModule);
+              .computeModule(new double[] { tempX, tempY });
 
     } else
       correctedDispModule = 0;
@@ -143,7 +134,7 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
   }
 
   protected void gatherAndSend(
-          Vertex<LayeredPartitionedLongWritable, V, E> vertex, float[] coords) {
+          Vertex<LayeredPartitionedLongWritable, V, E> vertex, double[] coords) {
     LayoutMessage toSend = new LayoutMessage();
     toSend.setPayloadVertex(vertex.getId());
     toSend.setTTL(ttlmax - 1);
@@ -174,7 +165,7 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
           WorkerContext workerContext) {
     super.initialize(graphState, workerClientRequestProcessor,
             graphTaskManager, workerGlobalCommUsage, workerContext);
-    accuracy = ((FloatWritable) getAggregatedValue(LayoutRoutine.currentAccuracyAggregator))
+    accuracy = ((DoubleWritable) getAggregatedValue(LayoutRoutine.currentAccuracyAggregator))
             .get();
     ttlmax = ((IntWritable) getAggregatedValue(LayoutRoutine.ttlMaxAggregator))
             .get();
@@ -182,8 +173,8 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
     tempsMap = getAggregatedValue(LayoutRoutine.tempAGG);
     sizesMap = getAggregatedValue(LayoutRoutine.correctedSizeAGG);
 
-    sendDegToo = getConf().getBoolean(LayoutRoutine.sendDegTooOptionString,
-            false);
+//    sendDegToo = getConf().getBoolean(LayoutRoutine.sendDegTooOptionString,
+//            false);
   }
 
 }

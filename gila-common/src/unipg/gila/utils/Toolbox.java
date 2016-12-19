@@ -18,24 +18,20 @@ package unipg.gila.utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.giraph.graph.Vertex;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
-import com.google.common.collect.Lists;
-
 import unipg.gila.common.coordinatewritables.CoordinateWritable;
-import unipg.gila.common.datastructures.PartitionedLongWritable;
 import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
+
+import com.google.common.collect.Lists;
 
 /**
  * This class implements a few convenience methods.
@@ -54,10 +50,36 @@ public class Toolbox {
    *          The second point.
    * @return The square distance.
    */
-  public static float squareModule(float[] p1, float[] p2) {
-    float result = (float) (Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1]
-            - p1[1], 2));
+  public static float floatSquareModule(float[] p1, float[] p2) {
+    float result = new Double(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1]
+            - p1[1], 2)).floatValue();
     return floatFuzzyMath(result);
+  }
+  
+  /**
+   * A method to compute the square distance between two points.
+   * 
+   * @param p1
+   *          The first point.
+   * @param p2
+   *          The second point.
+   * @return The square distance.
+   */
+  public static double squareModule(double[] p1, double[] p2) {
+    double result = Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1]
+            - p1[1], 2);
+    return doubleFuzzyMath(result);
+  }
+  
+  /**
+   * This method computes the square root of the square distance.
+   * 
+   * @param p1
+   * @param p2
+   * @return The square rooted distance between two points.
+   */
+  public static double floatComputeModule(float[] p1, float[] p2) {   
+    return floatFuzzyMath(new Double(Math.sqrt(floatSquareModule(p1, p2))).floatValue());
   }
 
   /**
@@ -67,9 +89,8 @@ public class Toolbox {
    * @param p2
    * @return The square rooted distance between two points.
    */
-  public static float computeModule(float[] p1, float[] p2) {
-    float result = (float) Math.sqrt(squareModule(p1, p2));
-    return floatFuzzyMath(result);
+  public static double computeModule(double[] p1, double[] p2) {   
+    return doubleFuzzyMath(Math.sqrt(squareModule(p1, p2)));
   }
 
   /**
@@ -79,9 +100,23 @@ public class Toolbox {
    *          The vector whose module is requested.
    * @return The requested module.
    */
-  public static float computeModule(float[] vector) {
-    return floatFuzzyMath(new Float(Math.sqrt((Math.pow(vector[0], 2) + Math
-            .pow(vector[1], 2)))));
+  public static double computeModule(double[] vector) {
+    return doubleFuzzyMath(Math.sqrt((Math.pow(vector[0], 2) + Math
+            .pow(vector[1], 2))));
+  }
+  
+  /**
+   * This method ensures that the given value is not equal to 0, returning the
+   * same given value if it is not equal to zero or a very small value
+   * otherwise.
+   * 
+   * @param value
+   * @return The value itself or a very small positive value otherwise.
+   */
+  public static float floatFuzzyMath(float value) {
+    if (value == 0.0)
+      return new Float(0.00001);
+    return value;
   }
 
   /**
@@ -92,50 +127,29 @@ public class Toolbox {
    * @param value
    * @return The value itself or a very small positive value otherwise.
    */
-  public static float floatFuzzyMath(float value) {
-    if (value == 0.0f)
-      return new Float(0.00001);
+  public static double doubleFuzzyMath(double value) {
+    if (value == 0.0)
+      return new Double(0.00001);
     return value;
   }
 
-  public static <V extends CoordinateWritable, E extends Writable> List<Float> buildSlopesList(
+  public static <V extends CoordinateWritable, E extends Writable> List<Double> buildSlopesList(
           Iterator<LayoutMessage> its,
           Vertex<LayeredPartitionedLongWritable, V, E> vertex)
           throws IOException {
-    LinkedList<Float> tempList = new LinkedList<Float>();
-    float[] myCoordinates = vertex.getValue().getCoordinates();
+    LinkedList<Double> tempList = new LinkedList<Double>();
+    double[] myCoordinates = vertex.getValue().getCoordinates();
     while (its.hasNext()) {
       LayoutMessage currentNeighbour = its.next();
-      float[] coordinates = currentNeighbour.getValue();
+      double[] coordinates = currentNeighbour.getValue();
       vertex.getValue().setShortestEdge(
               Toolbox.computeModule(myCoordinates, coordinates));
       double computedAtan = Math.atan2(coordinates[1] - myCoordinates[1],
               coordinates[0] - myCoordinates[0]);
-      tempList.add(new Float(computedAtan));
+      tempList.add(computedAtan);
     }
     return tempList;
   }
-
-  // public static <V extends CoordinateWritable, E extends Writable>
-  // HashMap<LayeredPartitionedLongWritable, Float>
-  // buildSlopesMap(Iterator<LayoutMessage> its,
-  // Vertex<LayeredPartitionedLongWritable, V, E> vertex) throws IOException {
-  // HashMap<LayeredPartitionedLongWritable, Float> tempList = new
-  // HashMap<LayeredPartitionedLongWritable, Float>();
-  // float[] myCoordinates = vertex.getValue().getCoordinates();
-  // while(its.hasNext()){
-  // LayoutMessage currentNeighbour = its.next();
-  // float[] coordinates = currentNeighbour.getValue();
-  // // vertex.getValue().setShortestEdge(Toolbox.computeModule(myCoordinates,
-  // coordinates));
-  // double computedAtan = Math.atan2(coordinates[1] - myCoordinates[1],
-  // coordinates[0] - myCoordinates[0]);
-  // computedAtan = computedAtan < 0 ? (Math.PI*2 + computedAtan) :
-  // computedAtan;
-  // tempList.put(currentNeighbour.getPayloadVertex(), new Float(computedAtan));
-  // }
-  // return tempList;
-  // }
 
   public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(
           Map<K, V> map, boolean ascending) {

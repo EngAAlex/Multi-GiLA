@@ -30,7 +30,7 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.log4j.Logger;
 
@@ -59,7 +59,7 @@ public class MultiScaleLayout {
 
   public static class Seeder extends AbstractSeeder<AstralBodyCoordinateWritable, SpTreeEdgeValue>{
 
-    private float k;
+    private double k;
 
     /* (non-Javadoc)
      * @see unipg.gila.layout.AbstractSeeder#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
@@ -74,7 +74,7 @@ public class MultiScaleLayout {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
       currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-      k = ((FloatWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
+      k = ((DoubleWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
     }
 
     /* (non-Javadoc)
@@ -106,7 +106,7 @@ public class MultiScaleLayout {
         LayeredPartitionedLongWritable current = currentEdge.getTargetVertexId();
         if(current.getLayer() != currentLayer || currentEdge.getValue().isSpanningTree())
           continue;
-        aggregate(LayoutRoutine.max_K_agg, new FloatWritable(vertex.getEdgeValue(current).getValue()*k));
+        aggregate(LayoutRoutine.max_K_agg, new DoubleWritable(vertex.getEdgeValue(current).getValue()*k));
         LayoutMessage msgCopy = ((LayoutMessage)message).copy();
         msgCopy.setSenderId(vertex.getId().getId());
         sendMessage(current, msgCopy);
@@ -117,8 +117,8 @@ public class MultiScaleLayout {
 
   public static class Propagator extends AbstractPropagator<AstralBodyCoordinateWritable, SpTreeEdgeValue>{
 
-    float modifier;
-    float maxK = Float.MIN_VALUE;
+    double modifier;
+    double maxK = Double.MIN_VALUE;
 
     private HashSet<LayoutMessage> messageCache;
 
@@ -135,8 +135,8 @@ public class MultiScaleLayout {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
       currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
-      modifier = getConf().getFloat(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault);
-      maxK = ((FloatWritable)getAggregatedValue(LayoutRoutine.max_K_agg)).get();
+      modifier = getConf().getDouble(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault);
+      maxK = ((DoubleWritable)getAggregatedValue(LayoutRoutine.max_K_agg)).get();
     }
 
     /* (non-Javadoc)
@@ -159,7 +159,7 @@ public class MultiScaleLayout {
      * @see unipg.gila.layout.AbstractPropagator#requestOptimalEdgeLength(org.apache.giraph.graph.Vertex, unipg.gila.common.datastructures.PartitionedLongWritable)
      */
     @Override
-    protected float requestOptimalSpringLength(
+    protected double requestOptimalSpringLength(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
       Iterable<SpTreeEdgeValue> eValues) {
       Iterator<SpTreeEdgeValue> cc = eValues.iterator();
@@ -181,10 +181,10 @@ public class MultiScaleLayout {
      * @see unipg.gila.layout.AbstractPropagator#requestWalshawConstant()
      */
     @Override
-    protected float requestWalshawConstant() {
+    protected double requestWalshawConstant() {
       if(LayoutRoutine.logLayout)
         log.info("Suggested walshawConstant " + Math.pow(maxK,2)*modifier + " from " + Math.pow(maxK,2) + " " + modifier);;
-        return (float) (Math.pow(maxK,2)*modifier);
+        return Math.pow(maxK,2)*modifier;
     }
 
     /* (non-Javadoc)

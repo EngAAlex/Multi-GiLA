@@ -141,7 +141,7 @@ public class SpanningTreeCreationRoutine {
             if(!alreadyConnected){
               alreadyConnected = true;
             }else{
-              sendMessage(current.getTargetVertexId(), new LayoutMessage(vertex.getId(), new float[]{0,0})); //inform the planet to disconnect the spanning tree from the oon
+              sendMessage(current.getTargetVertexId(), new LayoutMessage(vertex.getId(), new double[]{0,0})); //inform the planet to disconnect the spanning tree from the oon
               getContext().getCounter(MultiScaleComputation.MESSAGES_COUNTER_GROUP, this.getClass().getName()).increment(1);
               mutableEdges.remove();
               

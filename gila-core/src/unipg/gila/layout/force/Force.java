@@ -55,8 +55,8 @@ public abstract class Force {
    *          The degree of the second vertex.
    * @return The attractive force module exerted by v2 on v1.
    */
-  public abstract float[] computeAttractiveForce(float deltaX, float deltaY,
-          float distance, float squareDistance, float desiredDistance,
+  public abstract double[] computeAttractiveForce(double deltaX, double deltaY,
+    double distance, double squareDistance, double desiredDistance,
           int v1Deg, int v2Deg);
 
   /**
@@ -80,7 +80,7 @@ public abstract class Force {
    *          The degree of the second vertex.
    * @return The repulsive force module exerted by v2 on v1.
    */
-  public abstract float[] computeRepulsiveForce(float deltaX, float deltaY,
-          float distance, float squareDistance, int v1Deg, int v2Deg);
+  public abstract double[] computeRepulsiveForce(double deltaX, double deltaY,
+    double distance, double squareDistance, int v1Deg, int v2Deg);
 
 }

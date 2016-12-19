@@ -29,7 +29,7 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
 import org.apache.hadoop.io.BooleanWritable;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
@@ -64,11 +64,10 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
   // LOGGER
   Logger log = Logger.getLogger(this.getClass());
 
-  float repulsiveForceEnhancer;
-  protected float minimumForceThreshold;
-  protected float walshawConstant;
+  double repulsiveForceEnhancer;
+  protected double walshawConstant;
 
-  protected float k;
+  protected double k;
 
   protected Force force;
 
@@ -85,16 +84,15 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
     Iterator<LayoutMessage> it = messages.iterator();
     CoordinateWritable vValue = vertex.getValue();
 
-    float[] mycoords = vValue.getCoordinates();
-    ;
-    float[] foreigncoords;
-    float distance;
+    double[] mycoords = vValue.getCoordinates();
+    
+    double[] foreigncoords;
+    double distance;
 
-    float[] finalForce = new float[] { 0.0f, 0.0f };
-    float[] repulsiveForce = new float[] { 0.0f, 0.0f };
-    float[] tempForce = new float[] { 0.0f, 0.0f };
-    ;
-
+    double[] finalForce = new double[] { 0.0, 0.0 };
+    double[] repulsiveForce = new double[] { 0.0, 0.0 };
+    double[] tempForce = new double[] { 0.0, 0.0 };
+    
     int v1Deg;
     int v2Deg;
 
@@ -118,11 +116,11 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
                 + currentMessage.getPayloadVertex());
       }
 
-      float squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
-      distance = (float) Math.sqrt(squareDistance);
+      double squareDistance = Toolbox.squareModule(mycoords, foreigncoords);
+      distance = Math.sqrt(squareDistance);
 
-      float deltaX = (foreigncoords[0] - mycoords[0]);
-      float deltaY = (foreigncoords[1] - mycoords[1]);
+      double deltaX = (foreigncoords[0] - mycoords[0]);
+      double deltaY = (foreigncoords[1] - mycoords[1]);
 
       v2Deg = currentMessage.getWeight();
 
@@ -149,11 +147,6 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
         log.info("computed repulsive " + tempForce[0] + " " + tempForce[1]
                 + " with data " + deltaX + " " + deltaY + " " + distance);
 
-      // if(vValue.isAnalyzed(new LongWritable(currentPayload.getId())))
-      // log.info("Im " + vertex.getId() + " recalculating for " +
-      // currentPayload.getId() + " forces " + tempForce[0] + " " +
-      // tempForce[1]);
-
       repulsiveForce[0] += (repulsiveForceEnhancer * tempForce[0]);
       repulsiveForce[1] += (repulsiveForceEnhancer * tempForce[1]);
 
@@ -172,7 +165,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
     
     executePostMessageAction(vertex);
     
-    float currentWalshawConstant = requestWalshawConstant();
+    double currentWalshawConstant = requestWalshawConstant();
 
     if (LayoutRoutine.logLayout)
       log.info("Going to moderate on " + currentWalshawConstant + " from "
@@ -211,13 +204,13 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
   /**
    * @return
    */
-  protected float requestOptimalSpringLength(
+  protected double requestOptimalSpringLength(
           Vertex<LayeredPartitionedLongWritable, V, E> vertex,
           Iterable<E> iterable) {
     return k;
   }
 
-  protected float requestWalshawConstant() {
+  protected double requestWalshawConstant() {
     return walshawConstant;
   }
 
@@ -241,10 +234,10 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
           WorkerContext workerContext) {
     super.initialize(graphState, workerClientRequestProcessor,
             graphTaskManager, workerGlobalCommUsage, workerContext);
-    k = ((FloatWritable) getAggregatedValue(LayoutRoutine.k_agg)).get();
-    walshawConstant = ((FloatWritable) getAggregatedValue(LayoutRoutine.walshawConstant_agg))
+    k = ((DoubleWritable) getAggregatedValue(LayoutRoutine.k_agg)).get();
+    walshawConstant = ((DoubleWritable) getAggregatedValue(LayoutRoutine.walshawConstant_agg))
             .get();
-    repulsiveForceEnhancer = getConf().getFloat(
+    repulsiveForceEnhancer = getConf().getDouble(
             LayoutRoutine.repulsiveForceEnhancerString,
             LayoutRoutine.repulsiveForceEnhancementDefault);
 
