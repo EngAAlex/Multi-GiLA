@@ -107,7 +107,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
     terminate = false;
 
     workers = GiraphConstants.SPLIT_MASTER_WORKER.get(getConf()) ? getConf().getMapTasks() - 1 : getConf().getMapTasks();
-       
+        
     try {
       Class< ? extends AdaptationStrategy> tClass =
         (Class< ? extends AdaptationStrategy>) Class.forName(getConf()

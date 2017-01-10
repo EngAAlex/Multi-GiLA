@@ -19,17 +19,18 @@
 package unipg.gila.multi.layout;
 
 
+
 /**
  * @author Alessio Arleo
  *
  */
 
 public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
-
+  
   public static int maxK = 9;
   public static double maxAccuracy = 0.001; 
-  public static double minCoolingSpeed = 0.92;
-  public static double minInitialTempFactor = 2;
+  public static double minCoolingSpeed = 0.95;
+  public static double minInitialTempFactor = 1;
 
   public LayoutAdaptationStrategy(String confString){
     completeSetupFromConfString(confString);
@@ -122,16 +123,16 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
       if(nOfEdgesOfLayer < 1000)
         return LayoutAdaptationStrategy.maxK;
       if(nOfEdgesOfLayer < 5000)
-        return 6;
+        return 7;
       if(nOfEdgesOfLayer < 10000)
-        return 5;
+        return 6;
       //			if(nOfEdgesOfLayer > 50000)
       //				return 3;
       if(nOfEdgesOfLayer > 1000000)
         return 2;
       if(nOfEdgesOfLayer > 100000)
         return 3;
-      return 4;
+      return 5;
     }
 
     /* (non-Javadoc)
@@ -163,7 +164,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     public int returnCurrentK(int currentLayer, int nOfLayers,
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
         int proposedK = 2 + (4*(nOfLayers-currentLayer));
-        return  proposedK > LayoutAdaptationStrategy.maxK ? LayoutAdaptationStrategy.maxK : proposedK;
+        return proposedK;
+//        return  proposedK > LayoutAdaptationStrategy.maxK ? LayoutAdaptationStrategy.maxK : proposedK;
     }
 
     /* (non-Javadoc)
@@ -204,7 +206,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
   
   public static class SizeDiameterEnvironmentAwareDrivenAdaptationStrategy extends LayoutAdaptationStrategy{
         
-    private int threshold = 1000;
+    private int threshold;
     
     private SizeDrivenAdaptationStrategy sizeStrategy;
     private DiameterDrivenAdaptationStrategy diameterStrategy;
@@ -224,7 +226,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
      */
     public int returnCurrentK(int currentLayer, int nOfLayers,
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
-      if(nOfEdgesOfLayer/workers < threshold)
+      if((nOfEdgesOfLayer)/workers < threshold)
         return diameterStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);
       else
         return sizeStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);
@@ -235,8 +237,11 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
      */
     @Override
     protected void completeSetupFromConfString(String confString) {
-      if(!confString.equals(""))
+      try{
         threshold = Integer.parseInt(confString);
+      }catch(Exception e){
+       threshold = 1000; 
+      }      
     }
   }   
     

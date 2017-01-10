@@ -119,7 +119,7 @@ public class SolarMergerRoutine {
 			
 			setupInfoV.put(new IntWritable(0), new IntWritable((int)master.getTotalNumVertices()));
 			master.setAggregatedValue(layerVertexSizeAggregator, setupInfoV);
-			setupInfoE.put(new IntWritable(0), new IntWritable((int)master.getTotalNumEdges()));
+			setupInfoE.put(new IntWritable(0), new IntWritable((int)(master.getTotalNumEdges()/2)));
 			master.setAggregatedValue(layerEdgeSizeAggregator, setupInfoE);
 //			setupInfoW.put(new IntWritable(0), new IntWritable((int)master.getTotalNumEdges()));
 			setupInfoW.put(new IntWritable(0), new IntWritable(1));
