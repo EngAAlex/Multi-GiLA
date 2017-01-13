@@ -27,10 +27,10 @@ package unipg.gila.multi.layout;
 
 public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
   
-  public static int maxK = 9;
+  public static int maxK = 10;
   public static double maxAccuracy = 0.001; 
   public static double minCoolingSpeed = 0.95;
-  public static double minInitialTempFactor = 1;
+  public static double minInitialTempFactor = 2;
 
   public LayoutAdaptationStrategy(String confString){
     completeSetupFromConfString(confString);
@@ -52,11 +52,17 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
       return LayoutAdaptationStrategy.minCoolingSpeed;
     //  if(nOfEdgesOfLayer < 1500)
     //    return 0.96f;
+//    if(nOfEdgesOfLayer < 1000)
+//      return 0.95f;
+    if(nOfEdgesOfLayer < 1000)
+      return 0.94f;
+    if(nOfEdgesOfLayer < 5000)
+      return 0.93f;
     if(nOfEdgesOfLayer < 10000)
-      return 0.90f;
+      return 0.92f;
     if(nOfEdgesOfLayer < 1000000)
-      return 0.88f;
-    return 0.84f;
+      return 0.90f;
+    return 0.88f;
   }
 
   /* (non-Javadoc)
@@ -123,16 +129,16 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
       if(nOfEdgesOfLayer < 1000)
         return LayoutAdaptationStrategy.maxK;
       if(nOfEdgesOfLayer < 5000)
-        return 7;
-      if(nOfEdgesOfLayer < 10000)
         return 6;
+      if(nOfEdgesOfLayer < 10000)
+        return 5;
       //			if(nOfEdgesOfLayer > 50000)
       //				return 3;
       if(nOfEdgesOfLayer > 1000000)
         return 2;
       if(nOfEdgesOfLayer > 100000)
         return 3;
-      return 5;
+      return 4;
     }
 
     /* (non-Javadoc)
@@ -164,8 +170,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     public int returnCurrentK(int currentLayer, int nOfLayers,
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
         int proposedK = 2 + (4*(nOfLayers-currentLayer));
-        return proposedK;
-//        return  proposedK > LayoutAdaptationStrategy.maxK ? LayoutAdaptationStrategy.maxK : proposedK;
+//        return proposedK;
+        return  proposedK > LayoutAdaptationStrategy.maxK ? LayoutAdaptationStrategy.maxK : proposedK;
     }
 
     /* (non-Javadoc)
@@ -226,7 +232,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
      */
     public int returnCurrentK(int currentLayer, int nOfLayers,
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
-      if((nOfEdgesOfLayer)/workers < threshold)
+      if((nOfEdgesOfLayer)/workers < threshold && currentLayer > 0)
         return diameterStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);
       else
         return sizeStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);

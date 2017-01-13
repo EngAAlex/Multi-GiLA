@@ -3,7 +3,12 @@
  */
 package unipg.gila.aggregators;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 import org.apache.giraph.aggregators.Aggregator;
+import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.Writable;
 
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 
@@ -12,44 +17,54 @@ import unipg.gila.common.multi.LayeredPartitionedLongWritable;
  *
  */
 public class HighestLPLWritableAggregator implements
-  Aggregator<LayeredPartitionedLongWritable> {
+Aggregator<MapWritable> {
 
-  LayeredPartitionedLongWritable currentMax;
-  
+  MapWritable maxesForComponents;
+
   /* (non-Javadoc)
    * @see org.apache.giraph.aggregators.Aggregator#aggregate(org.apache.hadoop.io.Writable)
    */
-  public void aggregate(LayeredPartitionedLongWritable value) {
-    if(currentMax == null || value.getId() > currentMax.getId())
-      currentMax = value.copy();     
+  public void aggregate(MapWritable value) {
+    Iterator<Entry<Writable, Writable>> it = value.entrySet().iterator();
+    while(it.hasNext()){
+      Entry<Writable, Writable> current = it.next();
+      if(!maxesForComponents.containsKey(current.getKey()))
+        maxesForComponents.put(current.getKey(), current.getValue());
+      else{
+        LayeredPartitionedLongWritable newValue = (LayeredPartitionedLongWritable) current.getValue();
+        LayeredPartitionedLongWritable storedValue = (LayeredPartitionedLongWritable) maxesForComponents.get(current.getKey());
+        if(newValue.getId() > storedValue.getId())
+          maxesForComponents.put(current.getKey(), current.getValue());
+      }
+    }
   }
 
   /* (non-Javadoc)
    * @see org.apache.giraph.aggregators.Aggregator#createInitialValue()
    */
-  public LayeredPartitionedLongWritable createInitialValue() {
-    return new LayeredPartitionedLongWritable((short)0, Long.MIN_VALUE);
+  public MapWritable createInitialValue() {
+    return new MapWritable();
   }
 
   /* (non-Javadoc)
    * @see org.apache.giraph.aggregators.Aggregator#getAggregatedValue()
    */
-  public LayeredPartitionedLongWritable getAggregatedValue() {
-    return currentMax;
+  public MapWritable getAggregatedValue() {
+    return maxesForComponents;
   }
 
   /* (non-Javadoc)
    * @see org.apache.giraph.aggregators.Aggregator#setAggregatedValue(org.apache.hadoop.io.Writable)
    */
-  public void setAggregatedValue(LayeredPartitionedLongWritable value) {
-    currentMax = value;
+  public void setAggregatedValue(MapWritable value) {
+    maxesForComponents = value;
   }
 
   /* (non-Javadoc)
    * @see org.apache.giraph.aggregators.Aggregator#reset()
    */
   public void reset() {
-    currentMax = createInitialValue();
+    maxesForComponents = createInitialValue();
   }
 
 }

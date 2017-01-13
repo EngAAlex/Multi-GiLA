@@ -15,6 +15,8 @@ import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.worker.WorkerContext;
 import org.apache.giraph.worker.WorkerGlobalCommUsage;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.MapWritable;
 
 import unipg.gila.aggregators.HighestLPLWritableAggregator;
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
@@ -65,7 +67,9 @@ public class SpanningTreeCreationRoutine {
     vertexInLayerComputation(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
       Iterable<SolarMessage> msgs) throws IOException {
-      aggregate(maxIDAggregator, vertex.getId());
+      MapWritable mw = new MapWritable();
+      mw.put(new IntWritable(vertex.getValue().getComponent()), vertex.getId());
+      aggregate(maxIDAggregator, mw);
     }
 
   }
@@ -79,7 +83,7 @@ public class SpanningTreeCreationRoutine {
   extends
   MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, SolarMessage> {
 
-    LayeredPartitionedLongWritable maxID;
+    MapWritable maxIDs;
 
     /* (non-Javadoc)
      * @see unipg.gila.multi.MultiScaleComputation#initialize(org.apache.giraph.graph.GraphState, org.apache.giraph.comm.WorkerClientRequestProcessor, org.apache.giraph.graph.GraphTaskManager, org.apache.giraph.worker.WorkerGlobalCommUsage, org.apache.giraph.worker.WorkerContext)
@@ -95,7 +99,7 @@ public class SpanningTreeCreationRoutine {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      maxID = getAggregatedValue(maxIDAggregator);
+      maxIDs = getAggregatedValue(maxIDAggregator);
     }
 
     /* (non-Javadoc)
@@ -107,9 +111,10 @@ public class SpanningTreeCreationRoutine {
     vertexInLayerComputation(
       Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex,
       Iterable<SolarMessage> msgs) throws IOException {
-      if(vertex.getId().getId() != maxID.getId()){
-        addEdgeRequest(vertex.getId(), EdgeFactory.create(maxID, new SpTreeEdgeValue(true))); 
-        addEdgeRequest(maxID, EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true))); 
+      LayeredPartitionedLongWritable componentMax = (LayeredPartitionedLongWritable) maxIDs.get(new IntWritable(vertex.getValue().getComponent()));
+      if(vertex.getId().getId() != componentMax.getId()){
+        addEdgeRequest(vertex.getId(), EdgeFactory.create(componentMax, new SpTreeEdgeValue(true))); 
+        addEdgeRequest(componentMax, EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true))); 
       }        
     }
 
