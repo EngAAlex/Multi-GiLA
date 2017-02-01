@@ -51,16 +51,16 @@ import unipg.gila.multi.MultiScaleComputation;
  */
 public class SolarMerger{
 
-	
+
 	//GLOBAL STATIC ATTRIBUTES
 	public static boolean logMerger;
-	
+
 	/*
 	 * LOGGER 
 	 * */
 	protected static Logger log = Logger.getLogger(SolarMerger.class);
-	
-	
+
+
 	public static enum AstralBody{
 		SUN, MOON, PLANET, ASTEROID;
 
@@ -125,7 +125,7 @@ public class SolarMerger{
 	}
 
 	public static class SolarSweep extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, SolarMessage>{
-		
+
 		@Override
 		protected void vertexInLayerComputation(
 				Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex,
@@ -135,46 +135,46 @@ public class SolarMerger{
 				return;
 
 			Iterator<SolarMessage> theMessages = msgs.iterator();
+			
+			int astralWeight = vertex.getValue().astralWeight();
+			long vertexID = vertex.getId().getId();
+			
 			long maxID = Long.MIN_VALUE;
 			int minWeight = Integer.MAX_VALUE;
-			SolarMessage chosenOne = null;			
-			SolarMessage chosenOneForWeight = null;
-			SolarMessage chosenOneForId = null;			
+			
+			SolarMessage chosenOne = null;						
 			while(theMessages.hasNext()){
 				SolarMessage current = theMessages.next();
-				if(current.getPayloadVertex().getId() == vertex.getId().getId())
+				long currentID = current.getPayloadVertex().getId();
+				int currentWeight = current.getWeight();
+				if(currentID == vertexID)
 					continue;
-				if(current.getPayloadVertex().getId() > maxID){
-					maxID = current.getPayloadVertex().getId();
-					chosenOneForId = current.copy();
-				}
-				if(current.getWeight() < minWeight){
-					minWeight = current.getWeight();
-					chosenOneForWeight = current.copy();
+				if(currentWeight < minWeight){
+					minWeight = currentWeight;
+					chosenOne = current.copy();
+					maxID = currentID;
+				}else if(currentWeight == minWeight && currentID > maxID){
+					maxID = currentID;
+					chosenOne = current.copy();
 				}
 			}
 
-			if(chosenOneForWeight == null)
+			if(chosenOne == null)
 				return;
 
 			if(vertex.getValue().isSun()){ 
-				if(vertex.getValue().astralWeight() > minWeight || (vertex.getValue().astralWeight() == minWeight && maxID > vertex.getId().getId())){
+				if(astralWeight > minWeight || (astralWeight == minWeight && maxID > vertexID)){
 					vertex.getValue().resetToAsteroid();
-					chosenOne = vertex.getValue().astralWeight() > minWeight ? chosenOneForWeight : chosenOneForId;
 				}
 			}
 
-
-//			if(chosenOneForWeight != null && chosenOneForId != null){
-//				SolarMessage finalMessage = chosenOneForWeight == null ? chosenOneForId : chosenOneForWeight;
-				if(chosenOne != null && !chosenOne.isAZombie()){
-					sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
-					aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
-				}
-//			}
+			if(chosenOne != null && !chosenOne.isAZombie()){
+				sendMessageToAllEdges(vertex, (SolarMessage) chosenOne.propagate());
+				aggregate(SolarMergerRoutine.messagesDepleted, new BooleanWritable(false));
+			}
 		}
 	}
-	
+
 	public static class SunBroadcast extends MultiScaleComputation<AstralBodyCoordinateWritable, SolarMessage, SolarMessage>{
 
 		@Override
@@ -185,8 +185,8 @@ public class SolarMerger{
 				SolarMessage sunBroadcast = new SolarMessage(vertex.getId(), 1, vertex.getId(), CODE.SUNOFFER);
 				sunBroadcast.setWeight(0);
 				sendMessageToAllEdgesWithWeight(vertex, sunBroadcast);
-			if(logMerger)
-				log.info("I'm broadcasting my sun offer");
+				if(logMerger)
+					log.info("I'm broadcasting my sun offer");
 			}
 		}
 
@@ -293,8 +293,8 @@ public class SolarMerger{
 				if(chosenOne == null || 
 						(/*current.getPayloadVertex().getId() > vertexId && */
 								current.getWeight() < chosenOne.getWeight()// ||
-//								(current.getWeight() == chosenOne.getWeight() && current.getPayloadVertex().getId() > chosenOne.getPayloadVertex().getId())	//)
-						&&  !current.getValue().equals(chosenOne.getValue()))){	
+								//								(current.getWeight() == chosenOne.getWeight() && current.getPayloadVertex().getId() > chosenOne.getPayloadVertex().getId())	//)
+								&&  !current.getValue().equals(chosenOne.getValue()))){	
 					if(chosenOne != null){
 						if(refusedOffers == null)
 							refusedOffers = new SolarMessageSet();
@@ -309,7 +309,7 @@ public class SolarMerger{
 			}
 			return new Writable[]{chosenOne, refusedOffers};//, incomingInterfaces};
 		}
-		
+
 		protected Writable[] maxIdShuffler(Long vertexId, Iterator<SolarMessage> theMessages, AstralBodyCoordinateWritable value){
 			SolarMessage chosenOne = null;
 			SetWritable<SolarMessage> refusedOffers = null;
@@ -343,7 +343,7 @@ public class SolarMerger{
 			//INFORM MY SUN THAT AN OFFER HAS BEEN REFUSED
 			SolarMessage smForMySun = new SolarMessage(vertex.getId(), Integer.MAX_VALUE - (refusedSun.getTTL() == 0 ? 2 : 1), refusedSun.getValue().copy(), CODE.REFUSEOFFER);
 			smForMySun.addToExtraPayload(vertex.getId(), refusedSun.getWeight());
-      smForMySun.setWeight(refusedSun.getWeight());
+			smForMySun.setWeight(refusedSun.getWeight());
 			if(vertex.getValue().isPlanet()){
 				sendMessageWithWeight(vertex, vertex.getValue().getSun(), smForMySun);
 			}else
@@ -408,10 +408,10 @@ public class SolarMerger{
 				while(msgIterator.hasNext()){
 					SolarMessage currentMessage =  msgIterator.next();					
 					if(!currentMessage.getValue().equals(vertex.getId()) && (currentMessage.getCode().equals(CODE.REFUSEOFFER) || currentMessage.getCode().equals(CODE.SUNDISCOVERY))){ //THE SUN OFFER HAS BEEN DECLINED. SAVING THE DATA INTO THE NEIGHBORING SYSTEMS DATA STR.
-					  if(logMerger){
-				      log.info("Registering for referenced sun " + currentMessage.getValue() + " total weight " + currentMessage.getWeight() + " " +
-				          currentMessage.getExtraPayload().toString());
-					  }
+						if(logMerger){
+							log.info("Registering for referenced sun " + currentMessage.getValue() + " total weight " + currentMessage.getWeight() + " " +
+									currentMessage.getExtraPayload().toString());
+						}
 						value.addNeighbourSystem(currentMessage.getValue(), currentMessage.getExtraPayload(), currentMessage.getWeight());
 					}
 				}
@@ -513,7 +513,7 @@ public class SolarMerger{
 						if(vertex.getValue().isPlanet())
 							sendMessageWithWeight(vertex, vertex.getValue().getSun(), messageForSun);
 						else{
-						  sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageForSun);
+							sendMessageToMultipleEdgesWithWeight(vertex, (Iterator<LayeredPartitionedLongWritable>) vertex.getValue().getProxies().iterator(), messageForSun);
 						}
 					}else //ISOLATED SUN
 						value.addNeighbourSystem(xu.getValue().copy(), null, xu.getWeight());
@@ -548,7 +548,7 @@ public class SolarMerger{
 				Iterable<SolarMessage> msgs) throws IOException{
 			if(!vertex.getValue().isSun())
 				return;
-			
+
 			//####REGISTERING DATA TO AGGREGATORS
 			//SUNS PER COMPONENT
 			MapWritable information = new MapWritable();
@@ -570,7 +570,7 @@ public class SolarMerger{
 					vertex.getId().getLayer()+1);
 
 			addEdgeRequest(vertex.getId(), EdgeFactory.create(homologousId, new IntWritable(1)));					
-			
+
 			ByteArrayEdges<LayeredPartitionedLongWritable, IntWritable> outEdges = new ByteArrayEdges<LayeredPartitionedLongWritable, IntWritable>();
 			outEdges.setConf(getSpecialConf());
 
@@ -578,7 +578,7 @@ public class SolarMerger{
 			edgeList.add(EdgeFactory.create(vertex.getId(), new IntWritable(1)));
 			int counter = 0;
 			int weightCounter = 0;
-			
+
 			if(vertex.getValue().neigbourSystemsNo() > 0){
 				Iterator<Entry<Writable, Writable>> neighborSystems = vertex.getValue().neighbourSystemsIterator();
 				while(neighborSystems.hasNext()){
@@ -595,15 +595,15 @@ public class SolarMerger{
 
 			outEdges.initialize(edgeList);
 			if(logMerger)
-				log.info("Creating a new vertx with lowerweight " + value.astralWeight());
+				log.info("Creating a new vertex with lowerweight " + value.astralWeight());
 			addVertexRequest(homologousId, new AstralBodyCoordinateWritable(value.astralWeight(), 
 					coords[0], coords[1],value.getComponent()), outEdges);
 			MapWritable infoEdges = new MapWritable();
 			MapWritable infoWeights = new MapWritable();
-			
+
 			infoWeights.put(new IntWritable(currentLayer+1), new IntWritable(weightCounter));
 			aggregate(SolarMergerRoutine.layerEdgeWeightsAggregator, infoWeights);
-			
+
 			infoEdges.put(new IntWritable(currentLayer+1),new IntWritable(counter));
 			aggregate(SolarMergerRoutine.layerEdgeSizeAggregator, infoEdges);
 		}

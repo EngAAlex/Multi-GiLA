@@ -74,7 +74,7 @@ public class SolarMergerRoutine {
 	public static final String sunChance = "merger.SunChance";
 	public static final float sunChanceDefault = 0.1f;
 	public static final String sunChanceAggregatorString = "AGG_SUNCHANCE";
-	
+
 	//MERGER COUNTERS
 	public static final String COUNTER_GROUP = "Merging Counters";
 	private static final String NUMBER_OF_LEVELS_COUNTER = "Number of levels";
@@ -90,7 +90,7 @@ public class SolarMergerRoutine {
 	boolean terminate = false;
 	int attempts = 0;
 	float baseSunChance;
-	
+
 	MasterCompute master;
 
 	public boolean compute() {
@@ -100,28 +100,34 @@ public class SolarMergerRoutine {
 			master.setComputation(DummySolarMergerComputation.class);
 			return false;
 		}
-		
+
 		if(master.getSuperstep() == 0){
 			return false;
 		}
-		
+
 		if(master.getSuperstep() == 1){
 			MapWritable setupInfoV = new MapWritable();
 			MapWritable setupInfoE = new MapWritable();		
 			MapWritable setupInfoW = new MapWritable();
-			
-			setupInfoV.put(new IntWritable(0), new IntWritable((int)master.getTotalNumVertices()));
+
+			int initialLayerSize = (int) master.getTotalNumVertices();
+			int initialEdgeSize = (int) Math.ceil(master.getTotalNumEdges()/2);
+
+			setupInfoV.put(new IntWritable(0), new IntWritable(initialLayerSize));
 			master.setAggregatedValue(layerVertexSizeAggregator, setupInfoV);
-			setupInfoE.put(new IntWritable(0), new IntWritable((int)master.getTotalNumEdges()));
+			setupInfoE.put(new IntWritable(0), new IntWritable(initialEdgeSize));
 			master.setAggregatedValue(layerEdgeSizeAggregator, setupInfoE);
 			setupInfoW.put(new IntWritable(0), new IntWritable(1));
-			
+
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer 0 vertices").increment(initialLayerSize);
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer 0 edges").increment(initialEdgeSize);
+
 			master.setAggregatedValue(layerEdgeWeightsAggregator, setupInfoW);
 		}
-		
+
 		boolean messagesNegotiationDone = ((BooleanWritable)master.getAggregatedValue(messagesDepleted)).get();
 		boolean asteroidsAssigned = ((BooleanWritable)master.getAggregatedValue(asteroidsRemoved)).get();
-		
+
 		if(master.getComputation().equals(SunGeneration.class)){
 			master.setComputation(SolarSweep.class);
 			return false;
@@ -175,7 +181,7 @@ public class SolarMergerRoutine {
 			checkForNewLayer = false;
 			waitForDummy = false;
 			int layerSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerVertexSizeAggregator)).get(new IntWritable(cLayer+1))).get();
-			int edgeSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerEdgeSizeAggregator)).get(new IntWritable(cLayer+1))).get();
+			int edgeSize = (int) Math.ceil(((IntWritable)((MapWritable)master.getAggregatedValue(layerEdgeSizeAggregator)).get(new IntWritable(cLayer+1))).get()/2);
 			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " vertices").increment(layerSize);
 			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " edges").increment(edgeSize);
 			int currentLayerNo = ((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get();
@@ -209,7 +215,7 @@ public class SolarMergerRoutine {
 		}
 		return sum/values.size();
 	}
-	
+
 	/**
 	 * @param values
 	 * @return
@@ -239,16 +245,16 @@ public class SolarMergerRoutine {
 		master.registerAggregator(messagesDepleted, BooleanAndAggregator.class);
 		master.setAggregatedValue(currentLayer, new IntWritable(0));
 		master.registerPersistentAggregator(sunChanceAggregatorString, FloatMaxAggregator.class);
-		
+
 		master.setAggregatedValue(layerNumberAggregator, new IntWritable(0));
 		master.setAggregatedValue(mergerAttempts, new IntWritable(1));
 		baseSunChance = master.getConf().getFloat(sunChance, sunChanceDefault);
 		master.setAggregatedValue(sunChanceAggregatorString, new FloatWritable(baseSunChance));
-		
+
 		master.registerPersistentAggregator(sunsPerComponent, ComponentIntSumAggregator.class);
-		
+
 		layerThreshold = master.getConf().getInt(mergerConvergenceThreshold, mergerConvergenceThresholdDefault);
-		
+
 		SolarMerger.logMerger = master.getConf().getBoolean(logMergerString, false);
 	}
 

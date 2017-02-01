@@ -99,7 +99,6 @@ public class InterLayerCommunicationUtils{
 				removeEdgesRequest(lowerID, vertex.getId());
 			}
 			if(destroyLevels){
-				//			vertex.getValue().clearAstralInfo();
 				removeVertexRequest(vertex.getId());
 			}
 		}
