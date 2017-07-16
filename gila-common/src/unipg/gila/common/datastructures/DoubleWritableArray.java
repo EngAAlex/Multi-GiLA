@@ -25,13 +25,13 @@ import java.io.IOException;
  * @author Alessio Arleo
  *
  */
-public class FloatWritableArray extends WritableArray<Float> {
+public class DoubleWritableArray extends WritableArray<Double> {
 
-	public FloatWritableArray() {
+	public DoubleWritableArray() {
 	}
 
-	public FloatWritableArray(float[] in) {
-		internalState = new Float[in.length];
+	public DoubleWritableArray(double[] in) {
+		internalState = new Double[in.length];
 		for (int i = 0; i < in.length; i++)
 			internalState[i] = in[i];
 	}
@@ -41,9 +41,8 @@ public class FloatWritableArray extends WritableArray<Float> {
 	 */
 	@Override
 	protected void specificRead(int length, DataInput in) throws IOException {
-		internalState = new Float[length];
 		for (int i = 0; i < length; i++)
-			internalState[i] = in.readFloat();	
+			internalState[i] = in.readDouble();	
 	}
 
 	/* (non-Javadoc)
@@ -52,7 +51,8 @@ public class FloatWritableArray extends WritableArray<Float> {
 	@Override
 	protected void specificWrite(int length, DataOutput out) throws IOException {
 		for (int i = 0; i < internalState.length; i++)
-			out.writeFloat(internalState[i]);	
+			out.writeDouble(internalState[i]);	
 	}
 
 }
+
