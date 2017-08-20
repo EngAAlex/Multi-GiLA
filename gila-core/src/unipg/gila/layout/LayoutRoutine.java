@@ -320,9 +320,9 @@ public class LayoutRoutine {
 
       Writable key = currentEntryMax.getKey();
 
-      double[] maxCurrent = ((DoubleWritableArray) currentEntryMax.getValue())
+      Double[] maxCurrent = ((DoubleWritableArray) currentEntryMax.getValue())
               .get();
-      double[] minCurrent = ((DoubleWritableArray) aggregatedMinComponentData
+      Double[] minCurrent = ((DoubleWritableArray) aggregatedMinComponentData
               .get(key)).get();
 
       int noOfNodes = ((IntWritable) componentNodesMap.get(key)).get();
@@ -373,7 +373,7 @@ public class LayoutRoutine {
 
     while (tempsIterator.hasNext()) {
       Entry<Writable, Writable> currentTemp = tempsIterator.next();
-      double[] temps = ((DoubleWritableArray) currentTemp.getValue()).get();
+      Double[] temps = ((DoubleWritableArray) currentTemp.getValue()).get();
       newTempsMap.put(
               currentTemp.getKey(),
               new DoubleWritableArray(new double[] {
@@ -610,9 +610,9 @@ public class LayoutRoutine {
             Iterable<LayoutMessage> msgs) throws IOException {
       V vValue = vertex.getValue();
       double[] coords = vValue.getCoordinates();
-      double[] factors = ((DoubleWritableArray) scaleFactors
+      Double[] factors = ((DoubleWritableArray) scaleFactors
               .get(new IntWritable(vValue.getComponent()))).get();
-      double[] minCoords = ((DoubleWritableArray) minCoordinateMap
+      Double[] minCoords = ((DoubleWritableArray) minCoordinateMap
               .get(new IntWritable(vValue.getComponent()))).get();
       vValue.setCoordinates((coords[0] - minCoords[0]) * factors[0],
               (coords[1] - minCoords[1]) * factors[1]);
@@ -658,7 +658,7 @@ public class LayoutRoutine {
             Iterable<LayoutMessage> msgs) throws IOException {
       V vValue = vertex.getValue();
       double[] coords = vValue.getCoordinates();
-      double[] ccOffset = ((DoubleWritableArray) offsets.get(new IntWritable(
+      Double[] ccOffset = ((DoubleWritableArray) offsets.get(new IntWritable(
               vValue.getComponent()))).get();
       vValue.setCoordinates(((coords[0] + ccOffset[0]) * ccOffset[2])
               + ccOffset[3], ((coords[1] + ccOffset[1]) * ccOffset[2])

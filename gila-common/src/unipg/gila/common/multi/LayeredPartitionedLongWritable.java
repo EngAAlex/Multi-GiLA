@@ -44,8 +44,8 @@ public class LayeredPartitionedLongWritable extends PartitionedLongWritable {
   public LayeredPartitionedLongWritable(short partition, long id, int layer) {
     super(partition, id);
     this.layer = layer;
-  }
-
+  } 
+  
   public LayeredPartitionedLongWritable(LayeredPartitionedLongWritable idToCopy) {
     this(idToCopy.getPartition(), idToCopy.getId(), idToCopy.getLayer());
   }
@@ -96,7 +96,7 @@ public class LayeredPartitionedLongWritable extends PartitionedLongWritable {
 
   @Override
   public String toString() {
-    return partition + DELIMITER + id + DELIMITER + layer;
+    return partition + "," + id + "," + layer;
   }
 
   @Override

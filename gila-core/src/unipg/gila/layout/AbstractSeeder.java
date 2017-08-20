@@ -104,7 +104,7 @@ public abstract class AbstractSeeder<V extends CoordinateWritable, E extends Wri
       double tempX;
       double tempY;
 
-      double[] temps = ((DoubleWritableArray) tempsMap.get(new IntWritable(
+      Double[] temps = ((DoubleWritableArray) tempsMap.get(new IntWritable(
               component))).get();
 
       tempX = (forces[0] / displacementModule * Math.min(displacementModule,

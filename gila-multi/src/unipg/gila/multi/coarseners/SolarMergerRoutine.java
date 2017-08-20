@@ -57,7 +57,7 @@ public class SolarMergerRoutine {
 	 * */
 	protected static Logger log = Logger.getLogger(SolarMergerRoutine.class);
 
-	public static final String currentLayer = "AGG_CURRENTLAYER";
+	public static final String currentLayerAggregator = "AGG_CURRENTLAYER";
 	public static final String layerVertexSizeAggregator = "AGG_VERTEX_SIZE";
 	public static final String layerEdgeSizeAggregator = "AGG_EDGE_SIZE";	
 	public static final String layerEdgeWeightsAggregator = "AGG_EDGE_WEIGHTS";	
@@ -179,19 +179,26 @@ public class SolarMergerRoutine {
 			master.setComputation(RegimeMerger.class);
 			return false;
 		}
-		int cLayer = ((IntWritable)master.getAggregatedValue(currentLayer)).get();
+		int cLayer = ((IntWritable)master.getAggregatedValue(currentLayerAggregator)).get();
 		if(checkForNewLayer){
 			checkForNewLayer = false;
 			waitForDummy = false;
+			MapWritable mW = ((MapWritable)master.getAggregatedValue(layerEdgeSizeAggregator));
 			int layerSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerVertexSizeAggregator)).get(new IntWritable(cLayer+1))).get();
-			int edgeSize = ((IntWritable)((MapWritable)master.getAggregatedValue(layerEdgeSizeAggregator)).get(new IntWritable(cLayer+1))).get();
+			int edgeSize = ((IntWritable)mW.get(new IntWritable(cLayer+1))).get();
 			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " vertices").increment(layerSize);
-			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " edges").increment(edgeSize);
+			master.getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer+1) + " edges").increment(edgeSize/2);
+			
+			//CORRECT INTERNAL UPPER LAYER EDGES
+			mW.put(new IntWritable(cLayer + 1), new IntWritable(edgeSize/2));
+			
+			master.setAggregatedValue(layerEdgeSizeAggregator, mW);
+			
 			int currentLayerNo = ((IntWritable)master.getAggregatedValue(layerNumberAggregator)).get();
 			master.setAggregatedValue(layerNumberAggregator, new IntWritable(currentLayerNo + 1));
 			master.getContext().getCounter(COUNTER_GROUP, NUMBER_OF_LEVELS_COUNTER).increment(1);
 			if(master.getSuperstep() > 1){
-				master.setAggregatedValue(currentLayer, new IntWritable(cLayer+1));
+				master.setAggregatedValue(currentLayerAggregator, new IntWritable(cLayer+1));
 				int maxNoOfSuns = computeMaxOfValueSet(((MapWritable)master.getAggregatedValue(sunsPerComponent)).values());
 				if(maxNoOfSuns <= layerThreshold){
 					//haltComputation();
@@ -240,7 +247,7 @@ public class SolarMergerRoutine {
 	public void initialize(MasterCompute myMaster) throws InstantiationException,
 	IllegalAccessException {
 		master = myMaster;
-		master.registerPersistentAggregator(currentLayer, IntMaxAggregator.class);
+		master.registerPersistentAggregator(currentLayerAggregator, IntMaxAggregator.class);
 		master.registerPersistentAggregator(layerNumberAggregator, IntMaxAggregator.class);
 		master.registerPersistentAggregator(layerVertexSizeAggregator, ComponentIntSumAggregator.class);
 		master.registerPersistentAggregator(layerEdgeSizeAggregator, ComponentIntSumAggregator.class);		
@@ -248,7 +255,7 @@ public class SolarMergerRoutine {
 		master.registerPersistentAggregator(mergerAttempts, IntMaxAggregator.class);
 		master.registerAggregator(asteroidsRemoved, BooleanAndAggregator.class);
 		master.registerAggregator(messagesDepleted, BooleanAndAggregator.class);
-		master.setAggregatedValue(currentLayer, new IntWritable(0));
+		master.setAggregatedValue(currentLayerAggregator, new IntWritable(0));
 		master.registerPersistentAggregator(sunChanceAggregatorString, FloatMaxAggregator.class);
 		
 		master.setAggregatedValue(layerNumberAggregator, new IntWritable(0));

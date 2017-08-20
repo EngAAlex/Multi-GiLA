@@ -75,7 +75,7 @@ AbstractComputation<LayeredPartitionedLongWritable, Z, SpTreeEdgeValue, P, T> {
     WorkerContext workerContext) {
     super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
       workerGlobalCommUsage, workerContext);
-    currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+    currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();
     showLog = getConf().getBoolean(multiscaleLogString, false);
   }
 

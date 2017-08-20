@@ -41,6 +41,7 @@ public class DoubleWritableArray extends WritableArray<Double> {
 	 */
 	@Override
 	protected void specificRead(int length, DataInput in) throws IOException {
+		internalState = new Double[length];
 		for (int i = 0; i < length; i++)
 			internalState[i] = in.readDouble();	
 	}

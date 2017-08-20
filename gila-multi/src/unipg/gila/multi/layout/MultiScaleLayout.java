@@ -73,7 +73,7 @@ public class MultiScaleLayout {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();
       k = ((DoubleWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
     }
 
@@ -134,7 +134,7 @@ public class MultiScaleLayout {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();
       modifier = getConf().getDouble(LayoutRoutine.walshawModifierString, LayoutRoutine.walshawModifierDefault);
       maxK = ((DoubleWritable)getAggregatedValue(LayoutRoutine.max_K_agg)).get();
     }
@@ -262,7 +262,7 @@ public class MultiScaleLayout {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();
 
     }
   }
@@ -291,7 +291,7 @@ public class MultiScaleLayout {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();
     }
   }
 
@@ -311,7 +311,7 @@ public class MultiScaleLayout {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();
     }
 
     /* (non-Javadoc)
@@ -354,7 +354,7 @@ public class MultiScaleLayout {
       WorkerContext workerContext) {
       super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
         workerGlobalCommUsage, workerContext);
-      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayer)).get();;
+      currentLayer = ((IntWritable)getAggregatedValue(SolarMergerRoutine.currentLayerAggregator)).get();;
     }
   }
 

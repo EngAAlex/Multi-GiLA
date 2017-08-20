@@ -148,7 +148,7 @@ public abstract class ComponentAggregatorAbstract implements
   public static class ComponentFloatXYMaxAggregator extends
           ComponentAggregatorAbstract {
 
-    protected float[] checkEligibility(float[] mycoords, float[] newest) {
+    protected float[] checkEligibility(Float[] mycoords, Float[] newest) {
       float[] arrayToSave = new float[] { Math.max(mycoords[0], newest[0]),
               Math.max(mycoords[1], newest[1]) };
       return arrayToSave;
@@ -156,8 +156,8 @@ public abstract class ComponentAggregatorAbstract implements
 
     @Override
     protected void specificAggregate(Entry<Writable, Writable> current) {
-      float[] myData = ((FloatWritableArray) current.getValue()).get();
-      float[] foreignData = ((FloatWritableArray) internalState.get(current
+      Float[] myData = ((FloatWritableArray) current.getValue()).get();
+      Float[] foreignData = ((FloatWritableArray) internalState.get(current
               .getKey())).get();
       internalState.put(current.getKey(), new FloatWritableArray(
               checkEligibility(myData, foreignData)));
@@ -175,7 +175,7 @@ public abstract class ComponentAggregatorAbstract implements
           ComponentFloatXYMaxAggregator {
 
     @Override
-    protected float[] checkEligibility(float[] mycoords, float[] newest) {
+    protected float[] checkEligibility(Float[] mycoords, Float[] newest) {
       float[] arrayToSave = new float[] { Math.min(mycoords[0], newest[0]),
               Math.min(mycoords[1], newest[1]) };
       return arrayToSave;
@@ -193,7 +193,7 @@ public abstract class ComponentAggregatorAbstract implements
   public static class ComponentDoubleXYMaxAggregator extends
           ComponentAggregatorAbstract {
 
-    protected double[] checkEligibility(double[] mycoords, double[] newest) {
+    protected double[] checkEligibility(Double[] mycoords, Double[] newest) {
       double[] arrayToSave = new double[] { Math.max(mycoords[0], newest[0]),
               Math.max(mycoords[1], newest[1]) };
       return arrayToSave;
@@ -201,8 +201,8 @@ public abstract class ComponentAggregatorAbstract implements
 
     @Override
     protected void specificAggregate(Entry<Writable, Writable> current) {
-      double[] myData = ((DoubleWritableArray) current.getValue()).get();
-      double[] foreignData = ((DoubleWritableArray) internalState.get(current
+      Double[] myData = ((DoubleWritableArray) current.getValue()).get();
+      Double[] foreignData = ((DoubleWritableArray) internalState.get(current
               .getKey())).get();
       internalState.put(current.getKey(), new DoubleWritableArray(
               checkEligibility(myData, foreignData)));
@@ -220,7 +220,7 @@ public abstract class ComponentAggregatorAbstract implements
           ComponentDoubleXYMaxAggregator {
 
     @Override
-    protected double[] checkEligibility(double[] mycoords, double[] newest) {
+    protected double[] checkEligibility(Double[] mycoords, Double[] newest) {
       double[] arrayToSave = new double[] { Math.min(mycoords[0], newest[0]),
               Math.min(mycoords[1], newest[1]) };
       return arrayToSave;

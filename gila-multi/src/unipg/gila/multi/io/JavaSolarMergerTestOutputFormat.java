@@ -30,13 +30,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
 
 import unipg.gila.common.coordinatewritables.AstralBodyCoordinateWritable;
+import unipg.gila.common.datastructures.SpTreeEdgeValue;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.multi.coarseners.SolarMerger;
 
-public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> {
+public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> {
 
 	@Override
-	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable>.TextVertexWriter createVertexWriter(
+	public TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue>.TextVertexWriter createVertexWriter(
 			TaskAttemptContext arg0) throws IOException, InterruptedException {
 			return new JavaSolarMergerTestVertexWriter();
 		}
@@ -47,7 +48,7 @@ public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<Laye
 			
 			@Override
 			protected Text convertVertexToLine(
-					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, IntWritable> vertex)
+					Vertex<LayeredPartitionedLongWritable, AstralBodyCoordinateWritable, SpTreeEdgeValue> vertex)
 					throws IOException {
 				LayeredPartitionedLongWritable id = vertex.getId();
 				AstralBodyCoordinateWritable value = vertex.getValue();
@@ -56,12 +57,12 @@ public class JavaSolarMergerTestOutputFormat extends TextVertexOutputFormat<Laye
 			}
 		}
 
-		private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, IntWritable>> edges){
+		private String edgeBundler(Iterable<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> edges){
 			String result = "";
-			Iterator<Edge<LayeredPartitionedLongWritable, IntWritable>> it = edges.iterator();
+			Iterator<Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue>> it = edges.iterator();
 			while(it.hasNext()){
-				Edge<LayeredPartitionedLongWritable, IntWritable> edge = it.next();
-				result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "," + edge.getValue().get() + "]";
+				Edge<LayeredPartitionedLongWritable, SpTreeEdgeValue> edge = it.next();
+				result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "," + edge.getValue().getValue() + "]";
 				if(it.hasNext())
 					result += ",";
 			}

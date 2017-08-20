@@ -18,7 +18,7 @@
  */
 package unipg.gila.multi.layout;
 
-
+import org.apache.giraph.conf.GiraphConfiguration;
 
 /**
  * @author Alessio Arleo
@@ -27,12 +27,17 @@ package unipg.gila.multi.layout;
 
 public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
   
-  public static int maxK = 10;
-  public static double maxAccuracy = 0.001; 
-  public static double minCoolingSpeed = 0.95;
+  public static String fixMaxKString = "multi.adaptationStrategy.maxK";
+  public static String limitMaxKString = "multi.adaptationStrategy.limitMaxKOnSpanningTree";
+
+	
+  public static int maxK = 6;
+  public static double maxAccuracy = 0.01; 
+  public static double minCoolingSpeed = 0.94;
   public static double minInitialTempFactor = 2;
 
-  public LayoutAdaptationStrategy(String confString){
+  public LayoutAdaptationStrategy(String confString, GiraphConfiguration conf){
+	maxK = conf.getInt(fixMaxKString, maxK);
     completeSetupFromConfString(confString);
   }    
   
@@ -48,21 +53,22 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
 
   public double returnCurrentCoolingSpeed(int currentLayer,
     int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-    if(nOfEdgesOfLayer < 500)
-      return LayoutAdaptationStrategy.minCoolingSpeed;
+//    if(nOfEdgesOfLayer < 500)
+//      return LayoutAdaptationStrategy.minCoolingSpeed;
     //  if(nOfEdgesOfLayer < 1500)
     //    return 0.96f;
 //    if(nOfEdgesOfLayer < 1000)
 //      return 0.95f;
-    if(nOfEdgesOfLayer < 1000)
-      return 0.94f;
-    if(nOfEdgesOfLayer < 5000)
-      return 0.93f;
-    if(nOfEdgesOfLayer < 10000)
-      return 0.92f;
+//    if(nOfEdgesOfLayer < 1000)
+//      return 0.94;
+//    if(nOfEdgesOfLayer < 5000)
+//      return 0.93;
+//    if(nOfEdgesOfLayer < 10000)
+//      return 0.92;
     if(nOfEdgesOfLayer < 1000000)
-      return 0.90f;
-    return 0.88f;
+        return LayoutAdaptationStrategy.minCoolingSpeed;    	
+//      return 0.90;
+    return 0.88;
   }
 
   /* (non-Javadoc)
@@ -70,10 +76,10 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
    */
   public double returnTargetAccuracyy(int currentLayer, int nOfLayers,
     int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
-    if(nOfEdgesOfLayer < 1000)
-      return LayoutAdaptationStrategy.maxAccuracy;
-    if(nOfEdgesOfLayer < 10000)
-      return 0.001f;
+//    if(nOfEdgesOfLayer < 10000)
+//      return LayoutAdaptationStrategy.maxAccuracy;
+//    if(nOfEdgesOfLayer < 10000)
+//      return 0.001f;
     if(nOfEdgesOfLayer < 1000000)
       return 0.01f;
     return 0.1f;
@@ -84,8 +90,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     /**
      * @param confString
      */
-    public DensityDrivenAdaptationStrategy(String confString) {
-      super(confString);
+    public DensityDrivenAdaptationStrategy(String confString, GiraphConfiguration conf) {
+      super(confString, conf);
     }
 
     /* (non-Javadoc)
@@ -117,8 +123,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     /**
      * @param confString
      */
-    public SizeDrivenAdaptationStrategy(String confString) {
-      super(confString);
+    public SizeDrivenAdaptationStrategy(String confString, GiraphConfiguration conf) {
+      super(confString, conf);
     }
 
     /* (non-Javadoc)
@@ -128,10 +134,10 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
       if(nOfEdgesOfLayer < 1000)
         return LayoutAdaptationStrategy.maxK;
-      if(nOfEdgesOfLayer < 5000)
-        return 6;
-      if(nOfEdgesOfLayer < 10000)
-        return 5;
+//      if(nOfEdgesOfLayer < 5000)
+//        return 6;
+//      if(nOfEdgesOfLayer < 10000)
+//        return 5;
       //			if(nOfEdgesOfLayer > 50000)
       //				return 3;
       if(nOfEdgesOfLayer > 1000000)
@@ -155,8 +161,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     /**
      * @param confString
      */
-    public DiameterDrivenAdaptationStrategy(String confString) {
-      super(confString);
+    public DiameterDrivenAdaptationStrategy(String confString, GiraphConfiguration conf) {
+      super(confString, conf);
     }
 
     public static int maxDiameterForLayer(int currentLayer, int nOfLayers,
@@ -170,8 +176,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     public int returnCurrentK(int currentLayer, int nOfLayers,
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
         int proposedK = 2 + (4*(nOfLayers-currentLayer));
-//        return proposedK;
-        return  proposedK > LayoutAdaptationStrategy.maxK ? LayoutAdaptationStrategy.maxK : proposedK;
+        return proposedK;
     }
 
     /* (non-Javadoc)
@@ -188,8 +193,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
     /**
      * @param confString
      */
-    public SizeAndDiameterDrivenAdaptationStrategy(String confString) {
-      super(confString);
+    public SizeAndDiameterDrivenAdaptationStrategy(String confString, GiraphConfiguration conf) {
+      super(confString, conf);
     }
 
     /* (non-Javadoc)
@@ -213,6 +218,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
   public static class SizeDiameterEnvironmentAwareDrivenAdaptationStrategy extends LayoutAdaptationStrategy{
         
     private int threshold;
+    private boolean limitMaxK;
     
     private SizeDrivenAdaptationStrategy sizeStrategy;
     private DiameterDrivenAdaptationStrategy diameterStrategy;
@@ -221,20 +227,25 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
      * @param confString
      */
     public SizeDiameterEnvironmentAwareDrivenAdaptationStrategy(
-        String confString) {
-      super(confString);
-      sizeStrategy = new SizeDrivenAdaptationStrategy(confString);
-      diameterStrategy = new DiameterDrivenAdaptationStrategy(confString);
+        String confString, GiraphConfiguration conf) {
+      super(confString, conf);
+      limitMaxK = conf.getBoolean(limitMaxKString, true);
+      sizeStrategy = new SizeDrivenAdaptationStrategy(confString, conf);
+      diameterStrategy = new DiameterDrivenAdaptationStrategy(confString, conf);
     }
-
+    
     /* (non-Javadoc)
      * @see unipg.gila.multi.layout.LayoutAdaptationStrategy.LayoutAdaptation#returnCurrentK(int, int, int, int)
      */
     public int returnCurrentK(int currentLayer, int nOfLayers,
       int nOfVerticesOfLayer, int nOfEdgesOfLayer, int workers) {
-      if((nOfEdgesOfLayer)/workers < threshold && currentLayer > 0)
-        return diameterStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);
-      else
+      if((nOfEdgesOfLayer)/workers < threshold/* && currentLayer > 0*/){
+        int proposedK = diameterStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);
+        if(limitMaxK)
+        	return  proposedK > LayoutAdaptationStrategy.maxK ? LayoutAdaptationStrategy.maxK : proposedK;
+        else
+        	return proposedK;
+      }else
         return sizeStrategy.returnCurrentK(currentLayer, nOfLayers, nOfVerticesOfLayer, nOfEdgesOfLayer, workers);
     }
 

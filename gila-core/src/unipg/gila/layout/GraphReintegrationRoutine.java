@@ -137,13 +137,13 @@ public class GraphReintegrationRoutine {
             .get();// ((LongWritable)componentsNo.get(new
                    // LongWritable(maxID))).get();
 
-    double[] translationCorrection = ((DoubleWritableArray) minCoordsMap
+    Double[] translationCorrection = ((DoubleWritableArray) minCoordsMap
             .get(new IntWritable(maxID))).get();
     offsets.put(new IntWritable(maxID), new DoubleWritableArray(new double[] {
             -translationCorrection[0], -translationCorrection[1], 1.0f,
             cursor.x, cursor.y }));
 
-    double[] maxComponents = ((DoubleWritableArray) maxCoordsMap
+    Double[] maxComponents = ((DoubleWritableArray) maxCoordsMap
             .get(new IntWritable(maxID))).get();
     // float componentPadding =
     // getConf().getFloat(FloodingMaster.componentPaddingConfString,
