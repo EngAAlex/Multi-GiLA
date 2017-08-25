@@ -54,13 +54,14 @@ TextVertexOutputFormat<LayeredPartitionedLongWritable, AstralBodyCoordinateWrita
 
     protected boolean showPartitioning;
     protected boolean showComponent;
-
+    
     @Override
     public void initialize(TaskAttemptContext context) throws IOException,
     InterruptedException {
       super.initialize(context);
       showPartitioning = getConf().getBoolean(LayoutRoutine.showPartitioningString, false);
       showComponent = getConf().getBoolean(LayoutRoutine.showComponentString, true);
+      
     }
 
     @Override

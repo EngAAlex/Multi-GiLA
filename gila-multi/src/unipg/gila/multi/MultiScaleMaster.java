@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2016 Alessio Arleo
+s * Copyright 2016 Alessio Arleo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,33 +145,52 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		int currentLayer =
 				((IntWritable) getAggregatedValue(SolarMergerRoutine.currentLayerAggregator))
 				.get();
-		
+
 		if (merging) {
 			if (!mergerRoutine.compute()) {
 				return;
 			}
-			else {
-				if(!getConf().getBoolean(mergeOnlyString, false)){
-					merging = false;
-					spanningTreeSetup = true;
-				}else
-					haltComputation();
+			else {				
+				merging = false;
+				spanningTreeSetup = true;							
 			}
 		}
-		
+
+		int noOfVertices =
+				((IntWritable) ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator)) //HERE!
+						.get(new IntWritable(currentLayer))).get();
+		int noOfLayers =
+				((IntWritable) getAggregatedValue(SolarMergerRoutine.layerNumberAggregator))
+				.get();
+		int noOfEdges =
+				((IntWritable) ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator))
+						.get(new IntWritable(currentLayer))).get();
+
 		//CORRECT NO OF EDGES PER LAYER IN CASE OF RESTORE OF COMPUTATION
 		if(getComputation().equals(SolarMerger.StateRestore.class)){
-//			MapWritable rawEdges = ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator));
-//			Iterator<Entry<Writable, Writable>> it = rawEdges.entrySet().iterator();
-//			while(it.hasNext()){
-//				Entry<Writable, Writable> current = it.next();
-//				int currentSize = ((IntWritable)current.getValue()).get();
-//				rawEdges.put(current.getKey(), new IntWritable(currentSize/2));
-//			}
-//			setAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator, rawEdges);
-			setAggregatedValue(SolarMergerRoutine.layerNumberAggregator, new IntWritable(currentLayer + 1));
+			MapWritable rawEdges = ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator));
+			Iterator<Entry<Writable, Writable>> itE = rawEdges.entrySet().iterator();
+			while(itE.hasNext()){
+				Entry<Writable, Writable> current = itE.next();
+				int cLayer = ((IntWritable)current.getKey()).get();				
+				int eSize = ((IntWritable)current.getValue()).get()/2;
+				rawEdges.put(current.getKey(), new IntWritable(eSize));
+				getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer) + " edges").increment(eSize);				
+			}
+			MapWritable rawVertices = ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator));
+			Iterator<Entry<Writable, Writable>> itV = rawVertices.entrySet().iterator();
+			while(itV.hasNext()){
+				Entry<Writable, Writable> current = itV.next();
+				int cLayer = ((IntWritable)current.getKey()).get();
+				int vSize = ((IntWritable)current.getValue()).get();
+				getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer) + " vertices").increment(vSize);
+			}
+			setAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator, rawEdges);
+			
+			noOfLayers = currentLayer + 1;
+			setAggregatedValue(SolarMergerRoutine.layerNumberAggregator, new IntWritable(noOfLayers));
 		}
-		
+
 
 		if (spanningTreeSetup)
 			if (!spanningTreeRoutine.compute()) {
@@ -184,22 +203,20 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				return;
 			}
 
-		int noOfVertices =
-				((IntWritable) ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerVertexSizeAggregator)) //HERE!
-						.get(new IntWritable(currentLayer))).get();
-		int noOfLayers =
-				((IntWritable) getAggregatedValue(SolarMergerRoutine.layerNumberAggregator))
-				.get();
-		int noOfEdges =
-				((IntWritable) ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator))
-						.get(new IntWritable(currentLayer))).get();
-
 		if (preparePlacer) {
 			preparePlacer = false;
-			layout = true;
-
 			updateCountersAndAggregators(currentLayer, noOfLayers, noOfVertices,
 					noOfEdges);
+			
+			if(!getConf().getBoolean(skipMergingString, false)){
+				layout = true;				
+			}else
+				if (currentLayer > 0) {
+					placing = true;
+				}
+				else {
+					reintegrating = true;
+				}
 		}
 
 		if (currentLayer >= 0 && !reintegrating) {
@@ -225,6 +242,10 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				}
 				else {
 					layout = false;
+					if(getConf().getBoolean(mergeOnlyString, false)){
+						haltComputation();
+						return;
+					}
 					if (currentLayer > 0) {
 						placing = true;
 					}

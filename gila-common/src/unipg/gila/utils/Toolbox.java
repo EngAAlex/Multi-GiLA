@@ -114,8 +114,8 @@ public class Toolbox {
    * @return The value itself or a very small positive value otherwise.
    */
   public static float floatFuzzyMath(float value) {
-    if (value == 0.0)
-      return new Float(0.00001);
+    if (value < 0.0001f)
+      return new Float(0.0001);
     return value;
   }
 
@@ -128,8 +128,8 @@ public class Toolbox {
    * @return The value itself or a very small positive value otherwise.
    */
   public static double doubleFuzzyMath(double value) {
-    if (value == 0.0)
-      return new Double(0.00001);
+    if (value < 0.0001)
+      return new Double(0.0001);
     return value;
   }
 

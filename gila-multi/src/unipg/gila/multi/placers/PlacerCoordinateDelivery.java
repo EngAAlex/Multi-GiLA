@@ -37,6 +37,7 @@ import unipg.gila.common.datastructures.messagetypes.LayoutMessage;
 import unipg.gila.common.multi.LayeredPartitionedLongWritable;
 import unipg.gila.layout.LayoutRoutine;
 import unipg.gila.multi.MultiScaleComputation;
+import unipg.gila.multi.MultiScaleMaster;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils;
 
 /**
@@ -49,7 +50,6 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 	Logger log = Logger.getLogger(PlacerCoordinateDelivery.class);
 
 	protected double k;
-	protected boolean clearInfo;
 
 	/* (non-Javadoc)
 	 * @see unipg.gila.multi.MultiScaleComputation#vertexInLayerComputation(org.apache.giraph.graph.Vertex, java.lang.Iterable)
@@ -96,12 +96,12 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 						sendMessage(current.getPayloadVertex().copy(), new LayoutMessage(current.getPayloadVertex().copy(), blanks));
 					}
 	        addEdgeRequest(vertex.getId(), EdgeFactory.create(current.getPayloadVertex(), new SpTreeEdgeValue(true))); 
-	        addEdgeRequest(current.getPayloadVertex(), EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true))); 
+	        addEdgeRequest(current.getPayloadVertex(), EdgeFactory.create(vertex.getId(), new SpTreeEdgeValue(true)));
+			getContext().getCounter(MultiScaleMaster.multiCounterString, "Layer " + currentLayer + " added sp edges").increment(1);
 				}
 			}
 		}
-		if(clearInfo)
-			vertex.getValue().clearAstralInfo();
+
 	}
 
 	/* (non-Javadoc)
@@ -117,6 +117,5 @@ public class PlacerCoordinateDelivery extends MultiScaleComputation<AstralBodyCo
 		super.initialize(graphState, workerClientRequestProcessor, graphTaskManager,
 				workerGlobalCommUsage, workerContext);
 		k = ((DoubleWritable)getAggregatedValue(LayoutRoutine.k_agg)).get();
-		clearInfo = getConf().getBoolean(InterLayerCommunicationUtils.destroyLevelsString, true);
 	}
 }

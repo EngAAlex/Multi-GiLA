@@ -69,7 +69,8 @@ public class SolarMergerTestWithSpanningTreeOutputFormat extends TextVertexOutpu
           first = false;
         else
           result += ",";
-        result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "," + edge.getValue().getValue() + "]";
+        result += "[" + edge.getTargetVertexId().getId() + "," + edge.getTargetVertexId().getLayer() + "," + 
+        		(edge.getValue().isSpanningTree() ? "-2" : edge.getValue().getValue()) + "]";
       }
     }
 

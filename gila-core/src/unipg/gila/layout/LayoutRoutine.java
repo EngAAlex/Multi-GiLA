@@ -153,7 +153,7 @@ public class LayoutRoutine {
   protected static final double defaultMinRatioThreshold = 0.2;
 
   public static final String repulsiveForceEnhancerString = "layout.enhanceRepulsiveForcesBy";
-  public static final double repulsiveForceEnhancementDefault = 2.0;
+  public static final double repulsiveForceEnhancementDefault = 1.0;
 
   // GLOBAL STATIC VARIABLES
   public static boolean logLayout;

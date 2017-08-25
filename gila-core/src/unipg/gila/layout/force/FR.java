@@ -63,9 +63,8 @@ public class FR extends Force {
   @Override
   public double[] computeRepulsiveForce(double deltaX, double deltaY,
     double distance, double squareDistance, int v1Deg, int v2Deg) {
-    double degCorrection = 1.0f;
     return new double[] {
-            degCorrection * (deltaX / Toolbox.doubleFuzzyMath(squareDistance)),
-            degCorrection * (deltaY / Toolbox.doubleFuzzyMath(squareDistance)) };
+            (deltaX / Toolbox.doubleFuzzyMath(squareDistance)),
+            (deltaY / Toolbox.doubleFuzzyMath(squareDistance)) };
   }
 }

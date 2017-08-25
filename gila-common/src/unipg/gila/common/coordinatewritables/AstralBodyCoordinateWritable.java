@@ -328,7 +328,7 @@ public class AstralBodyCoordinateWritable extends CoordinateWritable {
 		if (sunProxies == null) {
 			sunProxies = new LayeredPartitionedLongWritableSet();
 		}
-		sunProxies.addElement(proxy);
+		sunProxies.addElement(proxy.copy());
 	}
 
 	public LayeredPartitionedLongWritableSet getProxies() {
