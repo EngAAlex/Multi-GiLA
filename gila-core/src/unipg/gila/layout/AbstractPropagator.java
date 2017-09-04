@@ -125,7 +125,7 @@ public class AbstractPropagator<V extends CoordinateWritable, E extends Writable
       v2Deg = currentMessage.getWeight();
 
       // ATTRACTIVE FORCES
-      if (vValue.hasBeenReset()) {
+      if (vValue.hasBeenReset() && vertex.getEdgeValue(currentPayload) != null) {
         tempForce = force.computeAttractiveForce(deltaX, deltaY, distance,
                 squareDistance,
                 requestOptimalSpringLength(vertex, vertex.getAllEdgeValues(currentPayload)), v1Deg,

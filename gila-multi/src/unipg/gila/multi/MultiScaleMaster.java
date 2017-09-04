@@ -21,10 +21,12 @@ package unipg.gila.multi;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.giraph.aggregators.BooleanAndAggregator;
 import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.giraph.conf.GiraphConstants;
 import org.apache.giraph.counters.GiraphStats;
 import org.apache.giraph.master.DefaultMasterCompute;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -46,6 +48,7 @@ import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleGraphExplorerWithCompo
 import unipg.gila.multi.layout.MultiScaleLayout.MultiScaleLayoutCC;
 import unipg.gila.multi.placers.SolarPlacerRoutine;
 import unipg.gila.multi.spanningtree.SpanningTreeCreationRoutine;
+import unipg.gila.multi.spanningtree.SpanningTreeEnforcingRoutine;
 
 /**
  * @author Alessio Arleo
@@ -65,19 +68,23 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 
 	public static final String multiCounterString = "Global Counters";
 
+	public static final String thresholdSurpassedAggregator = "THR_AGG";
+
 	LayoutRoutine layoutRoutine;
 	SolarMergerRoutine mergerRoutine;
 	SpanningTreeCreationRoutine spanningTreeRoutine;
 	SolarPlacerRoutine placerRoutine;
+	SpanningTreeEnforcingRoutine spanningTreeEnforcingRoutine;
 	GraphReintegrationRoutine reintegrationRoutine;
 	AdaptationStrategy adaptationStrategy;
 
-	boolean merging;
-	boolean placing;
+	boolean merge;
+	boolean place;
 	boolean layout;
-	boolean reintegrating;
+	boolean reintegrate;
 	boolean preparePlacer;
 	boolean spanningTreeSetup;
+	boolean enforceSPTree;
 	// boolean angularMaximization;
 	boolean forceMaximization;
 	int angularMaximizationIterations;
@@ -107,12 +114,16 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		spanningTreeRoutine = new SpanningTreeCreationRoutine();
 		spanningTreeRoutine.initialize(this);
 
-		merging = false;
+		spanningTreeEnforcingRoutine = new SpanningTreeEnforcingRoutine();
+		spanningTreeEnforcingRoutine.initialize(this);
+
+		merge = false;
 		layout = false;
-		reintegrating = false;
+		reintegrate = false;
 		spanningTreeSetup = false;
 		preparePlacer = false;
-		placing = false;
+		place = false;
+		enforceSPTree = false;
 		terminate = false;
 
 		workers = GiraphConstants.SPLIT_MASTER_WORKER.get(getConf()) ? getConf().getMapTasks() - 1 : getConf().getMapTasks();
@@ -128,14 +139,16 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			adaptationStrategy = new SizeDiameterEnvironmentAwareDrivenAdaptationStrategy(getConf().getStrings(adaptationStrategyOptionsString, "")[0], getConf());
 		}
 
+		registerPersistentAggregator(thresholdSurpassedAggregator, BooleanAndAggregator.class);
+
 	}
 
 	public void compute() {
 		if (getSuperstep() == 0) {
 			if(!getConf().getBoolean(skipMergingString, false))
-				merging = true;
+				merge = true;
 			else{
-				merging = false;
+				merge = false;
 				spanningTreeSetup = true;
 				setComputation(SolarMerger.StateRestore.class);
 				return;	
@@ -146,12 +159,12 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				((IntWritable) getAggregatedValue(SolarMergerRoutine.currentLayerAggregator))
 				.get();
 
-		if (merging) {
+		if (merge) {
 			if (!mergerRoutine.compute()) {
 				return;
 			}
 			else {				
-				merging = false;
+				merge = false;
 				spanningTreeSetup = true;							
 			}
 		}
@@ -186,7 +199,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				getContext().getCounter(SolarMergerRoutine.COUNTER_GROUP, "Layer " + (cLayer) + " vertices").increment(vSize);
 			}
 			setAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator, rawEdges);
-			
+
 			noOfLayers = currentLayer + 1;
 			setAggregatedValue(SolarMergerRoutine.layerNumberAggregator, new IntWritable(noOfLayers));
 		}
@@ -207,19 +220,43 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			preparePlacer = false;
 			updateCountersAndAggregators(currentLayer, noOfLayers, noOfVertices,
 					noOfEdges);
-			
+
 			if(!getConf().getBoolean(skipMergingString, false)){
 				layout = true;				
 			}else
 				if (currentLayer > 0) {
-					placing = true;
+					place = true;
 				}
 				else {
-					reintegrating = true;
+					reintegrate = true;
 				}
 		}
 
-		if (currentLayer >= 0 && !reintegrating) {
+		if (currentLayer >= 0 && !reintegrate) {
+
+			if(place || enforceSPTree){
+				if (place)
+					if (!placerRoutine.compute())
+						return;
+					else {
+						place = false;
+						resetLayoutAggregators();
+						boolean thresholdState = updateCountersAndAggregators(currentLayer, noOfLayers, noOfVertices,
+								noOfEdges);
+						if(thresholdState)
+							layout = true;
+						else
+							enforceSPTree = true;
+					}
+				
+				if(enforceSPTree)				
+					if (!spanningTreeEnforcingRoutine.compute())
+						return;
+					else {
+						enforceSPTree = false;
+						layout = true;
+					}
+			}
 
 			if (layout) {
 				int currentEdgeWeight =
@@ -247,28 +284,17 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 						return;
 					}
 					if (currentLayer > 0) {
-						placing = true;
+						place = true;
 					}
 					else {
-						reintegrating = true;
+						reintegrate = true;
 					}
 
 				}
 			}
-			if (placing)
-				if (!placerRoutine.compute())
-					return;
-				else {
-					placing = false;
-					layout = true;
-					resetLayoutAggregators();
-					updateCountersAndAggregators(currentLayer, noOfLayers, noOfVertices,
-							noOfEdges);
-					return;
-				}
 
 		}
-		if (reintegrating)
+		if (reintegrate)
 			if (reintegrationRoutine.compute()) {
 				getContext().getCounter(multiCounterString, "Supersteps").increment(
 						getSuperstep());
@@ -280,7 +306,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 			}
 	}
 
-	private void updateCountersAndAggregators(int currentLayer, int noOfLayers,
+	private boolean updateCountersAndAggregators(int currentLayer, int noOfLayers,
 			int noOfVertices, int noOfEdges) {
 		int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers,
 				noOfVertices, noOfEdges, workers);
@@ -291,8 +317,9 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				adaptationStrategy.returnCurrentInitialTempFactor(currentLayer,
 						noOfLayers, noOfVertices, noOfEdges);
 		double accuracy =
-				adaptationStrategy.returnTargetAccuracyy(currentLayer, noOfLayers,
+				adaptationStrategy.returnTargetAccuracy(currentLayer, noOfLayers,
 						noOfVertices, noOfEdges);
+		boolean thresholdState = adaptationStrategy.thresholdSurpassed();
 
 		setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(
 				selectedK));
@@ -302,6 +329,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				new DoubleWritable(initialTemp));
 		setAggregatedValue(LayoutRoutine.currentAccuracyAggregator,
 				new DoubleWritable(accuracy));
+		setAggregatedValue(thresholdSurpassedAggregator, new BooleanWritable(thresholdState));
 
 		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k")
 		.increment(selectedK);
@@ -314,6 +342,8 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		getContext().getCounter("Layer Counters",
 				"Layer " + currentLayer + " accuracy").increment(
 						(long) (accuracy * 100000));
+
+		return thresholdState;
 	}
 
 	/**

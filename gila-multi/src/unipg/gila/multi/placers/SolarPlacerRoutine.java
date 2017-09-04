@@ -19,10 +19,12 @@
 package unipg.gila.multi.placers;
 
 import org.apache.giraph.master.MasterCompute;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.IntWritable;
 
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.CoordinatesBroadcast;
 import unipg.gila.multi.coarseners.InterLayerCommunicationUtils.InterLayerDataTransferComputation;
+import unipg.gila.multi.MultiScaleMaster;
 import unipg.gila.multi.coarseners.SolarMergerRoutine;
 import unipg.gila.multi.spanningtree.SpanningTreeCreationRoutine.ExpandSpanningTree;
 import unipg.gila.multi.spanningtree.SpanningTreeCreationRoutine.SpanningTreeConsistencyEnforcerForMoons;
@@ -62,9 +64,15 @@ public class SolarPlacerRoutine {
 		counter++; return false;
 		case 3 : master.setComputation(PlacerCoordinateDelivery.class); counter++; return false;
 		case 4 : counter++; return false;
-		case 5 : master.setComputation(ExpandSpanningTree.class); counter++; return false;
-		case 6 : master.setComputation(SpanningTreeConsistencyEnforcerForMoons.class); counter++; return false;
-		case 7 : master.setComputation(SpanningTreeConsistencyEnforcerForPlanets.class); counter++; return false;
+//		case 5 : 
+//			boolean thresholdState = ((BooleanWritable)master.getAggregatedValue(MultiScaleMaster.thresholdSurpassedAggregator)).get();
+//			if(thresholdState){
+//				reset();
+//				return true;
+//			}else
+//				master.setComputation(ExpandSpanningTree.class); counter++; return false;
+//		case 6 : master.setComputation(SpanningTreeConsistencyEnforcerForMoons.class); counter++; return false;
+//		case 7 : master.setComputation(SpanningTreeConsistencyEnforcerForPlanets.class); counter++; return false;
 		default : reset(); return true;
 		}
 	}

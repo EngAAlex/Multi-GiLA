@@ -30,7 +30,9 @@ public interface AdaptationStrategy {
 
 	public double returnCurrentCoolingSpeed(int currentLayer, int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer);
 	
-	public double returnTargetAccuracyy(int currentLayer, int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer);
+	public double returnTargetAccuracy(int currentLayer, int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer);
+	
+	public boolean thresholdSurpassed();
 
 
 }
