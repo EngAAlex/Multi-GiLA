@@ -180,7 +180,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 						.get(new IntWritable(currentLayer))).get();
 
 		//CORRECT NO OF EDGES PER LAYER IN CASE OF RESTORE OF COMPUTATION
-		if(getComputation().equals(SolarMerger.StateRestore.class)){
+		if(getComputation().equals(SolarMerger.StateRestore.class)){			
 			MapWritable rawEdges = ((MapWritable) getAggregatedValue(SolarMergerRoutine.layerEdgeSizeAggregator));
 			Iterator<Entry<Writable, Writable>> itE = rawEdges.entrySet().iterator();
 			while(itE.hasNext()){
@@ -308,6 +308,7 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 
 	private boolean updateCountersAndAggregators(int currentLayer, int noOfLayers,
 			int noOfVertices, int noOfEdges) {
+				
 		int selectedK = adaptationStrategy.returnCurrentK(currentLayer, noOfLayers,
 				noOfVertices, noOfEdges, workers);
 		double coolingSpeed =
@@ -320,6 +321,8 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				adaptationStrategy.returnTargetAccuracy(currentLayer, noOfLayers,
 						noOfVertices, noOfEdges);
 		boolean thresholdState = adaptationStrategy.thresholdSurpassed();
+		
+		String layerText = "Layer " + currentLayer;
 
 		setAggregatedValue(LayoutRoutine.ttlMaxAggregator, new IntWritable(
 				selectedK));
@@ -331,16 +334,16 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 				new DoubleWritable(accuracy));
 		setAggregatedValue(thresholdSurpassedAggregator, new BooleanWritable(thresholdState));
 
-		getContext().getCounter("Layer Counters", "Layer " + currentLayer + " k")
+		getContext().getCounter("Layer Counters", layerText + " k")
 		.increment(selectedK);
 		getContext().getCounter("Layer Counters",
-				"Layer " + currentLayer + " coolingSpeed").increment(
+				layerText + " coolingSpeed").increment(
 						(long) (coolingSpeed * 100));
 		getContext().getCounter("Layer Counters",
-				"Layer " + currentLayer + " tempFactor").increment(
+				layerText + " tempFactor").increment(
 						(long) (initialTemp * 100));
 		getContext().getCounter("Layer Counters",
-				"Layer " + currentLayer + " accuracy").increment(
+				layerText + " accuracy").increment(
 						(long) (accuracy * 100000));
 
 		return thresholdState;

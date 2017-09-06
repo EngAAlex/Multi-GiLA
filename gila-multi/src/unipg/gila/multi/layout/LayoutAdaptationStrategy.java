@@ -70,7 +70,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
 			int nOfLayers, int nOfVerticesOfLayer, int nOfEdgesOfLayer) {
 
 		if(currentLayer == 0)
-			return 0.88;
+			return 0.90;
 		
 		if(nOfEdgesOfLayer < 100)
 			return minCoolingSpeed;
@@ -199,8 +199,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
 		}else{
 			if(nOfEdgesOfLayer < 1000)
 				return maxKTraditional;
-			if(nOfEdgesOfLayer < 10000)
-				return 4;
+//			if(nOfEdgesOfLayer < 10000)
+//				return 3;
 //			if(nOfEdgesOfLayer < 20000)
 //				return ;
 			if(nOfEdgesOfLayer > 1000000)

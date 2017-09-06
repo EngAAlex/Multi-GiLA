@@ -120,7 +120,7 @@ public class SolarMerger{
 				LayeredPartitionedLongWritable targetId = e.getTargetVertexId();
 				if(targetId.getLayer() == vertexLayer){
 					counter++;
-					weightCounter += e.getValue().getValue();
+					weightCounter = Math.max(weightCounter, e.getValue().getValue());
 				}
 			}
 			
