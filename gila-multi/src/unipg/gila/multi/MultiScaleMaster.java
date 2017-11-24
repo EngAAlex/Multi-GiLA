@@ -91,6 +91,8 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 	int angularMaximizationIterationsMax;
 	boolean terminate;
 
+	double lastTemp = Double.MAX_VALUE;
+	
 	int workers;
 
 	@SuppressWarnings("unchecked")
@@ -314,6 +316,14 @@ public class MultiScaleMaster extends DefaultMasterCompute {
 		double coolingSpeed =
 				adaptationStrategy.returnCurrentCoolingSpeed(currentLayer, noOfLayers,
 						noOfVertices, noOfEdges);
+		
+		if(coolingSpeed == lastTemp)
+			coolingSpeed -= 0.02;
+		else
+			if(coolingSpeed > lastTemp)
+				coolingSpeed = lastTemp - 0.02;
+		lastTemp = coolingSpeed;
+		
 		double initialTemp =
 				adaptationStrategy.returnCurrentInitialTempFactor(currentLayer,
 						noOfLayers, noOfVertices, noOfEdges);

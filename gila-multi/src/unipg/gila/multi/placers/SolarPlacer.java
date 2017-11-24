@@ -109,9 +109,7 @@ public class SolarPlacer extends MultiScaleComputation<AstralBodyCoordinateWrita
 						myCoords[1] + chosenPosition[1]}));
 				else{
 					double angle = Math.random()*Math.PI*2;
-					
-					log.info("Ginuzzo searcho " + currentRecipient.getKey());
-					
+										
 					double desiredDistance = vertex.getEdgeValue(currentRecipient.getKey()).getValue()*k;
 					sendMessage(currentRecipient.getKey().copy(), new LayoutMessage(currentRecipient.getKey(), 
 							new double[]{myCoords[0] + Math.cos(angle)*desiredDistance,
