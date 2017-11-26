@@ -30,7 +30,8 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
 	public static String fixMaxKString = "multi.adaptationStrategy.maxK";
 	public static String limitMaxKString = "multi.adaptationStrategy.limitMaxKOnSpanningTree";
 
-
+	protected int strategiesThresholdDefault = 200;
+	
 	protected static int globalMaxK = 10;
 	protected double globalDensityThreshold = 5;
 	protected int globalNOfEdgesThreshold = 200000;
@@ -379,7 +380,7 @@ public abstract class LayoutAdaptationStrategy implements AdaptationStrategy{
 			try{
 				threshold = Integer.parseInt(confString);
 			}catch(Exception e){
-				threshold = 1000; 
+				threshold = strategiesThresholdDefault; 
 			}      
 		}
 
