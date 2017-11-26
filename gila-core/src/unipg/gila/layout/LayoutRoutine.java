@@ -108,7 +108,7 @@ public class LayoutRoutine {
   public static final String coolingSpeed = "layout.coolingSpeed";
   public final static double defaultCoolingSpeed = 0.93;
   public static final String walshawModifierString = "layout.walshawModifier";
-  public static final double walshawModifierDefault = 1.0;
+  public static final double walshawModifierDefault = 1.1;
   public static final String accuracyString = "layout.accuracy";
   public static final double accuracyDefault = 0.01;
   public static final String forceMethodOptionString = "layout.forceModel";
@@ -153,7 +153,7 @@ public class LayoutRoutine {
   protected static final double defaultMinRatioThreshold = 0.2;
 
   public static final String repulsiveForceEnhancerString = "layout.enhanceRepulsiveForcesBy";
-  public static final double repulsiveForceEnhancementDefault = 1.0;
+  public static final double repulsiveForceEnhancementDefault = 2.0;
 
   // GLOBAL STATIC VARIABLES
   public static boolean logLayout;
